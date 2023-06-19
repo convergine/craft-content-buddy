@@ -1,0 +1,120 @@
+{% extends '_layouts/cp' %}
+
+{% import '_includes/forms' as forms %}
+
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+
+{% set title = 'New Prompt' %}
+{% set plugin = craft.app.getModule('convergine-contentbuddy') %}
+{% set selectedSubnavItem = 'prompts' %}
+{% set crumbs = [
+    { label: plugin.name | t('convergine-contentbuddy'), url: url('convergine-contentbuddy') },
+    { label: 'Prompts' | t('convergine-contentbuddy'), url: url('convergine-contentbuddy/prompts') },
+    { label: 'Create New' | t('convergine-contentbuddy'), url: url('convergine-contentbuddy/prompts/new') },
+] %}
+
+{% set fullPageForm = true %}
+
+{% block content %}
+    {{ forms.hidden({
+        name: 'action',
+        value: 'convergine-contentbuddy/prompts/save'
+    }) }}
+
+
+
+    {{ forms.textField({
+        label: 'Label'|t('app'),
+        name: 'label',
+        errors: prompt.getErrors('label'),
+        required: true,
+        first: true,
+        value: prompt.label,
+        autofocus: true,
+    }) }}
+
+    <div class="buddy-slider-cont field">
+        <div class="heading">
+            <label>{{ 'Temperature'|t('convergine-contentbuddy') }}</label>
+            <p>{{ 'temperatureDescription'|t('convergine-contentbuddy')}}</p>
+        </div>
+        <div class="flex">
+            <input
+                    type="range"
+                    step="0.1"
+                    min="0"
+                    max="2"
+                    class="buddy-slider"
+                    id="temperature"
+                    value="{{ prompt.temperature }}"
+                    name="temperature"
+                    data-gtm-form-interact-field-id="0"
+            >
+            <span>{{ prompt.temperature }}</span>
+        </div>
+    </div>
+
+    <div class="buddy-words-cont">
+        <label>{{ 'Number of words to generate'|t('convergine-contentbuddy')}}</label>
+        <div class="flex">
+            <div class="buddy-words-block">
+                <input type="radio" class="radio" name="wordsType" id="wordsType1" value="1"
+                       {% if prompt.wordsType==1 %}checked{% endif %}>
+                <label for="wordsType1">{{ 'Fixed number of words'|t('convergine-contentbuddy') }}</label>
+
+                {{ forms.textField({
+                    label: 'Number of words'|t('convergine-contentbuddy'),
+                    name: 'wordsNumber',
+                    errors: prompt.getErrors('wordsNumber'),
+                    required: true,
+                    value: prompt.wordsNumber,
+                    autofocus: true,
+                }) }}
+                <p>{{ 'numberOfWordsDescription'|t('convergine-contentbuddy')}}</p>
+            </div>
+            <div class="buddy-words-block">
+                <input type="radio" class="radio" name="wordsType" id="wordsType2" value="2"
+                       {% if prompt.wordsType==2 %}checked{% endif %}>
+                <label for="wordsType2">{{ 'Relative to length of text selected'|t('convergine-contentbuddy')}}</label>
+
+                <div class="buddy-slider-cont field">
+                    <div class="heading">
+                        <label>{{ 'Multiplier'|t('convergine-contentbuddy') }}</label>
+
+                    </div>
+                    <div class="flex">
+                        <input
+                                type="range"
+                                step="0.1"
+                                min="0"
+                                max="6"
+                                class="buddy-slider"
+                                id="wordsMultiplier"
+                                value="{{ prompt.wordsMultiplier }}"
+                                name="wordsMultiplier"
+                                data-prefix="x"
+                        >
+                        <span>x{{ prompt.wordsMultiplier }}</span>
+                    </div>
+                    <p style="margin-top: 40px">{{ 'multiplierDescription'|t('convergine-contentbuddy')}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ forms.textAreaField({
+        label: 'Prompt Template'|t('convergine-contentbuddy'),
+        name: 'template',
+        errors: prompt.getErrors('template'),
+        required: true,
+        rows: 6,
+        value: prompt.template,
+    }) }}
+
+{% endblock %}
+
+{% block details %}
+    <div id="settings" class="meta">
+        {% include 'convergine-contentbuddy/_components/_sidebar' with {'element': ''} %}
+    </div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% import '_includes/forms' as forms %}
+
+{{ forms.lightswitchField({
+    label: "Enabled"|t('convergine-contentbuddy'),
+    name: 'active',
+    on: (element) ? element.active : true
+}) }}

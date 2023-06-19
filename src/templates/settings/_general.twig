@@ -1,0 +1,66 @@
+{% extends 'convergine-contentbuddy/_layouts/_settings' %}
+
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Settings' %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="plugins/save-plugin-settings">
+    <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
+    {% namespace 'settings' %}
+
+        {{ forms.selectField({
+            label: 'OpenAI Preferred Model'|t('convergine-contentbuddy'),
+            name: 'preferredModel',
+            value: settings.preferredModel,
+            instructions: 'modelDescription'|t('convergine-contentbuddy'),
+            options: {
+                "gpt-3.5-turbo":"gpt-3.5-turbo" ,
+                "gpt-3.5-turbo-0301":"gpt-3.5-turbo-0301",
+                "gpt-3.5-turbo-0613":"gpt-3.5-turbo-0613",
+                "text-davinci-003":"text-davinci-003",
+                "text-curie-001":"text-curie-001",
+                "text-babbage-001":"text-babbage-001",
+                "text-ada-001":"text-ada-001",
+                "text-davinci-001":"text-davinci-001",
+                "davinci":"davinci",
+                "davinci-instruct-beta":"davinci-instruct-beta",
+                "curie-instruct-beta":"curie-instruct-beta",
+                "curie":"curie",
+                "babbage":"babbage",
+                "ada":"ada",
+            },
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'Image Generation Styles'|t('convergine-contentbuddy'),
+            name: 'imagesStyles',
+            value: settings.imagesStyles,
+            rows:10,
+            instructions: 'imageGenDescription'|t('convergine-contentbuddy')
+        }) }}
+
+        {{ forms.radioGroupField({
+            label: 'Default Image Size'|t('convergine-contentbuddy'),
+            name: 'imageSize',
+
+            value: settings.imageSize,
+            options: {
+                '256x256': 'Small (256x256)',
+                '512x512': 'Medium (512x512)',
+                '1024x1024': 'Large (1024x1024)',
+            }
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'OpenAI System Message'|t('convergine-contentbuddy'),
+            name: 'systemMessage',
+            value: settings.systemMessage,
+            instructions: 'systemMessageDescription'|t('convergine-contentbuddy')
+        }) }}
+
+    {% endnamespace %}
+{% endblock %}

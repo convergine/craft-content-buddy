@@ -1,0 +1,35 @@
+{% extends '_layouts/cp' %}
+{% set plugin = craft.app.getModule('convergine-contentbuddy') %}
+{% set crumbs = [
+    { label: plugin.name, url: url('convergine-contentbuddy') },
+    { label: "Settings"|t('convergine-contentbuddy'), url: url('convergine-contentbuddy/settings') },
+] %}
+
+{% set selectedSubnavItem = 'settings' %}
+
+{% set navItems = {
+    'settings-heading': { heading: "Settings"|t('convergine-contentbuddy') },
+    'general': { title: "Content  Settings"|t('convergine-contentbuddy') },
+    'fields': { title: "Fields Settings"|t('convergine-contentbuddy') },
+    'api': { title: "API Settings"|t('convergine-contentbuddy') },
+} %}
+
+{% set activeTab = craft.app.request.getSegment(3) ?? 'general' %}
+
+{% block sidebar %}
+    <nav>
+        <ul>
+            {% for key, element in navItems %}
+                {% if element.heading is defined %}
+                    <li class="heading">
+                        <span>{{ element.heading }}</span>
+                    </li>
+                {% else %}
+                    <li>
+                        <a href="{{ url('convergine-contentbuddy/settings/'~ key) }}" {{ activeTab == key ? 'class="sel"' }}>{{ element.title }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
+
+{% js %}
+
+        $(document).ready(function () {
+
+            $('.buddy-button').each(function () {
+                let that = $(this);
+                //let hash = $(this).attr('data-hash');
+                let input = that.parents('.field').find('.input input, .input textarea');
+                if (that.parents('.field').attr('data-type') == 'craft\\redactor\\Field') {
+                    let textareaId = input.attr('id');
+                    $('#textareaId').css('padding-right', '100px');
+                } else {
+                    input.css('padding-right', '100px');
+                }
+            });
+
+            function setPadding() {
+                $('.buddy-button').each(function () {
+                    let that = $(this);
+                    let input = that.parents('.field').find('.input input, .input textarea');
+                    if (that.parents('.field').attr('data-type') == 'craft\\redactor\\Field') {
+                        let textareaId = input.attr('id');
+                        $('#textareaId').css('padding-right', '100px');
+                    } else {
+                        input.css('padding-right', '100px');
+                    }
+                });
+            }
+
+            $('body').on('click', '.buddy-menu a', function (clickEvent) {
+                clickEvent.stopPropagation();
+                clickEvent.preventDefault();
+                let that = $(this);
+                let prompt = that.attr('data-prompt');
+                let temperature = that.attr('data-temperature');
+                let maxTokens = that.attr('data-max_tokens');
+                let tokenType = that.attr('data-token_type');
+                let multiplier = that.attr('data-token_multiplier');
+                let replaceText = that.attr('data-replace')*1;
+                let input = $('button[data-hash="' + that.attr('data-hash') + '"]').closest('.input').find('input, textarea').first();
+
+                let text = input.val();
+
+                let query = '';
+                let hash = that.attr('data-hash');
+                that.parents('.buddy-menu').css({'display': 'none',opacity: 0});
+                $('[aria-controls="'+that.parents('.buddy-menu').attr('id')+'"]').attr('aria-expanded','false');
+                if ($('button[data-hash="' + that.attr('data-hash') + '"]').closest('.field').attr('data-type') == 'craft\\redactor\\Field') {
+                    let textareaId = input.attr('id');
+                    query = $R('#' + textareaId).selection.getText();
+                    if(!query){
+                        query = text
+                    }
+                    if(!checkInputText(query)){
+                        return;
+                    }
+                    $R('#' + textareaId, 'source.setCode', text.replace(query,'{{ 'Working...'|t('convergine-contentbuddy') }}'));
+
+                } else {
+                    query = getInputSelection(input);
+                    if(!query){
+                        query = text
+                    }
+                    if(!checkInputText(query)){
+                        return;
+                    }
+                    input.val(text.replace(query,'{{ 'Working...'|t('convergine-contentbuddy') }}'));
+                }
+
+                if(tokenType==2){
+
+                    maxTokens  = Math.round(countWords(query) * multiplier * 1.33);
+                }
+                sendRequest(prompt, query, input, hash,temperature,maxTokens,text,replaceText);
+            });
+
+        });
+        function checkInputText(query){
+            if(query.length < 5){
+                alert('{{ 'selectPromptText'|t('convergine-contentbuddy') }}');
+                return false;
+            }
+            return true;
+        }
+        function getInputSelection(elem){
+            if(typeof elem != "undefined"){
+                s = elem[0].selectionStart;
+                e = elem[0].selectionEnd;
+                return elem.val().substring(s, e);
+            }
+            else{
+                return '';
+            }
+        }
+
+        function countWords(s){
+            s = s.replace(/(^\s*)|(\s*$)/gi,"");//exclude  start and end white-space
+            s = s.replace(/[ ]{2,}/gi," ");//2 or more space to 1
+            s = s.replace(/\n /,"\n"); // exclude newline with a start spacing
+            return s.split(' ').filter(function(str){return str!="";}).length;
+        }
+
+        function sendRequest(prompt, query, textField, hash,temperature,maxTokens,text,replaceText){
+            prompt = prompt.replace(/(\[\[text\]\])/g, query);
+
+            $.ajax({
+                type: "POST",
+                url: "https://api.openai.com/v1/chat/completions",
+                //url: "https://api.openai.com/v1/edits",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Authorization", "Bearer {{ settings.getApiKey }}");
+                },
+                data: JSON.stringify({
+                    "model": "gpt-3.5-turbo",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": parseFloat(temperature),
+                    "max_tokens": parseFloat(maxTokens),
+                    "top_p": 1,
+                    "frequency_penalty": {{ settings.frequencyPenalty }},
+                    "presence_penalty": {{ settings.presencePenalty }}
+                }),
+                success: function (data) {
+                    let result = data.choices[0].message.content;
+                    let state = data.choices[0].finish_reason;
+
+                    result = replaceText ? text.replace(query,result) : text.replace(query,query + ' ' + result);
+
+                    if ($('button[data-hash="' + hash + '"]').closest('.field').attr('data-type') == 'craft\\redactor\\Field') {
+                        let textareaId = textField.attr('id');
+                        $R('#' + textareaId, 'source.setCode', result);
+                    } else {
+                        $(textField).val(result);
+                    }
+                    if (state == 'length') {
+                        alert('{{ 'The reply has exceeded the specified maximum length. To fix this, either increase the value of the max_token setting or try telling chat-gpt to limit itself to a certain number of words.'|t('convergine-contentbuddy') }}');
+                    }
+                },
+                contentType: "application/json; charset=utf-8",
+                dataType: "json"
+            }).done(function (data) {
+
+            }).fail(function (data) {
+                alert(data.responseJSON.error.message);
+                if ($('button[data-hash="' + hash + '"]').closest('.field').attr('data-type') == 'craft\\redactor\\Field') {
+                    let textareaId = textField.attr('id');
+                    $R('#' + textareaId, 'source.setCode', query);
+                } else {
+                    $(textField).val(query);
+                }
+            });
+        }
+
+{% endjs %}

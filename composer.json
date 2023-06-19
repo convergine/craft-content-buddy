@@ -1,0 +1,53 @@
+{
+    "name": "convergine/craft-content-buddy",
+    "description": "Content Buddy is an AI-driven CraftCMS plugin that leverages the ChatGPT API to automatically generate and manage multi-language content, including text and images, with customizable settings and features for precise control and enhanced content creation.",
+    "type": "craft-plugin",
+    "version": "1.0.0",
+    "keywords": [
+        "craftcms",
+        "content-buddy",
+        "chatgpt",
+        "openai",
+        "ai-content",
+        "content-generation",
+        "text-manipulation",
+        "multilanguage",
+        "automation",
+        "content-creation",
+        "image-generation",
+        "article-generation",
+        "ai-assistant",
+        "content-scheduling"
+    ],
+    "support": {
+        "issues": "https://github.com/convergine/craft-content-buddy/issues?state=open",
+        "source": "https://github.com/convergine/craft-content-buddy",
+        "docs": "https://github.com/convergine/craft-content-buddy/blob/master/README.md",
+        "support": {
+            "email": "info@convergine.com"
+        }
+    },
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Convergine Corp.",
+            "homepage": "https://www.convergine.com"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+          "convergine\\contentbuddy\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "Content Buddy",
+        "handle": "convergine-contentbuddy",
+        "hasCpSettings": true,
+        "hasCpSection": true,
+        "changelogUrl": "https://github.com/convergine/craft-content-buddy/blob/master/CHANGELOG.md",
+        "class": "convergine\\contentbuddy\\BuddyPlugin"
+    }
+}

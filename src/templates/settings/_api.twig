@@ -1,0 +1,99 @@
+{% extends 'convergine-contentbuddy/_layouts/_settings' %}
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Settings' %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="plugins/save-plugin-settings">
+    <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
+    {% namespace 'settings' %}
+        {{ forms.autosuggestField({
+            label: 'API: Access Token'|t('convergine-contentbuddy'),
+            name: 'apiToken',
+            value: settings.apiToken,
+            instructions: 'Access token for the ChatGPT API'|t('convergine-contentbuddy'),
+            suggestEnvVars: true,
+        }) }}
+
+
+
+        {{ forms.textField({
+            label: 'API: Max Tokens'|t('convergine-contentbuddy'),
+            name: 'maxTokens',
+            value: settings.maxTokens,
+            autofocus: true,
+            instructions: 'maxAmountTokensDescription'|t('convergine-contentbuddy'),
+            first: false,
+            type: 'number',
+        }) }}
+
+
+        <div class="buddy-slider-cont field">
+            <div class="heading">
+                <label>{{ 'Temperature'|t('convergine-contentbuddy') }}</label>
+            </div>
+            <div class="flex">{{ 'Sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic'|t('convergine-contentbuddy')}}</div>
+            <div class="flex">
+                <input
+                        type="range"
+                        step="0.1"
+                        min="0"
+                        max="2"
+                        class="buddy-slider"
+                        id="temperature"
+                        value="{{ settings.temperature }}"
+                        name="temperature"
+                        data-gtm-form-interact-field-id="0"
+                >
+                <span>{{ settings.temperature }}</span>
+            </div>
+        </div>
+
+        <div class="buddy-slider-cont field">
+            <div class="heading">
+                <label>{{ 'Frequency Penalty'|t('convergine-contentbuddy') }}</label>
+            </div>
+            <div class="flex">{{ 'frequencyPenaltyDescription'|t('convergine-contentbuddy')}}</div>
+            <div class="flex">
+                <input
+                        type="range"
+                        step="0.1"
+                        min="-2"
+                        max="2"
+                        class="buddy-slider"
+                        id="frequencyPenalty"
+                        value="{{ settings.frequencyPenalty }}"
+                        name="frequencyPenalty"
+                        data-gtm-form-interact-field-id="0"
+                >
+                <span>{{ settings.frequencyPenalty }}</span>
+            </div>
+        </div>
+
+        <div class="buddy-slider-cont field">
+            <div class="heading">
+                <label>{{ 'Presence Penalty'|t('convergine-contentbuddy') }}</label>
+            </div>
+            <div class="flex">{{ 'presencePenaltyDescription'|t('convergine-contentbuddy')}}</div>
+            <div class="flex">
+                <input
+                    type="range"
+                    step="0.1"
+                    min="-2"
+                    max="2"
+                    class="buddy-slider"
+                    id="presencePenalty"
+                    value="{{ settings.presencePenalty }}"
+                    name="presencePenalty"
+                    data-gtm-form-interact-field-id="0"
+            >
+            <span>{{ settings.presencePenalty }}</span>
+            </div>
+        </div>
+
+    {% endnamespace %}
+{% endblock %}

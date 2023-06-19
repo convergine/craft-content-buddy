@@ -1,0 +1,65 @@
+{% extends 'convergine-contentbuddy/_layouts/_settings' %}
+
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Settings' %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% set fullPageForm = true %}
+
+{% block content %}
+    <div style="margin-bottom: 48px;">
+        <p>{{ 'fieldsDescriptionText'|t('convergine-contentbuddy') }}</p>
+    </div>
+    <input type="hidden" name="action" value="plugins/save-plugin-settings">
+    <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
+    {% namespace 'settings' %}
+
+        {% set fields = craft.app.fields.getAllFields %}
+
+        {% if fields|length %}
+            <div class="tableview tablepane">
+
+                <table class="data fullwidth">
+                    <thead>
+                    <tr>
+                        <th scope="col">{{ 'Label' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col">{{ 'Group' |t('convergine-contentbuddy') }}</th>
+                        <th class="thin">{{ 'Show Prompts Menu' |t('convergine-contentbuddy') }}</th>
+
+                    </tr>
+                    </thead>
+                    {% for field in fields %}
+                        {% set fildName = craft %}
+                        <tbody>
+                        <tr class="s-{{ field.id }}">
+                            <td class="label-column">{{ field.name }}</td>
+                            <td class="handle-column">
+                                <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button" aria-label="Copy to clipboard" tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
+                                    <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
+                                    <span data-icon="clipboard" aria-hidden="true"></span>
+                                </div></td>
+                            <td class="group-column">{{ craft.contentbuddy.getClass(field) }}</td>
+                            <td class="group-column">{{ field.group }}</td>
+                            <td class="enabled-column">
+                                {{ forms.lightswitch({
+                                    name: 'enabledFields['~field.id~'].key',
+                                    on: settings.enabledFields[field.id] is defined and settings.enabledFields[field.id] == '1',
+                                }) }}
+                            </td>
+                        </tr>
+                        </tbody>
+                    {% endfor %}
+                </table>
+            </div>
+        {% else %}
+            <div>
+                <p>{{ 'No fields exist yet.'|t('convergine-contentbuddy') }}</p>
+            </div>
+        {% endif %}
+
+    {% endnamespace %}
+{% endblock %}
+

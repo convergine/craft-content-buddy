@@ -1,0 +1,76 @@
+{% extends '_layouts/cp' %}
+
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Prompts' %}
+{% set selectedSubnavItem = 'prompts' %}
+{% set plugin = craft.app.getModule('convergine-contentbuddy') %}
+{% set crumbs = [
+    { label: plugin.name, url: url('convergine-contentbuddy') },
+    { label: 'Prompts' | t('convergine-contentbuddy'), url: url('convergine-contentbuddy/prompts') },
+] %}
+
+
+{% block headertitle %}
+    <h1>{{ title }}</h1>
+{% endblock %}
+
+{% block actionButton %}
+    <a href="{{ cpUrl('convergine-contentbuddy/prompts/add') }}" class="btn submit add icon">{{ 'New Prompt'|t('convergine-contentbuddy') }}</a>
+{% endblock %}
+
+{% block contextMenu %}
+
+{% endblock %}
+
+{% block content %}
+
+    {% if prompts|length %}
+
+        <div class="tableview tablepane">
+            <table class="data fullwidth">
+                <thead>
+                <tr>
+                    <th scope="col">{{ 'Id' |t('app') }}</th>
+                    <th scope="col">{{ 'Label' |t('app') }}</th>
+                    <th scope="col">{{ 'Prompt Template' |t('convergine-contentbuddy') }}</th>
+                    <th scope="col">{{ 'Temperature' |t('convergine-contentbuddy') }}</th>
+                    <th scope="col">{{ 'Words Count' |t('convergine-contentbuddy') }}</th>
+                    <th scope="col">{{ 'Enabled' |t('convergine-contentbuddy') }}</th>
+                    <th class="thin"></th>
+                    <th class="thin"></th>
+                </tr>
+                </thead>
+                {% for prompt in prompts %}
+                    <tbody>
+                    <tr class="s-{{ prompt.id }}">
+                        <td class="id-column">{{ prompt.id }}</td>
+                        <td class="label-column"><a href="{{ cpUrl('convergine-contentbuddy/prompts/edit/' ~ prompt.id) }}">{{ prompt.label }}</a></td>
+                        <td class="prompt-template-column">{{ prompt.template }}</td>
+                        <td class="temperature-column">{{ prompt.temperature }}</td>
+                        <td class="temperature-column">
+                            {% if prompt.wordsType ==1 %}
+                                {{ prompt.wordsNumber }}
+                            {% else %}
+                                x{{ prompt.wordsMultiplier }}
+                            {% endif %}
+                        </td>
+                        <td class="enabled-column"><span class="status {{ prompt.active ? 'live' : 'disabled' }}" role="img" aria-label="Status: Live"></span></td>
+                        <td class="edit-column"><a href="{{ cpUrl('convergine-contentbuddy/prompts/edit/' ~ prompt.id) }}" class="edit icon" title="{{ 'Edit'|t('app') }}" role="button"></a></td>
+                        <td class="delete-column"><a href="{{ cpUrl('convergine-contentbuddy/prompts/delete/' ~ prompt.id) }}" class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
+                    </tr>
+                    </tbody>
+                {% endfor %}
+            </table>
+        </div>
+    {% else %}
+        <div>
+            <p>{{ 'No prompts exist yet.'|t('convergine-contentbuddy') }}</p>
+        </div>
+    {% endif %}
+    <style>
+        .prompt-template-column {
+            max-width: 440px;
+        }
+    </style>
+{% endblock %}

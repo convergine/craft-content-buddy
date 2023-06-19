@@ -1,0 +1,550 @@
+{% extends '_layouts/cp' %}
+{% import "_includes/forms" as forms %}
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+
+{% set plugin = craft.app.getModule('convergine-contentbuddy') %}
+{% set crumbs = [
+    { label: plugin.name, url: url('convergine-contentbuddy') },
+    { label: "Content Generator"|t('convergine-contentbuddy'), url: url('convergine-contentbuddy/content-generator') },
+] %}
+
+{% set selectedSubnavItem = 'content-generator' %}
+
+{% set fullPageForm = false %}
+{% set title = "Content Generator"|t('convergine-contentbuddy') %}
+
+{% set sectionsOptions = [
+    {
+        'value':'',
+        'label':'Select Section'|t('convergine-contentbuddy')
+    }] %}
+{% set sectionsFieldsOptions = [
+    {
+        'value':'',
+        'label':'Select Field'|t('convergine-contentbuddy')
+    }] %}
+{% set imageFieldsOptions = [
+    {
+        'value':'',
+        'label':'Select Field'|t('convergine-contentbuddy')
+    }] %}
+
+{% block content %}
+    <style>
+        code {
+            font-size: .875em !important;
+            color: #d63384;
+            word-wrap: break-word;
+            background-color: rgba(0, 0, 0, .07);
+            padding: 2px 6px;
+        }
+    </style>
+    {% if settings.apiToken == ''%}
+        <ul class="buddy-alert error" style="display: block">
+            <li>{{ 'Need to setup API: Access Token'|t('convergine-contentbuddy')}}</li>
+        </ul>
+    {% endif %}
+
+    <p>{{ 'contentWelcome'|t('convergine-contentbuddy') }}</p>
+
+    {% for option in sections %}
+        {% set optionValue = option.entry_id ~':'~option.entry_type_id %}
+
+        {% set sectionsOptions = sectionsOptions|merge([
+            {
+                'value':optionValue,
+                'label':option.entry_name ~' / '~option.entry_type_name,
+                'data':{'id':optionValue}
+            }]
+        ) %}
+        {% for field in option.fields %}
+
+            {% set sectionsFieldsOptions = sectionsFieldsOptions|merge([
+                {
+                    'value':field.handle,
+                    'label':field.name,
+                    'data':{'id':optionValue}
+                }]
+            ) %}
+        {% endfor %}
+        {% for field in option.image_fields %}
+
+            {% set imageFieldsOptions = imageFieldsOptions|merge([
+                {
+                    'value':field.handle,
+                    'label':field.name,
+                    'data':{'id':optionValue}
+                }]
+            ) %}
+        {% endfor %}
+    {% endfor %}
+
+
+    <form id="buddy_generate_form" method="post">
+        <input type="hidden" name="action" value="convergine-contentbuddy/content-generator/generate">
+        {{ csrfInput() }}
+        {{ forms.selectField({
+            label: 'Language for Text Generation'|t('convergine-contentbuddy'),
+            name: 'buddy_language',
+            value: 'en',
+            instructions: 'languageDescription'|t('convergine-contentbuddy'),
+            options: settings.getLanguages(),
+        }) }}
+        {{ forms.textareaField({
+            label: 'Topic'|t('convergine-contentbuddy'),
+            name: 'buddy_topic',
+            id: 'buddy_topic',
+            value: '',
+            rows:6,
+            autofocus: true,
+            instructions: '',
+            first: true,
+            placeholder:'Please enter a brief description of the topic you want to write about.'|t('convergine-contentbuddy'),
+
+        }) }}
+
+        {{ forms.textField({
+            label: 'SEO Keywords'|t('convergine-contentbuddy'),
+            name: 'buddy_seo',
+            value: '',
+            autofocus: false,
+            placeholder: 'SEO keywords to focus on (comma-separated)'|t('convergine-contentbuddy'),
+            first: false,
+        }) }}
+
+        <div class="flex field">
+            {{ forms.textField({
+                label: 'Number of Articles:'|t('convergine-contentbuddy'),
+                name: 'buddy_number_of_articles',
+                id: 'buddy_number_of_articles',
+                value: '1',
+                autofocus: false,
+                placeholder: '',
+                first: false,
+                number: true
+            }) }}
+
+            {{ forms.textField({
+                label: 'Sections per article:'|t('convergine-contentbuddy'),
+                name: 'buddy_sections',
+                id: 'buddy_sections',
+                value: '3',
+                autofocus: false,
+                placeholder: '',
+                first: false,
+                number: true
+            }) }}
+
+            {{ forms.textField({
+                label: 'Maximum words per section:'|t('convergine-contentbuddy'),
+                name: 'buddy_max_words',
+                id: 'buddy_max_words',
+                value: '1000',
+                autofocus: false,
+                placeholder: '',
+                first: false,
+                number: true
+            }) }}
+        </div>
+
+        <div class="buddy-box">
+            <label>{{ 'Create article(s) in:'|t('convergine-contentbuddy') }}</label>
+            <div class="flex buddy-box-cont">
+                {{ forms.selectField({
+                    label: 'Section / Type'|t('convergine-contentbuddy'),
+                    name: 'buddy_entry_section',
+                    id: 'buddy_entry_section',
+                    options: sectionsOptions,
+                    placeholder: '',
+                    first: false
+                }) }}
+
+                {{ forms.selectField({
+                    label: 'Description Field'|t('convergine-contentbuddy'),
+                    name: 'buddy_entry_field',
+                    id: 'buddy_entry_field',
+                    options: sectionsFieldsOptions,
+                    placeholder: '',
+                    first: false
+                }) }}
+
+            </div>
+        </div>
+
+        <div class="buddy-options-list">
+        {{ forms.checkboxField({
+            label: 'Generate outline'|t('convergine-contentbuddy'),
+            name: 'buddy_include_outline',
+            value: 1,
+            autofocus: false,
+            placeholder: '',
+            first: false
+        }) }}
+
+        {{ forms.checkboxField({
+            label: 'Generate featured entry image'|t('convergine-contentbuddy'),
+            name: 'buddy_include_featured_image',
+            id: 'buddy_include_featured_image',
+            value: 1,
+            autofocus: false,
+            placeholder: '',
+            first: false
+        }) }}
+
+
+
+        {{ forms.checkboxField({
+            label: 'Generate conclusion'|t('convergine-contentbuddy'),
+            name: 'buddy_include_conclusion',
+            value: 1,
+            autofocus: false,
+            placeholder: '',
+            first: false
+        }) }}
+
+        {{ forms.checkboxField({
+            label: 'Generate TL;DR'|t('convergine-contentbuddy'),
+            name: 'buddy_include_tldr',
+            value: 1,
+            autofocus: false,
+            placeholder: '',
+            first: false
+        }) }}
+
+        {{ forms.checkboxField({
+            label: 'Generate section images'|t('convergine-contentbuddy'),
+            name: 'buddy_include_section_images',
+            id: 'buddy_include_section_images',
+            value: 1,
+            autofocus: false,
+            placeholder: '',
+            first: false
+        }) }}
+        </div>
+        <div id="buddy_folder_id_cont" style="display: none">
+            {% if folders %}
+            {{ forms.selectField({
+                label: 'Section Images Volume (Folder)'|t('convergine-contentbuddy'),
+                name: 'buddy_folder_id',
+                id: 'buddy_folder_id',
+                options: folders,
+                placeholder: '',
+                instructions: '',
+                first: false
+            }) }}
+            {% else %}
+                <div class="error">{{ 'You did not set up any volumes/filesystems yet.'|t('convergine-contentbuddy') }}</div>
+            {% endif %}
+        </div>
+        <div id="buddy_featured_field_id_cont" style="display: none">
+            <div class="error">{{ 'You did not set up any featured image fields for the selected section.'|t('convergine-contentbuddy') }}</div>
+            <div class="buddy-select" style="display: none">
+            {{ forms.selectField({
+                label: 'Featured Image Field'|t('convergine-contentbuddy'),
+                name: 'buddy_featured_field_id',
+                id: 'buddy_featured_field_id',
+                options: imageFieldsOptions,
+                placeholder: '',
+                instructions: '',
+                first: false
+            }) }}
+            </div>
+        </div>
+        <div class="buddy-spoiler">
+            <label>{{ 'promptsCustomize'|t('convergine-contentbuddy') }}</label>
+            <div class="buddy-spoiler-content">
+                <p>{{ 'promptsCustomizeDescription'|t('convergine-contentbuddy') }}</p>
+                <p>{{ 'You can use the following placeholders in your prompts:'|t('convergine-contentbuddy') }}</p>
+
+                <p><code>[[description]]</code> - {{ 'this will be replaced with you article description/topic.'|t('convergine-contentbuddy') }}</p>
+                <p><code>[[section]]</code> - {{ 'this will be replaced with the text of generated section.'|t('convergine-contentbuddy') }}</p>
+                <p><code>[[text]]</code> - {{ 'this will be replaced with text needed for that prompt.'|t('convergine-contentbuddy') }}</p>
+                <p><code>[[section-headlines]]</code> - {{ 'this will be replaced with the suggested headlines for the sections about to be generated.'|t('convergine-contentbuddy') }}</p>
+                <p><code>[[keywords]]</code> - {{ 'this will be replaced with the SEO keywords you entered.'|t('convergine-contentbuddy') }}</p>
+                <p><code>[[number-of-headlines]]</code> - {{ 'this will be replaced with the number of headlines for the article section.'|t('convergine-contentbuddy') }}</p>
+                <p>&nbsp;</p>
+                {{ forms.textareaField({
+                    label: 'article-title: uses <code>description</code>, <code>section-headlines</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[article-title]',
+                    id: 'buddy-prompt-article-title',
+                    value: 'Generate a title for an article that discusses the following topic:
+[[description]]
+The article will include the following sections:
+[[section-headlines]]
+
+Title:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:5
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'article-title-with-seo-keywords: uses <code>description</code>, <code>section-headlines</code>, <code>keywords</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[article-title-with-seo]',
+                    id: 'buddy-prompt-article-title-with-seo',
+                    value: 'Generate a title for an article that discusses the following topic:
+[[description]]
+The article will include the following sections:
+[[section-headlines]]
+Try to use the following seo keywords when possible: [[keywords]]
+
+Title:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:7
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'article-intro: uses <code>description</code>, <code>section-headlines</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[article-intro]',
+                    id: 'buddy-prompt-article-intro',
+                    value: 'Write an introduction for an article that discusses the following topic:
+[[description]]
+The article includes the following sections:
+[[section-headlines]]
+
+Article Intro:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:6
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'article-intro-with-seo-keywords: uses <code>description</code>, <code>section-headlines</code>, <code>keywords</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[article-intro-with-seo]',
+                    id: 'buddy-prompt-article-intro-with-seo',
+                    value: 'Write an introduction for an article that discusses the following topic:
+[[description]]
+The article includes the following sections:
+[[section-headlines]]
+Try to use the following seo keywords when possible: [[keywords]]
+
+Article Intro:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:7
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'section-headlines: uses <code>number-of-headlines</code>, <code>description</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[section-headlines]',
+                    id: 'buddy-prompt-section-headlines',
+                    value: 'Suggest a list of [[number-of-headlines]] possible headlines of sections for an article that will cover the following topic:
+[[description]]
+
+Section headlines:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:4
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'section-headlines-with-seo-keywords: uses <code>number-of-headlines</code>, <code>description</code>, <code>keywords</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[section-headlines-with-seo]',
+                    id: 'buddy-prompt-section-headlines-with-seo',
+                    value: 'Suggest a list of [[number-of-headlines]] possible headlines of sections for an article that will cover the following topic:
+[[description]]
+Try to use the following seo keywords when possible: [[keywords]]
+
+Section headlines:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:5
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'section: uses <code>description</code>, <code>section-headline</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[section]',
+                    id: 'buddy-prompt-section',
+                    value: 'I\'m writing an article about the follow topic:
+[[description]]
+
+As part of this article, write a text section that discusses the following: [[section-headline]]
+
+Section body without the title:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:6
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'section-with-seo: uses <code>description</code>, <code>section-headline</code>, <code>keywords</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[section-with-seo]',
+                    id: 'buddy-prompt-section-with-seo',
+                    value: 'I\'m writing an article about the follow topic:
+[[description]]
+
+As part of this article, write a text section that discusses the following: [[section-headline]]
+
+Try to use the following seo keywords when possible: [[keywords]]
+
+Section body without the title:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:8
+                }) }}
+                {{ forms.textareaField({
+                    label: 'section-with-seo: uses <code>description</code>, <code>section-headline</code>, <code>keywords</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[section-with-seo]',
+                    id: 'buddy-prompt-section-with-seo',
+                    value: 'I\'m writing an article about the follow topic:
+[[description]]
+
+As part of this article, write a text section that discusses the following: [[section-headline]]
+
+Try to use the following seo keywords when possible: [[keywords]]
+
+Section body without the title:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:8
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'article-conclusion: uses <code>description</code>, <code>section-headlines</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[article-conclusion]',
+                    id: 'buddy-prompt-article-conclusion',
+                    value: 'Write a conclusion for an article that discusses the following topic:
+[[description]]
+The article includes the following sections:
+[[section-headlines]]
+
+Article conclusion:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:6
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'article-conclusion-with-seo: uses <code>description</code>, <code>section-headlines</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[article-conclusion-with-seo]',
+                    id: 'buddy-prompt-article-conclusion-with-seo',
+                    value: 'Write a conclusion for an article that discusses the following topic:
+[[description]]
+The article includes the following sections:
+[[section-headlines]]
+Try to use the following seo keywords when possible: [[keywords]]
+
+Article conclusion:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:7
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'image: uses <code>text</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[image]',
+                    id: 'buddy-prompt-image',
+                    value: 'Describe an image that would be best fit for this text:
+
+ [[text]]
+
+---
+Creative image description in one sentence of 6 words:
+',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:7
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'section-summary: uses <code>section</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[section-summary]',
+                    id: 'buddy-prompt-section-summary',
+                    value: 'Write a short section summary for the following article section text:
+[[section]]
+
+Section summary:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:4
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'section-summary-with-seo: uses <code>section</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[section-summary-with-seo]',
+                    id: 'buddy-prompt-section-summary-with-seo',
+                    value: 'Write a short section summary for the following article section text:
+[[section]]
+Try to use the following seo keywords when possible: [[keywords]]
+
+Section summary:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:5
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'tldr: uses <code>text</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[tldr]',
+                    id: 'buddy-prompt-tldr',
+                    value: 'Write a TL;DR for the following text:
+[[text]]
+
+TL;DR:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:4
+                }) }}
+
+                {{ forms.textareaField({
+                    label: 'tldr-with-seo-keywords: uses <code>text</code>, <code>keywords</code>'|t('convergine-contentbuddy'),
+                    name: 'buddy-prompts[tldr-with-seo]',
+                    id: 'buddy-prompt-tldr-with-seo',
+                    value: 'Write a TL;DR for the following text:
+[[text]]
+Try to use the following seo keywords when possible: [[keywords]]
+
+TL;DR:',
+                    autofocus: true,
+                    instructions: '',
+                    first: true,
+                    placeholder:'',
+                    rows:4
+                }) }}
+
+            </div>
+        </div>
+        {{ min_execution_time_alert|raw }}
+        <ul class="buddy-alert error" id="buddy-alert-error">
+        </ul>
+        <ul class="buddy-alert success" id="buddy-alert-success">
+        </ul>
+        <button type="submit" class="btn submit add icon" id="buddy_generate_entry"
+                aria-label="Generate new entry"
+        >
+            <div class="label">{{ 'Generate'|t('convergine-contentbuddy') }}</div>
+            <div class="spinner spinner-absolute"></div>
+        </button>
+    </form>
+{% endblock %}
