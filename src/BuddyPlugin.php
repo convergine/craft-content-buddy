@@ -139,6 +139,13 @@ class BuddyPlugin extends Plugin
 				$event->html .= Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig');
 			}
 		);
+
+		/**
+		 * Load twig with js code.
+		 */
+		Craft::$app->view->hook('cp.commerce.product.edit.details', function(array &$context) {
+			return Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig');
+		});
 	}
 
 	protected function createSettingsModel(): SettingsModel {

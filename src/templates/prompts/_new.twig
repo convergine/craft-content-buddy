@@ -101,7 +101,12 @@
             </div>
         </div>
     </div>
-
+    {{ forms.lightswitchField({
+        label: "Replace the highlighted text"|t('convergine-contentbuddy'),
+        instructions: "promptReplaceText"|t('convergine-contentbuddy'),
+        name: 'replaceText',
+        on: (prompt) ? prompt.replaceText : true
+    }) }}
     {{ forms.textAreaField({
         label: 'Prompt Template'|t('convergine-contentbuddy'),
         name: 'template',
