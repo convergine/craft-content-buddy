@@ -287,7 +287,7 @@ class ChatGPT {
 	}
 
 	protected function _getEndpoint( $model ) {
-		if ( strpos( $model, 'gpt-3.5-turbo' ) === 0 || strpos( $model, 'gpt-4' ) === 0 ) {
+		if ( $this->isNewApi($model) ) {
 			return 'https://api.openai.com/v1/chat/completions';
 		}
 
@@ -311,7 +311,7 @@ class ChatGPT {
 	}
 
 	protected function _buildTextGenerationRequestBody( $model, $prompt, $maxTokensToGenerate, $temperature = 0.7 ) {
-		if ( strpos( $model, 'gpt-3.5-turbo' ) === 0 || strpos( $model, 'gpt-4' ) === 0 ) {
+		if ( $this->isNewApi($model) ) {
 			$messages = [];
 
 			$systemMessage = BuddyPlugin::getInstance()->getSettings()->systemMessage;
@@ -344,7 +344,7 @@ class ChatGPT {
 	}
 
 	protected function _getTextGenerationBasedOnModel( $model, $choices ) {
-		if ( strpos( $model, 'gpt-3.5-turbo' ) === 0 || strpos( $model, 'gpt-4' ) === 0 ) {
+		if ( $this->isNewApi($model) ) {
 			return trim( $choices[0]['message']['content'] );
 		}
 
@@ -547,5 +547,9 @@ class ChatGPT {
 			       . "</li></ul>";
 		}
 		return '';
+	}
+
+	public function isNewApi($model){
+		return strpos( $model, 'gpt-3.5-turbo' ) === 0 || strpos( $model, 'gpt-4' ) === 0 ;
 	}
 }

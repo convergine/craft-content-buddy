@@ -70,6 +70,10 @@ class SettingsModel extends Model
 	{
 		return App::parseEnv($this->apiToken);
 	}
+
+	public function titleFieldEnabled(){
+		return isset($this->enabledFields['title']) && $this->enabledFields['title'];
+	}
 	
 	public function getLanguages (){
 		return [

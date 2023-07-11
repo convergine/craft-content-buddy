@@ -21,16 +21,19 @@
 
 
 {% set currentLang = "" %}
+{% set currentLocale = "" %}
 
 {% set displayTranslationPrompts = false %}
 {% if craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings.usePageLang %}
     {% for site in craft.app.sites.getAllSites() %}
         {% if site.handle == craft.app.request.getQueryParam('site') %}
             {% set currentLang = 'Using the locale '|t('convergine-contentbuddy') ~ site.language %}
+            {% set currentLocale = site.language %}
         {% endif %}
     {% endfor %}
     {% if currentLang|length == 0 %}
         {% set currentLang = 'Using the locale '|t('convergine-contentbuddy') ~ craft.app.sites.getAllSites()[0].language %}
+        {% set currentLocale = craft.app.sites.getAllSites()[0].language %}
     {% endif %}
 {% endif %}
 
@@ -63,26 +66,6 @@ margin-right: 5px;" width="18" height="18" viewBox="0 0 18 18" fill="none">
                 {% endfor %}
             </ul>
 
-            {% if craft.app.sites.getAllSites()|length > 1 %}
-                <ul class="padded">
-                    {% for site in craft.app.sites.getAllSites () %}
-                        <li><a href="javascript:void(0)" class="doAi"
-                               data-hash="{{ hash }}"
-                               data-prompt="Translate to {{ site.language }}: [[text]]" type="button" role="button"
-                               data-temperature="0.7"
-                               data-max_tokens="3000"
-                               data-token_multiplier="1"
-                               data-token_type="1"
-                               data-replace="1"
-                               aria-label="{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
-                                   language: site.language
-                               } ) }}">{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
-                                    language: site.language
-                                } ) }}</a></li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-
         </div>
     </div>
 {% if craft.app.sites.getAllSites()|length > 1 %}
@@ -112,20 +95,39 @@ margin-right: 5px;" width="18" height="18" viewBox="0 0 18 18" fill="none">
         </button>
         <div id="tr-{{ event.element.id }}" class="menu menu--disclosure buddy-menu">
                 <ul class="padded">
+                    <li><a href="javascript:void(0)" class="doAi"
+                           data-hash="{{ hash }}"
+                           data-prompt="Translate to {{ currentLocale }}: [[text]]" type="button" role="button"
+                           data-temperature="0.7"
+                           data-max_tokens="3000"
+                           data-token_multiplier="1"
+                           data-token_type="1"
+                           data-replace="1"
+                           aria-label="{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
+                               language: currentLocale
+                           } ) }}">{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
+                                language: currentLocale
+                            } ) }}</a>
+                    </li>
+                    {% set languages = [currentLocale] %}
                     {% for site in craft.app.sites.getAllSites () %}
-                        <li><a href="javascript:void(0)" class="doAi"
-                               data-hash="{{ hash }}"
-                               data-prompt="Translate to {{ site.language }}: [[text]]" type="button" role="button"
-                               data-temperature="0.7"
-                               data-max_tokens="3000"
-                               data-token_multiplier="1"
-                               data-token_type="1"
-                               data-replace="1"
-                               aria-label="{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
-                                   language: site.language
-                               } ) }}">{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
-                                    language: site.language
-                                } ) }}</a></li>
+                        {% if site.language not in languages %}
+                            {% set languages = languages|merge([site.language]) %}
+                            <li><a href="javascript:void(0)" class="doAi"
+                                   data-hash="{{ hash }}"
+                                   data-prompt="Translate to {{ site.language }}: [[text]]" type="button" role="button"
+                                   data-temperature="0.7"
+                                   data-max_tokens="3000"
+                                   data-token_multiplier="1"
+                                   data-token_type="1"
+                                   data-replace="1"
+                                   aria-label="{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
+                                       language: site.language
+                                   } ) }}">{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
+                                        language: site.language
+                                    } ) }}</a>
+                            </li>
+                        {% endif %}
                     {% endfor %}
                 </ul>
         </div>

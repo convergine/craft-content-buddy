@@ -31,9 +31,26 @@
 
                     </tr>
                     </thead>
+                    <tbody>
+                    <tr class="s-title">
+                        <td class="label-column">Title</td>
+                        <td class="handle-column">
+                            <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button" aria-label="Copy to clipboard" tabindex="0" onclick="navigator.clipboard.writeText('title')">
+                                <input type="text" value="title" readonly="" size="5" tabindex="-1">
+                                <span data-icon="clipboard" aria-hidden="true"></span>
+                            </div></td>
+                        <td class="group-column">Entry Title</td>
+                        <td class="group-column"></td>
+                        <td class="enabled-column">
+                            {{ forms.lightswitch({
+                                name: 'enabledFields[title].key',
+                                on: settings.enabledFields['title'] is defined and settings.enabledFields['title'] == '1',
+                            }) }}
+                        </td>
+                    </tr>
                     {% for field in fields %}
                         {% set fildName = craft %}
-                        <tbody>
+
                         <tr class="s-{{ field.id }}">
                             <td class="label-column">{{ field.name }}</td>
                             <td class="handle-column">
@@ -50,8 +67,9 @@
                                 }) }}
                             </td>
                         </tr>
-                        </tbody>
+
                     {% endfor %}
+                    </tbody>
                 </table>
             </div>
         {% else %}

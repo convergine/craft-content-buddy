@@ -129,23 +129,40 @@ class BuddyPlugin extends Plugin
 			}
 		);
 
-		/**
-		 * Load twig with js code.
-		 */
-		Event::on(
-			Entry::class,
-			Entry::EVENT_DEFINE_SIDEBAR_HTML,
-			static function (DefineHtmlEvent  $event) {
-				$event->html .= Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig');
-			}
-		);
+		if (Craft::$app->getRequest()->getIsCpRequest()) {
+			// Load JS before page template is rendered
+			Event::on(
+				View::class,
+				View::EVENT_BEFORE_RENDER_PAGE_TEMPLATE,
+				function (TemplateEvent $event) {
+					/** @var SettingsModel $settings */
+					$settings = BuddyPlugin::getInstance()->getSettings();
 
-		/**
-		 * Load twig with js code.
-		 */
-		Craft::$app->view->hook('cp.commerce.product.edit.details', function(array &$context) {
-			return Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig');
-		});
+					// Get view
+					$view = Craft::$app->getView();
+
+					// Load additional JS
+					$js = Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig',[
+						'isNewApi'=>BuddyPlugin::getInstance()->chat->isNewApi($settings->preferredModel)
+					]);
+					if ($js) {
+						$view->registerJs($js, View::POS_END);
+					}
+
+					if($settings->titleFieldEnabled()){
+						// Load JS for title field
+						$js = Craft::$app->view->renderTemplate('convergine-contentbuddy/_title_field_script.twig',[
+							'hash' => StringHelper::UUID()
+						]);
+						if ($js) {
+							$view->registerJs($js, View::POS_END);
+						}
+					}
+
+				}
+			);
+		}
+
 	}
 
 	protected function createSettingsModel(): SettingsModel {
