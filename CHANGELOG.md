@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.4 - 2023-08-01
+### Added
+- Added Matrix block support.
+### Fixed
+- Fixed content generation error when no site exists with the hardcoded id "1". (Thanks to @edbarbe for code contribution).
+
 ## 1.0.3 - 2023-07-12
 ### Fixed
 - Fixed composer.json file to include the correct version of the plugin for auto-releases.

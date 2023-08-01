@@ -194,7 +194,7 @@ class ChatGPT {
 					$section_id,
 					$type_id,
 					$description_field,
-					1,
+					Craft::$app->sites->getCurrentSite()->id,
 					Craft::$app->user->getId(),
 					$assetfield
 				);

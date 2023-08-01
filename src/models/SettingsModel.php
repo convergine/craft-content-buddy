@@ -63,6 +63,8 @@ class SettingsModel extends Model
 	 */
 	public string $systemMessage = '';
 
+	private array $_supportedFieldTypes = ['craft\fields\PlainText','craft\redactor\Field'];
+
 	/**
 	 * @return string
 	 */
@@ -73,6 +75,60 @@ class SettingsModel extends Model
 
 	public function titleFieldEnabled(){
 		return isset($this->enabledFields['title']) && $this->enabledFields['title'];
+	}
+
+	public function getRegularFieldsList(): array {
+		$fields = [];
+
+		foreach ( \Craft::$app->getFields()->getAllFields() as $field ) {
+
+			if ( in_array( ( new \ReflectionClass( $field ) )->getName(), $this->_supportedFieldTypes ) ) {
+				$fields[] = [
+					'id'     => $field->id,
+					'handle' => $field->handle,
+					'name'   => $field->name,
+					'group'  => $field->getGroup()->name,
+					'type'   => $this->_getClass( $field )
+				];
+			}
+
+		}
+
+		return $fields;
+	}
+
+	public function getMatrixFieldsList(): array {
+		$matrixFields = [];
+		foreach ( \Craft::$app->getFields()->getFieldsByType( 'craft\fields\Matrix' ) as $matrixField ) {
+			$matrixFields [ $matrixField->handle ]['name']   = $matrixField->name;
+			$matrixFields [ $matrixField->handle ]['fields'] = [];
+			foreach ( \Craft::$app->getMatrix()->getBlockTypesByFieldId( $matrixField->id ) as $block ) {
+				foreach ( \Craft::$app->getFields()->getAllFields( "matrixBlockType:" . $block->uid ) as $blockField ) {
+					if ( in_array( ( new \ReflectionClass( $blockField ) )->getName(), $this->_supportedFieldTypes ) ) {
+						$matrixFields [ $matrixField->handle ]['fields'][] = [
+							'id'     => $blockField->id,
+							'handle' => $blockField->handle,
+							'name'   => $blockField->name,
+							'group'  => $block->name,
+							'type'   => $this->_getClass( $blockField )
+						];
+					}
+				}
+			}
+		}
+
+		return $matrixFields;
+	}
+
+	protected function _getClass( $object ): string {
+		return str_replace( [
+			'craft\fields\\',
+			'craft\redactor\Field'
+		],
+			[
+				'',
+				'Redactor'
+			], ( new \ReflectionClass( $object ) )->getName() );
 	}
 	
 	public function getLanguages (){

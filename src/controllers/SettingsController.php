@@ -3,6 +3,7 @@
 namespace convergine\contentbuddy\controllers;
 
 use convergine\contentbuddy\BuddyPlugin;
+use convergine\contentbuddy\variables\BuddyVariable;
 use yii\web\Response;
 
 class SettingsController extends \craft\web\Controller
@@ -34,12 +35,13 @@ class SettingsController extends \craft\web\Controller
 	/**
 	 * @return Response
 	 */
-	public function actionFields(): Response
-	{
+	public function actionFields(): Response {
 		$settings = BuddyPlugin::getInstance()->getSettings();
 
-		return $this->renderTemplate('convergine-contentbuddy/settings/_fields', [
-			'settings' => $settings,
-		]);
+		return $this->renderTemplate( 'convergine-contentbuddy/settings/_fields', [
+			'settings'     => $settings,
+			'fields'       => $settings->getRegularFieldsList(),
+			'matrixFields' => $settings->getMatrixFieldsList()
+		] );
 	}
 }

@@ -15,7 +15,7 @@
     <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
     {% namespace 'settings' %}
 
-        {% set fields = craft.app.fields.getAllFields %}
+        {% set _fields = craft.app.fields.getAllFields %}
 
         {% if fields|length %}
             <div class="tableview tablepane">
@@ -23,11 +23,11 @@
                 <table class="data fullwidth">
                     <thead>
                     <tr>
-                        <th scope="col">{{ 'Label' |t('convergine-contentbuddy') }}</th>
-                        <th scope="col">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
-                        <th scope="col">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
-                        <th scope="col">{{ 'Group' |t('convergine-contentbuddy') }}</th>
-                        <th class="thin">{{ 'Show Prompts Menu' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 20%">{{ 'Group' |t('convergine-contentbuddy') }}</th>
+                        <th class="thin" style="width: 10%">{{ 'Show Prompts Menu' |t('convergine-contentbuddy') }}</th>
 
                     </tr>
                     </thead>
@@ -58,7 +58,7 @@
                                     <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
                                     <span data-icon="clipboard" aria-hidden="true"></span>
                                 </div></td>
-                            <td class="group-column">{{ craft.contentbuddy.getClass(field) }}</td>
+                            <td class="group-column">{{ field.type }}</td>
                             <td class="group-column">{{ field.group }}</td>
                             <td class="enabled-column">
                                 {{ forms.lightswitch({
@@ -77,7 +77,54 @@
                 <p>{{ 'No fields exist yet.'|t('convergine-contentbuddy') }}</p>
             </div>
         {% endif %}
+        </div>
 
+        {% if matrixFields|length %}
+            <div class="content-pane" style="margin-top: 40px">
+            <h2 style="margin-top: 40px">{{ 'Matrix Fields'|t('convergine-contentbuddy') }}</h2>
+            <div class="tableview">
+                {% for matrixFild in matrixFields %}
+                <h3>{{ matrixFild.name }}</h3>
+                <table class="data fullwidth">
+                    <thead>
+                    <tr>
+                        <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 20%">{{ 'Block' |t('convergine-contentbuddy') }}</th>
+                        <th class="thin" style="width: 10%">{{ 'Show Prompts Menu' |t('convergine-contentbuddy') }}</th>
+
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% if matrixFild.fields|length %}
+                        {% for field in matrixFild.fields %}
+
+                            <tr class="s-{{ field.id }}">
+                                <td class="label-column">{{ field.name }}</td>
+                                <td class="handle-column">
+                                    <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button" aria-label="Copy to clipboard" tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
+                                        <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
+                                        <span data-icon="clipboard" aria-hidden="true"></span>
+                                    </div></td>
+                                <td class="group-column">{{ field.type }}</td>
+                                <td class="group-column">{{ field.group }}</td>
+                                <td class="enabled-column">
+                                    {{ forms.lightswitch({
+                                        name: 'enabledFields['~field.id~'].key',
+                                        on: settings.enabledFields[field.id] is defined and settings.enabledFields[field.id] == '1',
+                                    }) }}
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+                    {% endif %}
+                    </tbody>
+                </table>
+                {% endfor %}
+            </div>
+            </div>
+        {% endif %}
     {% endnamespace %}
 {% endblock %}
 
