@@ -54,12 +54,13 @@
                     {% for item in prompts %}
                         <li><a href="javascript:void(0)" class="doAi" type="button" role="button"
                                data-hash="{{ hash }}"
-                               data-prompt="{{ currentLang }} {{ item.template }}"
-                               data-temperature="{{ item.temperature }}"
-                               data-max_tokens="{{ item.wordsNumber }}"
-                               data-token_multiplier="{{ item.wordsMultiplier }}"
-                               data-token_type="{{ item.wordsType }}"
-                               data-replace="{{ item.replaceText }}"
+                               data-prompt="{{ item.id }}"
+                               data-lang="{{ currentLang }}"
+                                    {# data-temperature="{{ item.temperature }}"
+                           data-max_tokens="{{ item.wordsNumber }}"
+                           data-token_multiplier="{{ item.wordsMultiplier }}"
+                           data-token_type="{{ item.wordsType }}"
+                           data-replace="{{ item.replaceText }}"#}
                                aria-label="{{ item.label }}">{{ item.label }}</a></li>
                     {% else %}
                         {% if displayTranslationPrompts == false %}

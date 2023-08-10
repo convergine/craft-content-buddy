@@ -1,0 +1,188 @@
+{% extends 'convergine-contentbuddy/_layouts/_settings' %}
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'Image Generation'|t('convergine-contentbuddy') %}
+{% set selectedSubnavItem = 'image' %}
+
+{% set fullPageForm = true %}
+
+{% block content %}
+    <input type="hidden" name="action" value="plugins/save-plugin-settings">
+    <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
+    {% namespace 'settings' %}
+
+        {{ forms.selectField({
+            label: 'Image Generation Model'|t('convergine-contentbuddy'),
+            name: 'imageModel',
+            value: settings.imageModel,
+            instructions: 'imageModelDescription'|t('convergine-contentbuddy'),
+            options: {
+                "openai":"Open AI - DALL.E-2" ,
+                "stability":"Stability AI - Stable Diffusion"
+            },
+            toggle:true
+        }) }}
+
+        <div id="openai" class="{% if settings.imageModel !='openai' %}hidden{% endif %}">
+            {{ forms.textareaField({
+                label: 'Image Generation Styles'|t('convergine-contentbuddy'),
+                name: 'imagesStyles',
+                value: settings.imagesStyles,
+                rows:10,
+                instructions: 'imageGenDescription'|t('convergine-contentbuddy')
+            }) }}
+        </div>
+
+        <div id="stability" class="{% if settings.imageModel !='stability' %}hidden{% endif %}">
+            {{ forms.autosuggestField({
+                label: 'StabilityAI API key'|t('convergine-contentbuddy'),
+                name: 'stabilityAPIKey',
+                value: settings.stabilityAPIKey,
+                instructions: 'Please enter your StabilityAI API key here. You can get your key from the  <a href="https://platform.stability.ai/account/keys" target="_blank">StabilityAI website</a>.\nStabilityAI generated images are much better quality but require separate account and credits.\nNew accounts get 25 image generation credits upon registration.'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+
+            {{ forms.selectField({
+                label: 'Engine'|t('convergine-contentbuddy'),
+                name: 'stabilityEngine',
+                value: settings.stabilityEngine,
+                instructions: 'stabilityEngineDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "stable-diffusion-v1-5":"Stable Diffusion v1.5" ,
+                    "stable-diffusion-v1":"Stable Diffusion v1.4",
+                    "stable-diffusion-512-v2-0":"Stable Diffusion v2.0",
+                    "stable-diffusion-512-v2-1":"Stable Diffusion v2.1",
+                    "stable-diffusion-768-v2-1":"Stable Diffusion v2.1-768",
+                    "stable-diffusion-xl-1024-v1-0":"Stable Diffusion XL v1.0",
+                    "stable-diffusion-xl-1024-v0-9":"Stable Diffusion XL v0.9",
+                    "stable-diffusion-xl-beta-v2-2-2":"Stable Diffusion v2.2.2-XL Beta",
+                }
+            }) }}
+
+            {{ forms.selectField({
+                label: 'Style'|t('convergine-contentbuddy'),
+                name: 'stabilityStyle',
+                value: settings.stabilityStyle,
+                options: {
+                    "enhance":"Enhance",
+                    "anime":"Anime",
+                    "photographic":"Photographic",
+                    "digital-art":"Digital Art",
+                    "comic-book":"Comic Book",
+                    "fantasy-art":"Fantasy Art",
+                    "line-art":"Line Art",
+                    "analog-film":"Analog Film",
+                    "neon-punk":"Neon Punk",
+                    "isometric":"Isometric",
+                    "low-poly":"Low Poly",
+                    "origami":"Origami",
+                    "modeling-compound":"Modeling Compound",
+                    "cinematic":"Cinematic",
+                    "3d-model":"3D Model",
+                    "pixel-art":"Pixel Art",
+                    "tile-texture":"Tile Texture"
+                }
+            }) }}
+
+
+            {{ forms.selectField({
+                label: 'Sampler'|t('convergine-contentbuddy'),
+                name: 'stabilitySampler',
+                value: settings.stabilitySampler,
+                instructions: 'stabilitySamplerDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "DDIM":"DDIM" ,
+                    "DDIM":"DDIM" ,
+                    "K_DPMPP_2M":"K_DPMPP_2M" ,
+                    "K_DPMPP_2S_ANCESTRAL":"K_DPMPP_2S_ANCESTRAL" ,
+                    "K_DPM_2":"K_DPM_2" ,
+                    "K_DPM_2_ANCESTRAL":"K_DPM_2_ANCESTRAL" ,
+                    "K_EULER":"K_EULER" ,
+                    "K_EULER_ANCESTRAL":"K_EULER_ANCESTRAL" ,
+                    "K_HEUN":"K_HEUN" ,
+                    "K_LMS":"K_LMS"
+                }
+            }) }}
+
+            <div class="buddy-slider-cont field">
+                <div class="heading">
+                    <label>{{ 'Steps'|t('convergine-contentbuddy') }}</label>
+                </div>
+                <div class="flex">{{ 'stabilityStepsDescription'|t('convergine-contentbuddy')}}</div>
+                <div class="flex">
+                    <input
+                            type="range"
+                            step="1"
+                            min="10"
+                            max="150"
+                            class="buddy-slider"
+                            id="stabilitySteps"
+                            value="{{ settings.stabilitySteps }}"
+                            name="stabilitySteps"
+                            data-gtm-form-interact-field-id="0"
+                    >
+                    <span>{{ settings.stabilitySteps }}</span>
+                </div>
+            </div>
+
+            <div class="buddy-slider-cont field">
+                <div class="heading">
+                    <label>{{ 'CFG scale'|t('convergine-contentbuddy') }}</label>
+                </div>
+                <div class="flex">{{ 'stabilityCFGDescription'|t('convergine-contentbuddy')}}</div>
+                <div class="flex">
+                    <input
+                            type="range"
+                            step="1"
+                            min="0"
+                            max="35"
+                            class="buddy-slider"
+                            id="stabilityScale"
+                            value="{{ settings.stabilityScale }}"
+                            name="stabilityScale"
+                            data-gtm-form-interact-field-id="0"
+                    >
+                    <span>{{ settings.stabilityScale }}</span>
+                </div>
+            </div>
+        </div>
+
+        {{ forms.radioGroupField({
+            label: 'Default Image Size'|t('convergine-contentbuddy'),
+            name: 'imageSize',
+            instructions: 'If you get an error when trying to generate images with Stability AI, try changing the image size to the one specified in the error.'|t('convergine-contentbuddy'),
+            value: settings.imageSize,
+            options: {
+                '256x256': 'Small (256x256)',
+                '512x512': 'Medium (512x512)',
+                '1024x1024': 'Large (1024x1024)',
+            }
+        }) }}
+
+        {{ forms.lightswitchField({
+            label: 'Enable Generate Image From Text'|t('convergine-contentbuddy'),
+            name: 'generateImageFromText',
+            instructions: 'If enabled, new dropdown option will be appear to generate images from selected text within the Content Buddy enabled field.'|t('convergine-contentbuddy'),
+            on: settings.generateImageFromText is defined and settings.generateImageFromText == '1',
+            toggle:'generateImageFromText'
+        }) }}
+
+        <div id="generateImageFromText">
+        {% if folders %}
+            {{ forms.selectField({
+                label: 'Images Volume (Folder)'|t('convergine-contentbuddy'),
+                name: 'generateImageAssetId',
+                id: 'generateImageAssetId',
+                value: settings.generateImageAssetId,
+                options: folders,
+                placeholder: '',
+                instructions: 'This is the volume where generated images will be saved.'|t('convergine-contentbuddy'),
+                first: false,
+            }) }}
+        {% else %}
+            <div class="error">{{ 'You did not set up any volumes/filesystems yet.'|t('convergine-contentbuddy') }}</div>
+        {% endif %}
+        </div>
+    {% endnamespace %}
+{% endblock %}

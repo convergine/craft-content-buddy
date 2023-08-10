@@ -1,10 +1,11 @@
 <?php return [
 	/* Settings -> navigation */
-	'Content  Settings'=>'Content  Settings',
-	'Fields Settings'=>'Fields Settings',
-	'API Settings'=>'API Settings',
+	'Settings'=>'Settings',
+	'Fields'=>'Fields',
+	'API'=>'API',
 	'Content Generator'=>'Content Generator',
 	'Prompts Templates'=>'Prompts Templates',
+	'Image Generation' => 'Image Generation',
 
     /* Settings -> General Page */
     'OpenAI Preferred Model' => 'OpenAI Preferred model',
@@ -16,6 +17,7 @@
     'Default Image Size' => 'Default Image Size',
     'imageDescription' => 'The size of the images you want to generate with DALL-E for the generated content. The larger the image, the more expensive it is.',
 	'systemMessageDescription' => 'If anything is added in this textarea - then ALL prompts sent to API will include it at the end of the prompt:',
+	'imageModelDescription' => 'Select the default image generation API.',
 
 	/* Settings -> Api Page */
 	'API: Access Token'=>'API: Access Token',
@@ -33,6 +35,14 @@
 	'Show Prompts Menu'=>'Show Quick Menu',
 	'No fields exist yet.'=>'No fields exist yet.',
     'fieldsDescriptionText'=>'In this section, you have the ability to choose which fields in your entries will show the "Content Buddy" dropdown menu.',
+
+	/* Settings -> stability options */
+	'Please enter your StabilityAI API key here. You can get your key from the <a href="https://platform.stability.ai/account/keys" target="_blank">StabilityAI website</a>.\nStabilityAI generated images are much better quality but require separate account and credits.\nNew accounts get 25 image generation credits upon registration.' =>'Please enter your StabilityAI API key here. You can get your key from the  <a href="https://platform.stability.ai/account/keys" target="_blank">StabilityAI website</a>.\nStabilityAI generated images are much better quality but require separate account and credits.\nNew accounts get 25 image generation credits upon registration.',
+	'stabilityEngineDescription' =>'The default model that will be used when generating an image using Stability.ai.',
+	'stabilitySamplerDescription' => 'A sampler determines how the image is "calculated". A sampler processes an input (prompt) to produce an output (image). Since these samplers are different mathematically, they will produce difference results for the same prompt.',
+	'stabilityStepsDescription' =>'Generation steps control how many times the image is sampled. Increasing the number of steps might give you better results, up to a point where there\'re diminishing returns. More steps would also cost you more.',
+	'stabilityCFGDescription' => 'Prompt strength (CFG scale) controls how much the final image will adhere to your prompt. Lower values would give the model more "creativity", while higher values will produce a final image that\'s close to your prompt.',
+	'Enable Generate Image From Text' => 'Enable Generate Image From Text',
 
 	/* Prompts Page */
 	'Edit Prompt'=>'Edit Prompt',
@@ -103,5 +113,8 @@
 	'badGatewayError' => 'The server returned "502 Bad Gateway" error. This could mean that there is an issue with OpenAI server connection. Please try again a bit later.',
 	'tooManyRequestsError' => 'OpenAI service returned "429 Too Many Requests" error. The model is currently overloaded with other requests. Pleases try again later.',
 	'badRequestError' => 'Your request was rejected as a result of ChatGPT\'s internal safety system. Please adjust your input and try again.',
-	'selectPromptText'=>'Please add new or select existing text to use this prompt.'
+	'unauthorizedError' => 'Incorrect API key provided',
+	'selectPromptText'=>'Please add new or select existing text to use this prompt.',
+	'Prompt not found'=>'Prompt not found',
+	'Missing required params'=>'Missing required params',
 ];

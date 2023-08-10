@@ -1,8 +1,10 @@
 <?php
 namespace convergine\contentbuddy;
 
-use convergine\contentbuddy\services\ChatGPT;
+use convergine\contentbuddy\services\ContentGenerator;
 use convergine\contentbuddy\services\Prompt;
+use convergine\contentbuddy\services\PromptProcessor;
+use convergine\contentbuddy\services\Request;
 use convergine\contentbuddy\variables\BuddyVariable;
 use Craft;
 use craft\base\Model;
@@ -25,8 +27,9 @@ use craft\i18n\PhpMessageSource;
 
 /**
 * @property Prompt $promptService;
- * @property ChatGPT $chat;
- *
+ * @property ContentGenerator $chat;
+ * @property Request $request;
+ * @property PromptProcessor $promptProcessor;
  */
 class BuddyPlugin extends Plugin
 {
@@ -49,7 +52,9 @@ class BuddyPlugin extends Plugin
 	protected function _setComponents(){
 		$this->setComponents([
 			'promptService' => Prompt::class,
-			'chat' => ChatGPT::class,
+			'chat' => ContentGenerator::class,
+			'request' => Request::class,
+			'promptProcessor' => PromptProcessor::class,
 		]);
 	}
 
@@ -64,6 +69,7 @@ class BuddyPlugin extends Plugin
 				$event->rules['convergine-contentbuddy/settings/general'] = 'convergine-contentbuddy/settings/general';
 				$event->rules['convergine-contentbuddy/settings/api'] = 'convergine-contentbuddy/settings/api';
 				$event->rules['convergine-contentbuddy/settings/fields'] = 'convergine-contentbuddy/settings/fields';
+				$event->rules['convergine-contentbuddy/settings/image-generation'] = 'convergine-contentbuddy/settings/image-generation';
 
 				$event->rules['convergine-contentbuddy/content-generator'] = 'convergine-contentbuddy/content-generator/index';
 

@@ -65,12 +65,42 @@ class SettingsModel extends Model
 
 	private array $_supportedFieldTypes = ['craft\fields\PlainText','craft\redactor\Field'];
 
+	public string $imageModel = 'openai';
+
+	// stability ai options
+
+	public string $stabilityAPIKey = '';
+
+	public string $stabilityEngine = 'stable-diffusion-512-v2-1';
+
+	public string $stabilitySampler = 'DDIM';
+
+	public int $stabilitySteps = 50;
+
+	public int $stabilityScale = 7;
+
+	public string $stabilityStyle = 'enhance';
+
+	// Generate image based on text
+
+	public bool $generateImageFromText = false;
+
+	public int $generateImageAssetId = 0;
+
 	/**
 	 * @return string
 	 */
 	public function getApiKey(): string
 	{
 		return App::parseEnv($this->apiToken);
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getStabilityApiKey(): string
+	{
+		return App::parseEnv($this->stabilityAPIKey);
 	}
 
 	public function titleFieldEnabled(){

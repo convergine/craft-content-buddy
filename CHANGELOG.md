@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.5 - 2023-08-10
+### Added
+- Added Image Generation Settings: Choose between different Image Generation providers, such as OpenAI or Stability.AI (Stable Diffusion).
+- New Single Image Generation Feature: Easily generate a single image based on selected text. For optimized results, first use the "generate image idea" option with your chosen text. Then, with the generated image prompt, select "generate image on this" to create your final image.
+
 ## 1.0.4 - 2023-08-01
 ### Added
 - Added Matrix block support.

@@ -2,7 +2,7 @@
 namespace convergine\contentbuddy\controllers;
 
 use convergine\contentbuddy\BuddyPlugin;
-use convergine\contentbuddy\services\ChatGPT;
+use convergine\contentbuddy\services\ContentGenerator;
 use Craft;
 
 
@@ -77,7 +77,7 @@ class ContentGeneratorController extends \craft\web\Controller {
 				'sections'=>$sections,
 				'folders'=>$assets_folders,
 				'settings'=>BuddyPlugin::getInstance()->getSettings(),
-				'min_execution_time_alert'=>ChatGPT::getTimeLimitAlert()
+				'min_execution_time_alert'=>ContentGenerator::getTimeLimitAlert()
 			]);
 	}
 

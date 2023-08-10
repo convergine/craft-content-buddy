@@ -9,9 +9,10 @@
 
 {% set navItems = {
     'settings-heading': { heading: "Settings"|t('convergine-contentbuddy') },
-    'general': { title: "Content  Settings"|t('convergine-contentbuddy') },
-    'fields': { title: "Fields Settings"|t('convergine-contentbuddy') },
-    'api': { title: "API Settings"|t('convergine-contentbuddy') },
+    'general': { title: "General"|t('convergine-contentbuddy') },
+    'fields': { title: "Fields"|t('convergine-contentbuddy') },
+    'api': { title: "API"|t('convergine-contentbuddy') },
+    'image-generation': { title: "Image Generation"|t('convergine-contentbuddy') },
 } %}
 
 {% set activeTab = craft.app.request.getSegment(3) ?? 'general' %}

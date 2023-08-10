@@ -20,7 +20,7 @@ use GuzzleHttp\Client;
 use craft\elements\Asset;
 use Craft;
 
-class ChatGPT {
+class ContentGenerator {
 
 	private string $_language;
 
@@ -47,8 +47,6 @@ class ChatGPT {
 		$folderId                    = $data['buddy_folder_id'] ?? null;
 		$this->_language             = $data['buddy_language'] ?? 'en';
 
-		$image_size = BuddyPlugin::getInstance()->getSettings()->imageSize;
-
 		$section           = $data['buddy_entry_section'];
 		$description_field = $data['buddy_entry_field'];
 		list( $section_id, $type_id ) = explode( ':', $section );
@@ -56,6 +54,8 @@ class ChatGPT {
 		if ( ! $section_id || ! $type_id || ! $description_field ) {
 			return [ 'res' => false, 'msg' => 'Please, select section and description field' ];
 		}
+
+		$request = BuddyPlugin::getInstance()->request;
 
 		while ( $number_of_articles > 0 ) {
 
@@ -69,7 +69,7 @@ class ChatGPT {
 			$generated_segments = [];
 
 			try {
-				$section_headlines = $this->sendRequest(
+				$section_headlines = $request->send(
 					$this->_buildPrompt( $prompts[ 'section-headlines' . $prompt_name_suffix ], array(
 							'description'         => $topic,
 							'number-of-headlines' => $number_of_sections,
@@ -77,7 +77,7 @@ class ChatGPT {
 						)
 					), 2000, $temperature );
 
-				$article_intro = $this->sendRequest(
+				$article_intro = $request->send(
 					$this->_buildPrompt( $prompts[ 'article-intro' . $prompt_name_suffix ], array(
 							'description'       => $topic,
 							'section-headlines' => $section_headlines,
@@ -95,7 +95,7 @@ class ChatGPT {
 					$generated_segments['section-headlines'] = $section_headlines_array;
 				}
 
-				$title = $this->sendRequest(
+				$title = $request->send(
 					$this->_buildPrompt( $prompts[ 'article-title' . $prompt_name_suffix ], array(
 							'description'       => $topic,
 							'section-headlines' => implode( "\n", $section_headlines_array ),
@@ -109,7 +109,7 @@ class ChatGPT {
 				$section_summaries = [];
 
 				foreach ( $section_headlines_array as $headline ) {
-					$section_content = $this->sendRequest(
+					$section_content = $request->send(
 						$this->_buildPrompt( $prompts[ 'section' . $prompt_name_suffix ], array(
 								'description'      => $topic,
 								'section-headline' => $headline,
@@ -118,7 +118,7 @@ class ChatGPT {
 						), $section_max_tokens, $temperature );
 
 					if ( $include_tldr ) {
-						$section_summaries[] = $this->sendRequest(
+						$section_summaries[] = $request->send(
 							$this->_buildPrompt( $prompts[ 'section-summary' . $prompt_name_suffix ], array(
 									'section'  => $section_content,
 									'keywords' => $seo_keywords,
@@ -129,13 +129,14 @@ class ChatGPT {
 					$content = $this->_addSubtitle( $content, $headline );
 
 					if ( $include_section_images ) {
-						$section_image = $this->sendRequest(
+						$section_image = $request->send(
 							$this->_buildPrompt( $prompts['image'], array(
 									'text' => $section_content,
 								)
 							), 2000, $temperature );
 
-						$assets  = $this->sendImageRequest( $section_image, $folderId, $image_size );
+						$imageService = new Image();
+						$assets  = $imageService->generate( $section_image, $folderId );
 						$content = $this->_addImages( $content, $assets );
 					}
 
@@ -144,7 +145,7 @@ class ChatGPT {
 				}
 
 				if ( $include_conclusion ) {
-					$article_conclusion = $this->sendRequest(
+					$article_conclusion = $request->send(
 						$this->_buildPrompt( $prompts[ 'article-conclusion' . $prompt_name_suffix ], array(
 								'description'       => $topic,
 								'section-headlines' => implode( "\n", $section_headlines_array ),
@@ -159,7 +160,7 @@ class ChatGPT {
 				if ( $include_tldr ) {
 					$text = implode( "\n", $section_summaries );
 
-					$tldr_for_all_sections = $this->sendRequest(
+					$tldr_for_all_sections = $request->send(
 						$this->_buildPrompt( $prompts[ 'tldr' . $prompt_name_suffix ], array(
 								'text'     => $text,
 								'keywords' => $seo_keywords,
@@ -174,13 +175,14 @@ class ChatGPT {
 				if ( $include_featured_image && ! empty( $featured_field_id ) ) {
 					$folder = $this->_getFolderId( $featured_field_id );
 					if ( $folder ) {
-						$featured_image = $this->sendRequest(
+						$featured_image = $request->send(
 							$this->_buildPrompt( $prompts['image'], array(
 									'text' => $article_intro,
 								)
 							), 2000, $temperature );
 
-						$featured_assets = $this->sendImageRequest( $featured_image, $folder->id, $image_size );
+						$imageService = new Image();
+						$featured_assets  = $imageService->generate( $featured_image, $folder->id );
 						if ( $featured_assets ) {
 							$assetfield = [ 'asset' => $featured_assets[0], 'handle' => $featured_field_id ];
 						}
@@ -214,7 +216,7 @@ class ChatGPT {
 		return $result;
 	}
 
-	public function sendRequest( $prompt, $maxTokens, $temperature ) {
+	/*public function sendRequest( $prompt, $maxTokens, $temperature ) {
 		try {
 			$model = BuddyPlugin::getInstance()->getSettings()->preferredModel;
 
@@ -250,43 +252,11 @@ class ChatGPT {
 		$choices = $json['choices'];
 
 		return $this->_getTextGenerationBasedOnModel( $model, $choices );
-	}
+	}*/
 
-	function sendImageRequest( $prompt, $folderId, $dimensions = '512x512' ) {
 
-		$client = new Client();
 
-		$imagePrompt = $this->_applyImageStylesToPrompt( $prompt );
-
-		$imageResponse = $client->request( 'POST', 'https://api.openai.com/v1/images/generations', [
-			'body'    => json_encode( [
-				'prompt'          => $imagePrompt,
-				'n'               => 1,
-				'size'            => $dimensions,
-				'response_format' => 'b64_json',
-			] ),
-			'headers' => [
-				'Authorization' => 'Bearer ' . BuddyPlugin::getInstance()->getSettings()->getApiKey(),
-				'Content-Type'  => 'application/json',
-			],
-		] );
-
-		$body = $imageResponse->getBody();
-		$json = json_decode( $body, true );
-		$data = $json['data'] ?? [];
-
-		$assets = array();
-		foreach ( $data as $image ) {
-			$asset = $this->_uploadFileByUrl( $folderId, $image['b64_json'], $dimensions, $imagePrompt );
-			if ( $asset ) {
-				$assets[] = $asset;
-			}
-		}
-
-		return $assets;
-	}
-
-	protected function _getEndpoint( $model ) {
+	/*protected function _getEndpoint( $model ) {
 		if ( $this->isNewApi($model) ) {
 			return 'https://api.openai.com/v1/chat/completions';
 		}
@@ -349,7 +319,7 @@ class ChatGPT {
 		}
 
 		return trim( $choices[0]['text'] );
-	}
+	}*/
 
 	private function _buildPrompt( $prompt, $keyValueArray ) {
 		foreach ( $keyValueArray as $key => $value ) {
@@ -450,59 +420,7 @@ class ChatGPT {
 		return Craft::$app->getDrafts()->saveElementAsDraft( $newEntry ) ? $newEntry : false;
 	}
 
-	private function _applyImageStylesToPrompt( $prompt ) {
-		$stylesArray = BuddyPlugin::getInstance()->getSettings()->imagesStyles;
-		$stylesArray = explode( "\n", $stylesArray );
-		$imagePrompt = rtrim( rtrim( $prompt ), '.' );
 
-		if ( ! empty( $stylesArray ) ) {
-			$style       = $stylesArray[ array_rand( $stylesArray ) ];
-			$imagePrompt .= ', ' . $style;
-		}
-
-		$imagePrompt = str_replace( '"', '', $imagePrompt );
-
-		return str_replace( "'", '', $imagePrompt );
-	}
-
-	private function _uploadFileByUrl( $folderId, $imageData, $dimensions, $imagePrompt ) {
-		$imagePromptWithOnlyLetters = preg_replace( '/[^A-Za-z0-9\- ]/', '', $imagePrompt );
-		$imagePromptWithOnlyLetters = str_replace( ' ', '-', $imagePromptWithOnlyLetters );
-		$imagePromptWithOnlyLetters = substr( $imagePromptWithOnlyLetters, 0, 40 );
-		$imagePromptWithOnlyLetters = strtolower( $imagePromptWithOnlyLetters );
-
-		$folder      = Craft::$app->getAssets()->getFolderById( $folderId );
-		$folder_path = Craft::getAlias( $folder->getVolume()->getFs()->getSettings()['path'] );
-		if ( ! is_dir( $folder_path ) ) {
-			throw new \Exception( 'Upload folder not found' );
-		}
-
-		$tmpFilePath  = $folder_path . '/image' . rand( 9999, 9999999 );
-		$outputStream = fopen( $tmpFilePath, 'wb' );
-		fwrite( $outputStream, base64_decode( $imageData ) );
-
-		fclose( $outputStream );
-		$mime_type = mime_content_type( $tmpFilePath );
-		$extension = explode( '/', $mime_type )[1];
-
-		$newFilename                   = $imagePromptWithOnlyLetters . '-' . $dimensions . '-' . rand( 0, 99999999 ) . '.' . $extension;
-		$asset                         = new Asset();
-		$asset->tempFilePath           = $tmpFilePath;
-		$asset->filename               = $newFilename;
-		$asset->newFolderId            = $folder->id;
-		$asset->volumeId               = $folder->volumeId;
-		$asset->avoidFilenameConflicts = true;
-		$asset->setScenario( Asset::SCENARIO_CREATE );
-
-		$result = Craft::$app->getElements()->saveElement( $asset );
-
-		// In case of error, let user know about it.
-		if ( $result === false ) {
-			throw new Exception( 'Error while uploading asset' );
-		}
-
-		return $asset;
-	}
 
 	private function _addImages( $content, $images ) {
 		foreach ( $images as $image ) {

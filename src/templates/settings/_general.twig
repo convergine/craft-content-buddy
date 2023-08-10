@@ -1,5 +1,5 @@
 {% extends 'convergine-contentbuddy/_layouts/_settings' %}
-
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
 {% import '_includes/forms' as forms %}
 
 {% set title = 'Settings' %}
@@ -34,26 +34,6 @@
                 "babbage":"babbage",
                 "ada":"ada",
             },
-        }) }}
-
-        {{ forms.textareaField({
-            label: 'Image Generation Styles'|t('convergine-contentbuddy'),
-            name: 'imagesStyles',
-            value: settings.imagesStyles,
-            rows:10,
-            instructions: 'imageGenDescription'|t('convergine-contentbuddy')
-        }) }}
-
-        {{ forms.radioGroupField({
-            label: 'Default Image Size'|t('convergine-contentbuddy'),
-            name: 'imageSize',
-
-            value: settings.imageSize,
-            options: {
-                '256x256': 'Small (256x256)',
-                '512x512': 'Medium (512x512)',
-                '1024x1024': 'Large (1024x1024)',
-            }
         }) }}
 
         {{ forms.textareaField({
