@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.6 - 2023-08-24
+### Fixed
+- Fixed path that was hard coded in the plugin, causing issues with with non standard /admin path. [Issue #12](https://github.com/convergine/craft-content-buddy/issues/12)
+- Fixed issue with translations not using the correct prompt. [Issue #13](https://github.com/convergine/craft-content-buddy/issues/13)
+- Fixed incorrect ChatGPT error message display introduced in previous version. [Issue #14](https://github.com/convergine/craft-content-buddy/issues/14)
+
 ## 1.0.5 - 2023-08-10
 ### Added
 - Added Image Generation Settings: Choose between different Image Generation providers, such as OpenAI or Stability.AI (Stable Diffusion).

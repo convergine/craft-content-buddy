@@ -92,7 +92,7 @@
 
         $.ajax({
             type: "POST",
-            url: "/admin/actions/convergine-contentbuddy/prompt-processor/process",
+            url: "{{ actionUrl('convergine-contentbuddy/prompt-processor/process') }}",
             data: sendData,
             success: function (data) {
                 if (data.res) {

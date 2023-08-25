@@ -58,7 +58,7 @@ class PromptProcessor {
 		if($prompt == '_translate_'){
 			$prompt="Translate to {$lang}: {$query}";
 			return [
-				'response'=>BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7),
+				'response'=>BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true),
 				'replaceText'=>1
 			];
 		}elseif ($prompt == '_generate_images_'){

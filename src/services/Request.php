@@ -16,6 +16,7 @@ namespace convergine\contentbuddy\services;
 use convergine\contentbuddy\BuddyPlugin;
 use GuzzleHttp\Client;
 use Craft;
+use yii\helpers\StringHelper;
 
 class Request {
 
@@ -25,11 +26,14 @@ class Request {
 		$this->_settings = BuddyPlugin::getInstance()->getSettings();
 	}
 
-	public function send( $prompt, $maxTokens, $temperature ) {
+	public function send( $prompt, $maxTokens, $temperature,$isTranslate = false ) {
 		try {
 			$model = $this->_settings->preferredModel;
 
 			$maxTokens = min( $maxTokens, $this->_getMaxTokensForModel( $model ) );
+			if($isTranslate){
+				$maxTokens = $maxTokens /2;
+			}
 
 			$client = new Client();
 			$res = $client->request( 'POST', $this->_getEndpoint( $model ), [
@@ -38,23 +42,20 @@ class Request {
 					'Authorization' => 'Bearer ' . $this->_settings->getApiKey(),
 					'Content-Type'  => 'application/json',
 				],
+				'http_errors'=>false
 			] );
 
 			$body = $res->getBody();
 			$json = json_decode( $body, true );
+			if(isset($json['error'])){
+				$message = $json['error']['message'];
+
+				throw new \Exception( $message );
+			}
 		} catch ( \Throwable $e ) {
 			$message = $e->getMessage();
-			if(strpos($message,'502 Bad Gateway')!=false || strpos($message,'500 Internal Server Error')!=false){
-				$message = Craft::t('convergine-contentbuddy', 'badGatewayError');
-			}elseif (strpos($message,'429 Too Many Requests')!=false){
-				$message = Craft::t('convergine-contentbuddy', 'tooManyRequestsError');
-			}elseif (strpos($message,'400 Bad Request')!=false){
-				$message = Craft::t('convergine-contentbuddy', 'badRequestError');
-			}elseif (strpos($message,'401 Unauthorized')!=false){
-				$message = Craft::t('convergine-contentbuddy', 'unauthorizedError');
-			}
-			$message .= "<br><br>Prompt: " . $prompt;
-			$message .= "<br>Model: " . $model;
+			$message .= "<br><br>Prompt:<br>" . StringHelper::truncateWords($prompt,20,'...',true);
+			$message .= "<br><br>Model: " . $model;
 			$message .= "<br>Max tokens: " . $maxTokens;
 
 			throw new \Exception( $message );
@@ -67,15 +68,15 @@ class Request {
 
 	protected function _getMaxTokensForModel( $model ) {
 		if ( $model == 'text-davinci-002' || $model == 'text-davinci-003' || strpos( $model, 'gpt-3.5-turbo' ) === 0 ) {
-			return 4000;
+			return 3900;
 		}
 
 		if ( strpos( $model, 'gpt-4-32k' ) === 0 ) {
-			return 32000;
+			return 31000;
 		}
 
 		if ( strpos( $model, 'gpt-4' ) === 0 ) {
-			return 8000;
+			return 7900;
 		}
 
 		return 2000;
