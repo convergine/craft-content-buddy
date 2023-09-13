@@ -111,12 +111,8 @@
                     <ul class="padded">
                         <li><a href="javascript:void(0)" class="doAi"
                                data-hash="{{ hash }}"
-                               data-prompt="Translate to {{ currentLocale }}: [[text]]" type="button" role="button"
-                               data-temperature="0.7"
-                               data-max_tokens="3000"
-                               data-token_multiplier="1"
-                               data-token_type="1"
-                               data-replace="1"
+                               data-prompt="_translate_" type="button" role="button"
+                               data-lang="{{ currentLocale }}"
                                aria-label="{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
                                    language: currentLocale
                                } ) }}">{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
@@ -129,12 +125,8 @@
                                 {% set languages = languages|merge([site.language]) %}
                                 <li><a href="javascript:void(0)" class="doAi"
                                        data-hash="{{ hash }}"
-                                       data-prompt="Translate to {{ site.language }}: [[text]]" type="button" role="button"
-                                       data-temperature="0.7"
-                                       data-max_tokens="3000"
-                                       data-token_multiplier="1"
-                                       data-token_type="1"
-                                       data-replace="1"
+                                       data-prompt="_translate_" type="button" role="button"
+                                       data-lang="{{ site.language }}"
                                        aria-label="{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {
                                            language: site.language
                                        } ) }}">{{ 'Translate to {language}'|t('convergine-contentbuddy', params = {

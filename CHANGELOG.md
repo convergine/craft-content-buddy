@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.7 - 2023-09-13
+### Fixed
+- Fixed issue with using translation prompt in 1.0.6 [Issue #15](https://github.com/convergine/craft-content-buddy/issues/15)
+
 ## 1.0.6 - 2023-08-24
 ### Fixed
 - Fixed path that was hard coded in the plugin, causing issues with with non standard /admin path. [Issue #12](https://github.com/convergine/craft-content-buddy/issues/12)
