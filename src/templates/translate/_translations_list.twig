@@ -1,0 +1,84 @@
+{% if items|length %}
+    <h3>{{ 'Translations Log' |t('convergine-contentbuddy') }}</h3>
+    <div class="tableview">
+
+        <table class="data fullwidth">
+            <thead>
+            <tr>
+                <th scope="col" style="width: 20%">{{ 'Section' |t('convergine-contentbuddy') }}</th>
+                <th scope="col" style="width: 15%">Translate To</th>
+                <th scope="col" style="width: 10%">Job Status</th>
+                <th scope="col" style="width: 5%">Entries<br>Submitted</th>
+
+                <th scope="col" style="width: 5%">Fields<br>Processed</th>
+                <th scope="col" style="width: 5%">Fields<br>Translated</th>
+                <th scope="col" style="width: 5%">Fields<br>Skipped</th>
+                <th scope="col" style="width: 5%">Field<br>Errors</th>
+                <th class="col" style="width: 15%">Date Created</th>
+                <th class="thin" style="width: 10%">Status</th>
+                <th class="thin" style="width: 10%"></th>
+
+            </tr>
+            </thead>
+            <tbody>
+
+            {% for item in items %}
+                {% set section = craft.app.sections.getSectionById(item.sectionId) %}
+                {% set site = craft.app.sites.getSiteById(item.siteId) %}
+
+                <tr class="s-{{ item.id }}">
+                    <td class="label-column">{{ section.name }}</td>
+                    <td class="handle-column">
+                        {{ site.name }} ({{ site.language }})
+                    </td>
+                    <td class="label-column">
+                        {{ craft.contentbuddy.getJobsInfo(item.id)|raw }}
+                    </td>
+                    <td class="group-column">{{ item.entriesSubmitted }}</td>
+                    <td class="group-column"><strong>{{ item.fieldsProcessed }}</strong> of {{ item.fieldsCount }}</td>
+                    <td class="group-column">{{ item.fieldsTranslated }}</td>
+                    <td class="group-column">{{ item.fieldsSkipped }}</td>
+                    <td class="group-column">
+                        {% if item.fieldsError > 0 %}
+                            <a href="{{ url('convergine-contentbuddy/site-translate/log',{'id':item.id}) }}">
+                        {% endif %}
+                        {{ item.fieldsError }}
+                        {% if item.fieldsError > 0 %}
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td class="enabled-column">
+                        {{ item.dateCreated | datetime}}
+                    </td>
+                    <td>
+                        {{ craft.contentbuddy.getTranslationStatus(item.id)|raw }}
+                        {% if craft.contentbuddy.hasActiveJobs(item.id) ==0 %}
+                            {% if item.fieldsError > 0 %}
+                                <form method="post">
+                                    {{ hiddenInput('translationId',item.id) }}
+                                    {{ csrfInput() }}
+                                    {{ actionInput('convergine-contentbuddy/translate/rerun/') }}
+
+                                    <button type="submit" class="btn submit" data-icon="refresh" id="" aria-label="Re run translate">
+                                        <div class="label">Re run</div>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="delete-column">
+                        {% if craft.contentbuddy.hasActiveJobs(item.id) ==0 %}
+                        <a href="{{ actionUrl('convergine-contentbuddy/translate/delete/',{'id':item.id}) }}"
+                           class="delete icon translate-delete" title="{{ 'Delete'|t('app') }}" role="button">
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+

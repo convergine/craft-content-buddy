@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.8 - 2024-02-02
+### Added
+- Added auto-translate feature for multi-site CraftCMS instances
+### Fixed
+- Fixed issue when custom prompt template exceeds 255 characters [Issue #16](https://github.com/convergine/craft-content-buddy/issues/16)
+- Fixed issue with multi-site [Issue #19](https://github.com/convergine/craft-content-buddy/issues/19)
+
 ## 1.0.7 - 2023-09-13
 ### Fixed
 - Fixed issue with using translation prompt in 1.0.6 [Issue #15](https://github.com/convergine/craft-content-buddy/issues/15)

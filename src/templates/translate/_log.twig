@@ -1,0 +1,54 @@
+{% extends "_layouts/cp" %}
+{% set crumbs = [
+
+    { label: 'Site Translation' | t('convergine-contentbuddy'), url: url('convergine-contentbuddy/site-translate') },
+    { label: 'Log ' | t('convergine-contentbuddy'),url:'#' },
+] %}
+{% set selectedSubnavItem = 'site-translation' %}
+{% set title = 'Translate \'{section}\' to \'{translationTo}\' at {date}'|t('convergine-contentbuddy',
+    {
+        'translationTo':translationTo,
+        'date':translationDate|datetime,
+        'section':translationSection
+    }) %}
+{% block content %}
+    {% if translationLogs|length %}
+        <div class="tableview">
+
+            <table class="data fullwidth" style="margin-bottom: 40px">
+                <thead>
+                <tr>
+                    <th scope="col" style="width: 20%">{{ 'Entry' |t('craft') }}</th>
+                    <th scope="col" style="width: 5%">{{ 'Field' |t('craft') }}</th>
+                    <th scope="col" style="width: 20%">{{ 'Message' |t('craft') }}</th>
+
+                </tr>
+                </thead>
+                <tbody>
+
+                {% for log in translationLogs %}
+                    {% set entry = craft.entries().id(log.entryId).one() %}
+
+
+                    <tr class="s-{{ log.id }}">
+                        <td class="name-column"><a href="{{ entry.cpEditUrl }}" target="_blank">{{ entry.title }}</a></td>
+                        <td class="field-column">{{ log.field }}</td>
+                        <td class="message-column">{{ log.message|raw }}</td>
+
+                    </tr>
+
+                {% endfor %}
+                </tbody>
+            </table>
+            {% for page in 1..pages %}
+                {% if (craft.app.request.getParam('pageId') == page or (not craft.app.request.getParam('pageId') and loop.first)) and page != 0 %}
+                    <span class="btn submit">{{ page }}</span>
+                {% elseif page !=0 %}
+                    <a class="btn" href="{{ url("convergine-contentbuddy/site-translate/log",{'id': translationId, "pageId":page}) }}">{{ page }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No found</p>
+    {% endif %}
+{% endblock %}

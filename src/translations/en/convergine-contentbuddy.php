@@ -109,6 +109,23 @@
 	'this will be replaced with the number of headlines for the article section.'=>'this will be replaced with the number of headlines for the article section.',
     'Fixed number of words'=>'Fixed number of words',
 
+	/* Site Translation */
+	'Site Translation'=>'Site Translation',
+	'Translate?'=>'Translate?',
+	'Generate Translations'=>'Generate Translations',
+	'Additional instructions'=>'Additional instructions',
+	'additionalInstructionsDescription'=>'You can provide additional instructions to ChatGPT to fine-tune the translation prompt. Things like \'do not translate links\' or translate and rephrase in specific tone or style, etc.',
+	'Overwrite Existing Translations'=>'Overwrite Existing Translations',
+	'overwriteExistingTranslationsDescription'=>'If selected, all existing translations that will be found during translation process will be overwritten.',
+	'Are you sure to remove record and associated logs?'=>'Are you sure to remove record and associated logs?',
+	'translationStarted'=>'Translations request added',
+	'selectSectionInstructions'=>'Select the section that will be translated',
+	'Select Language'=>'Select Language',
+	'selectLanguageInstructions'=>'Select the language you would like to translate the selected section. You can select only the languages that are set up in Settings ➝ Sites',
+	'Translations Log'=>'Translations Log',
+	'translateFieldsDescriptionText'=>'Select the fields that will be translated in the selected section.',
+
+
 	/* General error messages*/
 	'badGatewayError' => 'The server returned "502 Bad Gateway" error. This could mean that there is an issue with OpenAI server connection. Please try again a bit later.',
 	'tooManyRequestsError' => 'OpenAI service returned "429 Too Many Requests" error. The model is currently overloaded with other requests. Pleases try again later.',
@@ -117,4 +134,6 @@
 	'selectPromptText'=>'Please add new or select existing text to use this prompt.',
 	'Prompt not found'=>'Prompt not found',
 	'Missing required params'=>'Missing required params',
+
+	'licenseNotice'=>'By maintaining a valid license for our plugin on live domains, you\'re directly supporting our team\'s efforts. This not only champions the broader CraftCMS community but also enables us to continually innovate and deliver enhanced features for you.'
 ];

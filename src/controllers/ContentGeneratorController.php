@@ -4,6 +4,7 @@ namespace convergine\contentbuddy\controllers;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\services\ContentGenerator;
 use Craft;
+use craft\services\Sites;
 
 
 class ContentGeneratorController extends \craft\web\Controller {
@@ -71,11 +72,16 @@ class ContentGeneratorController extends \craft\web\Controller {
 				$assets_folders[]=['value'=>$folder->id,'label'=>$folder->name];
 			}
 		}
+		$sites = [];
+		foreach (Craft::$app->sites->getAllSites() as $site){
+			$sites[$site->id] = $site->name;
+		}
 
 		return $this->renderTemplate('convergine-contentbuddy/content/_index',
 			[
 				'sections'=>$sections,
 				'folders'=>$assets_folders,
+				'sites'=>$sites,
 				'settings'=>BuddyPlugin::getInstance()->getSettings(),
 				'min_execution_time_alert'=>ContentGenerator::getTimeLimitAlert()
 			]);
@@ -85,7 +91,7 @@ class ContentGeneratorController extends \craft\web\Controller {
 		$this->requirePostRequest();
 		$data = $this->request->post();
 
-		$result = BuddyPlugin::getInstance()->chat->generateEntry($data);
+		$result = BuddyPlugin::getInstance()->contentGenerator->generateEntry($data);
 
 		$request = Craft::$app->getRequest();
 		if ($request->getAcceptsJson()) {

@@ -1,10 +1,12 @@
 <?php
 namespace convergine\contentbuddy;
 
+use convergine\contentbuddy\services\Base;
 use convergine\contentbuddy\services\ContentGenerator;
 use convergine\contentbuddy\services\Prompt;
 use convergine\contentbuddy\services\PromptProcessor;
 use convergine\contentbuddy\services\Request;
+use convergine\contentbuddy\services\Translate;
 use convergine\contentbuddy\variables\BuddyVariable;
 use Craft;
 use craft\base\Model;
@@ -27,9 +29,11 @@ use craft\i18n\PhpMessageSource;
 
 /**
 * @property Prompt $promptService;
- * @property ContentGenerator $chat;
+ * @property ContentGenerator $contentGenerator;
  * @property Request $request;
  * @property PromptProcessor $promptProcessor;
+ * @property Translate $translate;
+ * @property Base $base;
  */
 class BuddyPlugin extends Plugin
 {
@@ -49,12 +53,15 @@ class BuddyPlugin extends Plugin
 	
 	}
 
+
 	protected function _setComponents(){
 		$this->setComponents([
 			'promptService' => Prompt::class,
-			'chat' => ContentGenerator::class,
+			'contentGenerator' => ContentGenerator::class,
 			'request' => Request::class,
 			'promptProcessor' => PromptProcessor::class,
+			'translate' => Translate::class,
+			'base' => Base::class,
 		]);
 	}
 
@@ -79,6 +86,9 @@ class BuddyPlugin extends Plugin
 				$event->rules['convergine-contentbuddy/prompts/delete/<id:\d+>'] = 'convergine-contentbuddy/prompts/remove';
 
 				$event->rules['convergine-contentbuddy/content/generate'] = 'convergine-contentbuddy/content-generator/generate';
+
+				$event->rules['convergine-contentbuddy/site-translate'] = 'convergine-contentbuddy/translate/index';
+				$event->rules['convergine-contentbuddy/site-translate/log'] = 'convergine-contentbuddy/translate/log';
 
 			}
 		);
@@ -149,7 +159,7 @@ class BuddyPlugin extends Plugin
 
 					// Load additional JS
 					$js = Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig',[
-						'isNewApi'=>BuddyPlugin::getInstance()->chat->isNewApi($settings->preferredModel)
+						'isNewApi'=>BuddyPlugin::getInstance()->contentGenerator->isNewApi($settings->preferredModel)
 					]);
 					if ($js) {
 						$view->registerJs($js, View::POS_END);
@@ -214,6 +224,10 @@ class BuddyPlugin extends Plugin
 			$nav['subnav']['content-generator'] = [
 				'label' => Craft::t('convergine-contentbuddy', 'Content Generator'),
 				'url' => 'convergine-contentbuddy/content-generator',
+			];
+			$nav['subnav']['site-translation'] = [
+				'label' => Craft::t('convergine-contentbuddy', 'Site Translation'),
+				'url' => 'convergine-contentbuddy/site-translate',
 			];
 			$nav['subnav']['prompts'] = [
 				'label' => Craft::t('convergine-contentbuddy', 'Prompts Templates'),

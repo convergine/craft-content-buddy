@@ -48,6 +48,7 @@ class ContentGenerator {
 		$this->_language             = $data['buddy_language'] ?? 'en';
 
 		$section           = $data['buddy_entry_section'];
+		$site_id           = $data['buddy_entry_site'];
 		$description_field = $data['buddy_entry_field'];
 		list( $section_id, $type_id ) = explode( ':', $section );
 
@@ -196,7 +197,7 @@ class ContentGenerator {
 					$section_id,
 					$type_id,
 					$description_field,
-					Craft::$app->sites->getCurrentSite()->id,
+					$site_id,
 					Craft::$app->user->getId(),
 					$assetfield
 				);

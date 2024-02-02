@@ -151,6 +151,15 @@
             <label>{{ 'Create article(s) in:'|t('convergine-contentbuddy') }}</label>
             <div class="flex buddy-box-cont">
                 {{ forms.selectField({
+                    label: 'Site'|t('convergine-contentbuddy'),
+                    name: 'buddy_entry_site',
+                    id: 'buddy_entry_site',
+                    value: craft.app.sites.getCurrentSite.id,
+                    options: sites,
+                    placeholder: '',
+                    first: false
+                }) }}
+                {{ forms.selectField({
                     label: 'Section / Type'|t('convergine-contentbuddy'),
                     name: 'buddy_entry_section',
                     id: 'buddy_entry_section',
@@ -536,6 +545,7 @@ TL;DR:',
             </div>
         </div>
         {{ min_execution_time_alert|raw }}
+        {{ craft.contentbuddy.checkLicense()|raw }}
         <ul class="buddy-alert error" id="buddy-alert-error">
         </ul>
         <ul class="buddy-alert success" id="buddy-alert-success">

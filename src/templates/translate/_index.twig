@@ -1,0 +1,112 @@
+{% extends '_layouts/cp' %}
+{% import "_includes/forms" as forms %}
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+
+{% set plugin = craft.app.getModule('convergine-contentbuddy') %}
+{% set crumbs = [
+    { label: plugin.name, url: url('convergine-contentbuddy') },
+    { label: "Site Translation"|t('convergine-contentbuddy'), url: url('convergine-contentbuddy/site-translate') },
+] %}
+
+{% set selectedSubnavItem = 'site-translation' %}
+
+{% set fullPageForm = false %}
+{% set title = "Site Translation"|t('convergine-contentbuddy') %}
+
+{% block content %}
+
+    <form method="post">
+        <input type="hidden" name="action" value="convergine-contentbuddy/translate/process">
+        {{ csrfInput() }}
+
+        {{ forms.selectField({
+            label: 'Select Section:'|t('convergine-contentbuddy'),
+            name: 'section',
+            id: 'section',
+            options: sections,
+            placeholder: '',
+            first: false,
+            instructions: 'selectSectionInstructions'|t('convergine-contentbuddy')
+        }) }}
+        <div id="fields"></div>
+
+        {{ forms.selectField({
+            label: 'Select Language:'|t('convergine-contentbuddy'),
+            name: 'translate_to',
+            id: 'translate_to',
+            options: sites,
+            placeholder: '',
+            first: false,
+            instructions:'selectLanguageInstructions'|t('convergine-contentbuddy')
+        }) }}
+
+        {{ forms.textareaField({
+            label: 'Additional instructions'|t('convergine-contentbuddy'),
+            name: 'instructions',
+            value: 'do not translate HTML code, link URLs or filenames that can break the functionality of the link or code',
+            instructions: 'additionalInstructionsDescription'|t('convergine-contentbuddy')
+        }) }}
+
+        {{ forms.lightswitchField({
+            label: "Overwrite Existing Translations"|t('convergine-contentbuddy'),
+            name: 'override',
+            on: false,
+            instructions: 'overwriteExistingTranslationsDescription'|t('convergine-contentbuddy')
+        }) }}
+        {{ craft.contentbuddy.checkLicense()|raw }}
+        <button type="submit" class="btn submit add icon" id="buddy_generate_entry"
+                aria-label="Generate new entry"
+        >
+            <div class="label">{{ 'Generate Translations'|t('convergine-contentbuddy') }}</div>
+            <div class="spinner spinner-absolute"></div>
+        </button>
+    </form>
+
+    {% include 'convergine-contentbuddy/translate/_translations_list.twig' with {
+        items : items
+    } only %}
+{% endblock %}
+
+{% js %}
+
+        $(function(){
+            $("#section").on("change", function(){
+                if($(this).val() != "")
+                    getFields($(this).val())
+            })
+            $(".translate-delete").on('click',function (e){
+                e.preventDefault()
+                if(confirm('{{ 'Are you sure to remove record and associated logs?'|t('convergine-contentbuddy') }}')){
+                    const url = $(this).attr('href')
+                    const row = $(this).parents('tr')
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: {
+                            [Craft.csrfTokenName]: Craft.csrfTokenValue
+                        },
+                        success: function(data) {
+                            row.remove();
+                            Craft.cp.displayNotification("notice", "Record removed", {"icon":"info","iconLabel":"Notice"})
+                        },
+                        dataType:'json'
+                    });
+                }
+            })
+        })
+        function getFields($section){
+            $.ajax({
+                url: '{{ url('actions/convergine-contentbuddy/translate/get-fields') }}',
+                type: 'POST',
+                data: {
+                    [Craft.csrfTokenName]: Craft.csrfTokenValue,
+                    'section': $section
+                },
+                success: function(data) {
+                    $("#fields").html(data)
+                    $(".lightswitch").lightswitch()
+                }
+            });
+        }
+
+{% endjs %}

@@ -1,5 +1,5 @@
 {% extends 'convergine-contentbuddy/_layouts/_settings' %}
-
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
 {% import '_includes/forms' as forms %}
 
 {% set title = 'Settings' %}
@@ -8,6 +8,7 @@
 {% set fullPageForm = true %}
 
 {% block content %}
+    {{ craft.contentbuddy.checkLicense()|raw }}
     <div style="margin-bottom: 48px;">
         <p>{{ 'fieldsDescriptionText'|t('convergine-contentbuddy') }}</p>
     </div>
