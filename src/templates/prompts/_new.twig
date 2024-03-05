@@ -16,6 +16,7 @@
 {% set fullPageForm = true %}
 
 {% block content %}
+    {{ craft.contentbuddy.checkLicense()|raw }}
     {{ forms.hidden({
         name: 'action',
         value: 'convergine-contentbuddy/prompts/save'

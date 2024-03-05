@@ -26,13 +26,13 @@ class Base {
 
 	public function checkLicenseMsg(){
 		$status = \Craft::$app->plugins->getPluginLicenseKeyStatus('convergine-contentbuddy');
-
 		// Handle different license statuses
 		if (in_array($status,[
 			LicenseKeyStatus::Trial,
 			LicenseKeyStatus::Invalid,
 			LicenseKeyStatus::Mismatched,
-			LicenseKeyStatus::Astray
+			LicenseKeyStatus::Astray,
+			LicenseKeyStatus::Unknown
 		])) {
 
 			return '<div class="buddy-alert error" style="display:block;">

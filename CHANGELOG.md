@@ -2,9 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.9 - 2024-03-05
+### Fixed
+- Fixed issue with TranslateRecord migration [Issue #20](https://github.com/convergine/craft-content-buddy/issues/20)
+
+### Changed
+- Updated to support the latest GPT models and Stability.AI engines.
+
 ## 1.0.8 - 2024-02-02
 ### Added
 - Added auto-translate feature for multi-site CraftCMS instances
+
 ### Fixed
 - Fixed issue when custom prompt template exceeds 255 characters [Issue #16](https://github.com/convergine/craft-content-buddy/issues/16)
 - Fixed issue with multi-site [Issue #19](https://github.com/convergine/craft-content-buddy/issues/19)
@@ -27,6 +35,7 @@ All notable changes to this project will be documented in this file.
 ## 1.0.4 - 2023-08-01
 ### Added
 - Added Matrix block support.
+
 ### Fixed
 - Fixed content generation error when no site exists with the hardcoded id "1". (Thanks to @edbarbe for code contribution).
 

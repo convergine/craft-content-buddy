@@ -2,6 +2,8 @@
 
 {% import '_includes/forms' as forms %}
 
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+
 {% set title = 'Prompts' %}
 {% set selectedSubnavItem = 'prompts' %}
 {% set plugin = craft.app.getModule('convergine-contentbuddy') %}
@@ -24,10 +26,12 @@
 {% endblock %}
 
 {% block content %}
-
     {% if prompts|length %}
 
         <div class="tableview tablepane">
+
+            {{ craft.contentbuddy.checkLicense()|raw }}
+
             <table class="data fullwidth">
                 <thead>
                 <tr>

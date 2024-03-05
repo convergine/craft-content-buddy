@@ -67,19 +67,12 @@ class Request {
 	}
 
 	protected function _getMaxTokensForModel( $model ) {
-		if ( $model == 'text-davinci-002' || $model == 'text-davinci-003' || strpos( $model, 'gpt-3.5-turbo' ) === 0 ) {
-			return 3900;
-		}
-
-		if ( strpos( $model, 'gpt-4-32k' ) === 0 ) {
-			return 31000;
-		}
-
-		if ( strpos( $model, 'gpt-4' ) === 0 ) {
-			return 7900;
-		}
-
-		return 2000;
+        return match($model) {
+            "gpt-4", "gpt-4-0613" => 7900,
+            "gpt-4-32k", "gpt-4-32k-0613" => 31000,
+            "gpt-4-0125-preview", "gpt-4-turbo-preview", "gpt-4-1106-preview", "gpt-4-vision-preview", "gpt-3.5-turbo-0125", "gpt-3.5-turbo", "gpt-3.5-turbo-1106" => 3900,
+            default => 2000
+        };
 	}
 
 	protected function _buildTextGenerationRequestBody( $model, $prompt, $maxTokensToGenerate, $temperature = 0.7 ) {
