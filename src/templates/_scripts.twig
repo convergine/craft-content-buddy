@@ -1,86 +1,101 @@
 {% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
 
-    $(document).ready(function () {
+$(document).ready(function () {
+    let working = '{{ 'Working...'|t('convergine-contentbuddy') }}';
+    let selectPromptText = '{{ 'selectPromptText'|t('convergine-contentbuddy') }}';
 
-        $('.buddy-button').each(function () {
-            let that = $(this);
-            let cont = that.parents('.field');
-            let input = cont.find('.input input, .input textarea');
-            if (that.parents('.field').attr('data-type') == 'craft\\redactor\\Field') {
-                let textareaId = input.attr('id');
-                $('#textareaId').css('padding-right', '125px');
+    $('.buddy-button').each(function () {
+        let $this = $(this);
+        let $field = $this.parents('.field');
+        let $input = $field.find('.input input, .input textarea');
+        if($field.attr('data-type') !== 'craft\\redactor\\Field' && $field.attr('data-type') !== 'craft\\ckeditor\\Field') {
+            if($field.find('.chars-left').length) {
+                $input.css('padding-right', '158px');
+                $field.find('.chars-left').css('padding-right', '128px')
             } else {
-
-                if (cont.find('.chars-left').length) {
-                    input.css('padding-right', '158px');
-                    cont.find('.chars-left').css('padding-right', '128px')
-                } else {
-                    input.css('padding-right', '125px');
-                }
+                $input.css('padding-right', '125px');
             }
-        });
+        }
+    });
 
+    $('body').on('click', '.buddy-menu a', function (clickEvent) {
+        clickEvent.stopPropagation();
+        clickEvent.preventDefault();
 
-        $('body').on('click', '.buddy-menu a', function (clickEvent) {
-            clickEvent.stopPropagation();
-            clickEvent.preventDefault();
-            let that = $(this);
+        let $this = $(this);
+        let hash = $this.attr('data-hash');
+        let $button = $('button[data-hash="' + hash + '"]');
+        let $input = $button.closest('.input').find('input, textarea').first();
 
-            let input = $('button[data-hash="' + that.attr('data-hash') + '"]').closest('.input').find('input, textarea').first();
-            let text = input.val();
+        $this.parents('.buddy-menu').css({'display': 'none', opacity: 0});
+        $('[aria-controls="' + $this.parents('.buddy-menu').attr('id') + '"]').attr('aria-expanded', 'false');
 
-            let prompt = that.attr('data-prompt');
-            let lang = that.attr('data-lang');
+        let fieldType = $button.closest('.field').attr('data-type');
+        let query = getInputSelection(fieldType, $input);
+        if(!checkInputText(query)) {
+            return;
+        }
+        setInputSelection(fieldType, $input, query, working);
 
-            let query = '';
-            let hash = that.attr('data-hash');
-            that.parents('.buddy-menu').css({'display': 'none', opacity: 0});
-            $('[aria-controls="' + that.parents('.buddy-menu').attr('id') + '"]').attr('aria-expanded', 'false');
-            if ($('button[data-hash="' + that.attr('data-hash') + '"]').closest('.field').attr('data-type') == 'craft\\redactor\\Field') {
-                let textareaId = input.attr('id');
-                query = $R('#' + textareaId).selection.getHtml();
-                if (!query) {
-                    query = text
-                }
-                if (!checkInputText(query)) {
-                    return;
-                }
-                $R('#' + textareaId, 'source.setCode', text.replace(query, '{{ 'Working...'|t('convergine-contentbuddy') }}'));
-
-            } else {
-                query = getInputSelection(input);
-                if (!query) {
-                    query = text
-                }
-                if (!checkInputText(query)) {
-                    return;
-                }
-                input.val(text.replace(query, '{{ 'Working...'|t('convergine-contentbuddy') }}'));
-            }
-
-            sendRequest(prompt, query, input, hash,text,lang);
-        });
-
+        let text = $input.val();
+        let prompt = $this.attr('data-prompt');
+        let lang = $this.attr('data-lang');
+        sendRequest(prompt, query, $input, hash,text,lang);
     });
 
     function checkInputText(query) {
-        if (query.length < 5) {
-            alert('{{ 'selectPromptText'|t('convergine-contentbuddy') }}');
+        if(query.length < 5) {
+            alert(selectPromptText);
             return false;
         }
         return true;
     }
 
-    function getInputSelection(elem) {
-        if (typeof elem != "undefined") {
-            s = elem[0].selectionStart;
-            e = elem[0].selectionEnd;
-            return elem.val().substring(s, e);
+    function getInputSelection(fieldType, $input) {
+        let query = '';
+        let text = $input.val();
+        if(fieldType === 'craft\\redactor\\Field') {
+            let textareaId = $input.attr('id');
+            query = $R('#' + textareaId).selection.getHtml();
+        } else if(fieldType === 'craft\\ckeditor\\Field') {
+            //query = CKEditor5.utils.getDataFromElement($input[0]);
+            let $ckElement = $input.next().find('.ck-editor__editable');
+            if($ckElement.length) {
+                let selection = $ckElement[0].ckeditorInstance.model.document.selection.getFirstRange().getItems();
+                for(let item of selection) {
+                    query = item.data;
+                }
+            }
+        } else if(typeof $input !== "undefined") {
+            let s = $input[0].selectionStart;
+            let e = $input[0].selectionEnd;
+            return $input.val().substring(s, e);
         } else {
             return '';
         }
+        if(!query) {
+            query = text
+        }
+        console.log('query',query);
+        return query;
     }
 
+    function setInputSelection(fieldType, $input, old_text, new_text) {
+        let text = $input.val();
+        let value = text.replace(old_text, new_text);
+        if(fieldType === 'craft\\redactor\\Field') {
+            let textareaId = $input.attr('id');
+            $R('#' + textareaId, 'source.setCode', value);
+        } else if(fieldType === 'craft\\ckeditor\\Field') {
+            //CKEditor5.utils.setDataInElement(input[0], text.replace(query, working));
+            let $ckElement = $input.next().find('.ck-editor__editable');
+            if($ckElement.length) {
+                $ckElement[0].ckeditorInstance.setData(value);
+            }
+        } else {
+            $input.val(value);
+        }
+    }
 
     function sendRequest(prompt, query, textField, hash, text, lang) {
         let sendData = {
@@ -95,41 +110,22 @@
             url: "{{ actionUrl('convergine-contentbuddy/prompt-processor/process') }}",
             data: sendData,
             success: function (data) {
-                if (data.res) {
-
-                    result = data.result.replaceText==1 ? text.replace(query, data.result.response) : text.replace(query, query + ' ' + data.result.response);
-
-                    if ($('button[data-hash="' + hash + '"]').closest('.field').attr('data-type') == 'craft\\redactor\\Field') {
-                        let textareaId = textField.attr('id');
-                        $R('#' + textareaId, 'source.setCode', result);
-                    } else {
-                        $(textField).val(result);
-                    }
+                let fieldType = $('button[data-hash="' + hash + '"]').closest('.field').attr('data-type');
+                if(data.res) {
+                    let result = data.result.replaceText == 1 ? data.result.response : query + ' ' + data.result.response;
+                    setInputSelection(fieldType, textField, working, result);
                 } else {
-                    result = text.replace('{{ 'Working...'|t('convergine-contentbuddy') }}', query)
-                    if ($('button[data-hash="' + hash + '"]').closest('.field').attr('data-type') == 'craft\\redactor\\Field') {
-                        let textareaId = textField.attr('id');
-                        $R('#' + textareaId, 'source.setCode', result);
-                    } else {
-                        $(textField).val(query);
-                    }
+                    setInputSelection(fieldType, textField, working, query);
                     let errorMessages = (data.msg).replaceAll('<br>','\n');
-
                     alert(errorMessages);
                 }
             },
             dataType: "json"
-        }).done(function (data) {
-
         }).fail(function (data) {
-            result = text.replace('{{ 'Working...'|t('convergine-contentbuddy') }}', query)
+            result = text.replace(working, query);
             alert(data.responseJSON.error.message.replace('<br>','\n'));
-            if ($('button[data-hash="' + hash + '"]').closest('.field').attr('data-type') == 'craft\\redactor\\Field') {
-                let textareaId = textField.attr('id');
-                $R('#' + textareaId, 'source.setCode', query);
-            } else {
-                $(textField).val(query);
-            }
+            let fieldType = $('button[data-hash="' + hash + '"]').closest('.field').attr('data-type');
+            setInputSelection(fieldType, textField, working, query);
         });
     }
-
+});

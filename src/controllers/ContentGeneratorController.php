@@ -4,15 +4,13 @@ namespace convergine\contentbuddy\controllers;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\services\ContentGenerator;
 use Craft;
-use craft\services\Sites;
+use craft\web\Controller;
 
+class ContentGeneratorController extends Controller {
 
-class ContentGeneratorController extends \craft\web\Controller {
-
-	public function actionIndex(){
-
+	public function actionIndex() {
 		$sections = [];
-		$_sections = Craft::$app->sections->getAllSections();
+        $_sections = version_compare(Craft::$app->getInfo()->version, '5.0', '>=') ? Craft::$app->entries->getAllSections() : Craft::$app->sections->getAllSections();
 
 		foreach ($_sections as $section){
 			if($section->type == 'channel'){
@@ -36,7 +34,8 @@ class ContentGeneratorController extends \craft\web\Controller {
 
 								if(in_array(get_class($field),[
 									'craft\fields\PlainText',
-									'craft\redactor\Field'
+									'craft\redactor\Field',
+                                    'craft\ckeditor\Field'
 								])){
 									$entry_data['fields'][]=[
 										'name'=>$field->name,
@@ -87,7 +86,7 @@ class ContentGeneratorController extends \craft\web\Controller {
 			]);
 	}
 
-	public function actionGenerate(){
+	public function actionGenerate() {
 		$this->requirePostRequest();
 		$data = $this->request->post();
 

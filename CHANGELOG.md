@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.0 - 2024-03-21
+### Added
+- Added support for CraftCMS v5.x
+- Added support for CKEditor fields [Issue #21](https://github.com/convergine/craft-content-buddy/issues/21)
+
+### Fixed
+- Fixed error installing in Docker [Issue #22](https://github.com/convergine/craft-content-buddy/issues/22)
+
 ## 1.0.9 - 2024-03-05
 ### Fixed
 - Fixed issue with TranslateRecord migration [Issue #20](https://github.com/convergine/craft-content-buddy/issues/20)

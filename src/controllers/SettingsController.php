@@ -39,7 +39,8 @@ class SettingsController extends \craft\web\Controller {
 		return $this->renderTemplate( 'convergine-contentbuddy/settings/_fields', [
 			'settings'     => $settings,
 			'fields'       => $settings->getRegularFieldsList(),
-			'matrixFields' => $settings->getMatrixFieldsList()
+			'matrixFields' => $settings->getMatrixFieldsList(),
+            'isCraft5'     => version_compare(Craft::$app->getInfo()->version, '5.0', '>=')
 		] );
 	}
 

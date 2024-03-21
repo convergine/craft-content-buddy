@@ -23,9 +23,15 @@
             <tbody>
 
             {% for item in items %}
-                {% set section = craft.app.sections.getSectionById(item.sectionId) %}
+                {% if isCraft5 %}
+                    {% set section = craft.app.entries.getSectionById(item.sectionId) %}
+                {% else %}
+                    {% set section = craft.app.sections.getSectionById(item.sectionId) %}
+                {% endif %}
+
                 {% set site = craft.app.sites.getSiteById(item.siteId) %}
 
+                {% if site %}
                 <tr class="s-{{ item.id }}">
                     <td class="label-column">{{ section.name }}</td>
                     <td class="handle-column">
@@ -74,6 +80,7 @@
                         {% endif %}
                     </td>
                 </tr>
+                {% endif %}
 
             {% endfor %}
             </tbody>

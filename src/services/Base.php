@@ -16,6 +16,7 @@ namespace convergine\contentbuddy\services;
 use convergine\contentbuddy\BuddyPlugin;
 use Craft;
 use craft\enums\LicenseKeyStatus;
+use ReflectionClass;
 
 class Base {
 
@@ -45,8 +46,14 @@ class Base {
 
 	public function getSupportedFieldTypes(): array{
 		return [
+            //'craft\fieldlayoutelements\entries\EntryTitleField',
 			'craft\fields\PlainText',
-			'craft\redactor\Field'
+			'craft\redactor\Field',
+            'craft\ckeditor\Field'
 		];
 	}
+
+    public function isSupportedFieldType($field) : bool {
+        return in_array((new ReflectionClass($field))->getName(), $this->getSupportedFieldTypes());
+    }
 }

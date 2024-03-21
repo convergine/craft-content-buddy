@@ -16,7 +16,9 @@
                         <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
                         <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
                         <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
-                        <th scope="col" style="width: 20%">{{ 'Group' |t('convergine-contentbuddy') }}</th>
+                        {% if not isCraft5 %}
+                            <th scope="col" style="width: 20%">{{ 'Group' |t('convergine-contentbuddy') }}</th>
+                        {% endif %}
                         <th class="thin" style="width: 10%">{{ 'Translate?' |t('convergine-contentbuddy') }}</th>
 
                     </tr>
@@ -34,7 +36,9 @@
                                     <span data-icon="clipboard" aria-hidden="true"></span>
                                 </div></td>
                             <td class="group-column">{{ field.type }}</td>
-                            <td class="group-column">{{ field.group }}</td>
+                            {% if not isCraft5 %}
+                                <td class="group-column">{{ field.group }}</td>
+                            {% endif %}
                             <td class="enabled-column">
                                 {{ forms.lightswitch({
                                     name: 'enabledFields[]',

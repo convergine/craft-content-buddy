@@ -1,9 +1,9 @@
 <?php
 namespace convergine\contentbuddy\models;
 
+use Craft;
 use craft\base\Model;
 use craft\helpers\App;
-use Craft;
 
 class SettingsModel extends Model
 {
@@ -63,7 +63,11 @@ class SettingsModel extends Model
 	 */
 	public string $systemMessage = '';
 
-	private array $_supportedFieldTypes = ['craft\fields\PlainText','craft\redactor\Field'];
+	private array $_supportedFieldTypes = [
+        'craft\fields\PlainText',
+        'craft\redactor\Field',
+        'craft\ckeditor\Field'
+    ];
 
 	public string $imageModel = 'openai';
 
@@ -108,18 +112,23 @@ class SettingsModel extends Model
 	}
 
 	public function getRegularFieldsList(): array {
+        $isCraft5 = version_compare(Craft::$app->getInfo()->version, '5.0', '>=');
+
 		$fields = [];
 
 		foreach ( \Craft::$app->getFields()->getAllFields() as $field ) {
 
 			if ( in_array( ( new \ReflectionClass( $field ) )->getName(), $this->_supportedFieldTypes ) ) {
-				$fields[] = [
-					'id'     => $field->id,
-					'handle' => $field->handle,
-					'name'   => $field->name,
-					'group'  => $field->getGroup()->name,
-					'type'   => $this->_getClass( $field )
-				];
+                $field_obj = [
+                    'id'     => $field->id,
+                    'handle' => $field->handle,
+                    'name'   => $field->name,
+                    'type'   => $this->_getClass( $field )
+                ];
+                if(!$isCraft5) {
+                    $field_obj['group'] = $field->getGroup()->name;
+                }
+				$fields[] = $field_obj;
 			}
 
 		}
@@ -128,13 +137,16 @@ class SettingsModel extends Model
 	}
 
 	public function getMatrixFieldsList(): array {
+        if(version_compare(Craft::$app->getInfo()->version, '5.0', '>=')) {
+            return array();
+        }
 		$matrixFields = [];
 		foreach ( \Craft::$app->getFields()->getFieldsByType( 'craft\fields\Matrix' ) as $matrixField ) {
 			$matrixFields [ $matrixField->handle ]['name']   = $matrixField->name;
 			$matrixFields [ $matrixField->handle ]['fields'] = [];
-			foreach ( \Craft::$app->getMatrix()->getBlockTypesByFieldId( $matrixField->id ) as $block ) {
-				foreach ( \Craft::$app->getFields()->getAllFields( "matrixBlockType:" . $block->uid ) as $blockField ) {
-					if ( in_array( ( new \ReflectionClass( $blockField ) )->getName(), $this->_supportedFieldTypes ) ) {
+            foreach ( \Craft::$app->getMatrix()->getBlockTypesByFieldId( $matrixField->id ) as $block ) {
+                foreach ( \Craft::$app->getFields()->getAllFields( "matrixBlockType:" . $block->uid ) as $blockField ) {
+                    if ( in_array( ( new \ReflectionClass( $blockField ) )->getName(), $this->_supportedFieldTypes ) ) {
 						$matrixFields [ $matrixField->handle ]['fields'][] = [
 							'id'     => $blockField->id,
 							'handle' => $blockField->handle,
@@ -146,18 +158,19 @@ class SettingsModel extends Model
 				}
 			}
 		}
-
 		return $matrixFields;
 	}
 
 	protected function _getClass( $object ): string {
 		return str_replace( [
 			'craft\fields\\',
-			'craft\redactor\Field'
+			'craft\redactor\Field',
+            'craft\ckeditor\Field'
 		],
 			[
 				'',
-				'Redactor'
+				'Redactor',
+                'CK Editor'
 			], ( new \ReflectionClass( $object ) )->getName() );
 	}
 	

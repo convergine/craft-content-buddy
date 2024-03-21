@@ -389,7 +389,7 @@ Subtitles text:',
 
 	protected function _checkLicenseEnvironment() {
 		// Get the current domain name
-		$domain = $_SERVER['HTTP_HOST'];
+		$domain = $_SERVER['HTTP_HOST']??'';
 
 		// Check if domain is localhost
 		if ($domain === 'localhost') {

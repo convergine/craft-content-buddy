@@ -1,6 +1,7 @@
 <?php
 namespace convergine\contentbuddy;
 
+use convergine\contentbuddy\models\SettingsModel;
 use convergine\contentbuddy\services\Base;
 use convergine\contentbuddy\services\ContentGenerator;
 use convergine\contentbuddy\services\Prompt;
@@ -9,23 +10,17 @@ use convergine\contentbuddy\services\Request;
 use convergine\contentbuddy\services\Translate;
 use convergine\contentbuddy\variables\BuddyVariable;
 use Craft;
-use craft\base\Model;
+use craft\base\Field;
 use craft\base\Plugin;
+use craft\events\DefineFieldHtmlEvent;
+use craft\events\RegisterUrlRulesEvent;
 use craft\events\TemplateEvent;
+use craft\helpers\StringHelper;
+use craft\helpers\UrlHelper;
 use craft\web\twig\variables\CraftVariable;
+use craft\web\UrlManager;
 use craft\web\View;
 use yii\base\Event;
-use craft\web\UrlManager;
-use craft\helpers\UrlHelper;
-use craft\base\Field;
-use craft\events\DefineFieldHtmlEvent;
-use craft\events\DefineHtmlEvent;
-use craft\events\RegisterUrlRulesEvent;
-use convergine\contentbuddy\assets\BuddyAssets;
-use convergine\contentbuddy\models\SettingsModel;
-use craft\elements\Entry;
-use craft\helpers\StringHelper;
-use craft\i18n\PhpMessageSource;
 
 /**
 * @property Prompt $promptService;
@@ -178,7 +173,6 @@ class BuddyPlugin extends Plugin
 				}
 			);
 		}
-
 	}
 
 	protected function createSettingsModel(): SettingsModel {

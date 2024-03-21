@@ -425,7 +425,7 @@ class ContentGenerator {
 
 	private function _addImages( $content, $images ) {
 		foreach ( $images as $image ) {
-			$content .= '<img src="' . $image->getUrl() . '" />';
+            $content .= "<figure><img src='" . $image->getUrl() . "' /></figure>";
 		}
 
 		return $content;

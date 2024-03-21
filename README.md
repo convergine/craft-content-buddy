@@ -1,4 +1,4 @@
-# Content Buddy for Craft CMS 4
+# Content Buddy for Craft CMS 4 / Craft CMS 5
 ![Screenshot](./docs/images/image1.png)
 ![Screenshot](./docs/images/image2.png)
 ![Screenshot](./docs/images/image3.png)
