@@ -71,7 +71,7 @@ cd /path/to/my-project.test
 composer require convergine/craft-content-buddy
 
 # tell Craft to install the plugin
-./craft plugin/install craft-content-buddy
+./craft plugin/install convergine-contentbuddy
 ```
 
 ## Roadmap
