@@ -3,6 +3,8 @@
 namespace convergine\contentbuddy\migrations;
 
 use convergine\contentbuddy\records\BuddyPromptRecord;
+use convergine\contentbuddy\records\TranslateLogRecord;
+use convergine\contentbuddy\records\TranslateRecord;
 use craft\db\Migration;
 use craft\enums\LicenseKeyStatus;
 use GuzzleHttp\Client;
@@ -52,6 +54,43 @@ class Install extends Migration {
 			'dateUpdated' => $this->dateTime()->notNull(),
 			'uid'         => $this->uid(),
 		] );
+
+        $this->archiveTableIfExists( TranslateRecord::tableName() );
+        $this->createTable( TranslateRecord::tableName(), [
+            'id'       => $this->primaryKey(),
+            'sectionId'    => $this->integer()->notNull(),
+            'sectionType' => $this->integer()->notNull(),
+            'siteId'   => $this->integer()->notNull(),
+
+            'instructions'     => $this->string(255),
+            'override'=> $this->integer()->notNull(),
+            'fields'=> $this->text(),
+            'fieldsCount'=>$this->integer()->notNull(),
+            'entriesSubmitted'=>$this->integer()->notNull(),
+            'fieldsProcessed'=>$this->integer()->notNull(),
+            'fieldsTranslated'=>$this->integer()->notNull(),
+            'fieldsError'=>$this->integer()->notNull(),
+            'fieldsSkipped'=>$this->integer()->notNull(),
+            'jobIds'=> $this->text(),
+
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid'         => $this->uid(),
+        ] );
+
+        $this->archiveTableIfExists( TranslateLogRecord::tableName() );
+        $this->createTable( TranslateLogRecord::tableName(), [
+            'id'       => $this->primaryKey(),
+            'translationId'    => $this->integer()->notNull(),
+            'entryId' => $this->integer()->notNull(),
+            'message'=> $this->text(),
+            'field'=>$this->string(255),
+            'blockId'=>$this->integer()->notNull(),
+
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid'         => $this->uid(),
+        ] );
 	}
 
 	/**

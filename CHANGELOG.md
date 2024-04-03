@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.1 - 2024-04-03
+### Fixed
+- Fixed issue with fresh installation [Issue #24](https://github.com/convergine/craft-content-buddy/issues/24)
+
 ## 1.1.0 - 2024-03-21
 ### Added
 - Added support for CraftCMS v5.x
