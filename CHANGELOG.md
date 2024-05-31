@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.3 - 2024-05-31
+### Fixed
+- Fixed issue with site translation on fresh install
+
 ## 1.1.2 - 2024-05-31
 ### Added
 - Ability to translate single pages with a click [Issue #7](https://github.com/convergine/craft-content-buddy/issues/7)

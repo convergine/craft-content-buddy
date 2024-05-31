@@ -58,6 +58,7 @@ class Install extends Migration {
         $this->archiveTableIfExists( TranslateRecord::tableName() );
         $this->createTable( TranslateRecord::tableName(), [
             'id'       => $this->primaryKey(),
+            'idEntry'    => $this->integer()->null(),
             'sectionId'    => $this->integer()->notNull(),
             'sectionType' => $this->integer()->notNull(),
             'siteId'   => $this->integer()->notNull(),

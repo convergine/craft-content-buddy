@@ -2,7 +2,7 @@
     "name": "convergine/craft-content-buddy",
     "description": "Content Buddy is an AI-driven CraftCMS plugin that leverages the ChatGPT API to automatically generate and manage multi-language content, including text and images, with customizable settings and features for precise control and enhanced content creation.",
     "type": "craft-plugin",
-    "version": "1.1.2",
+    "version": "1.1.3",
     "keywords": [
         "craftcms",
         "content-buddy",
