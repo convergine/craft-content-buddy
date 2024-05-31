@@ -1,0 +1,16 @@
+<input type="hidden" name="translate_to" id="translate_to"><div>
+    <label id="context-label" class="visually-hidden">Translate</label>
+    <button type="button" id="entry-translate-btn" class="btn menubtn sitemenubtn" data-icon="world" aria-labelledby="context-label">Translate to</button>
+    <div class="menu">
+
+        <ul class="padded">
+            {% for siteId, site in sites %}
+            <li>
+                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to \'{{ site }}\'')){$('.action-input').val('convergine-contentbuddy/translate/process-entry');
+                            $('#translate_to').val('{{ siteId }}');$('#main-form').submit()}">{{ site }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+
+    </div>
+</div>

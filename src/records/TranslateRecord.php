@@ -17,6 +17,7 @@ namespace convergine\contentbuddy\records;
  * @property int $fieldsSkipped
  * @property int $fieldsCount
  * @property string $jobIds
+ * @property string $idEntry
  *
  */
 class TranslateRecord extends \craft\db\ActiveRecord {

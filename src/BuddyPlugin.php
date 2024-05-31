@@ -10,9 +10,11 @@ use convergine\contentbuddy\services\Request;
 use convergine\contentbuddy\services\Translate;
 use convergine\contentbuddy\variables\BuddyVariable;
 use Craft;
+use craft\base\Element;
 use craft\base\Field;
 use craft\base\Plugin;
 use craft\events\DefineFieldHtmlEvent;
+use craft\events\DefineHtmlEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\TemplateEvent;
 use craft\helpers\StringHelper;
@@ -173,6 +175,17 @@ class BuddyPlugin extends Plugin
 				}
 			);
 		}
+
+		Event::on(
+			Element::class,
+			Element::EVENT_DEFINE_ADDITIONAL_BUTTONS,
+			function (DefineHtmlEvent $event) {
+				if (($event->sender->enabled && $event->sender->getEnabledForSite())) {
+					$event->html.=$this->translate->getEntryTranslateControl($event->sender);
+
+				}
+			}
+		);
 	}
 
 	protected function createSettingsModel(): SettingsModel {

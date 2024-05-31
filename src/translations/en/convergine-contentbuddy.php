@@ -135,5 +135,6 @@
 	'Prompt not found'=>'Prompt not found',
 	'Missing required params'=>'Missing required params',
 
-	'licenseNotice'=>'By maintaining a valid license for our plugin on live domains, you\'re directly supporting our team\'s efforts. This not only champions the broader CraftCMS community but also enables us to continually innovate and deliver enhanced features for you.'
+	'licenseNotice'=>'By maintaining a valid license for our plugin on live domains, you\'re directly supporting our team\'s efforts. This not only champions the broader CraftCMS community but also enables us to continually innovate and deliver enhanced features for you.',
+	'entryTranslationStarted'=>'Translations request added to queue.',
 ];

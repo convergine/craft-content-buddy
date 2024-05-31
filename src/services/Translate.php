@@ -534,6 +534,20 @@ class Translate extends Component {
 		return $this->_getLayoutFields($fieldLayout);
 	}
 
+	public function getEntryTranslateControl(Element $entry):string {
+		$currentSite = $entry->siteId;
+		$sites = [];
+		foreach (Craft::$app->sites->getAllSites() as $site){
+			if($site->id !=$currentSite){
+				$sites[$site->id]=$site->name." : ".$site->language;
+			}
+
+		}
+		return Craft::$app->view->renderTemplate('convergine-contentbuddy/translate/_control.twig',[
+			'sites'=>$sites
+		]);
+	}
+
 	protected function _getJobsData( $translateId ) {
 		$translateRecord = TranslateRecord::findOne( $translateId );
 		$jobs            = explode( ',', $translateRecord->jobIds );
