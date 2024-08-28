@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.4 - 2024-08-28
+### Added
+- Added GPT-4o and GPT-4o mini to the selectable models in API settings.
+- Added support for structures. [Issue #26](https://github.com/convergine/craft-content-buddy/issues/26)
+
+### Fixed
+- Resolved an issue where translating matrix fields would fail if those fields did not exist on the target site. Now, the error will no longer block the translation of other content. However, to ensure matrix fields are translated, you must modify the matrix field's "Propagation Method" on the source site. Change it to any option other than "Only save blocks to the site they are created in." This setting prevents fields from being copied to other languages, and since Content Buddy does not create fields, it cannot translate matrix fields that do not exist on the target site. [Issue #27](https://github.com/convergine/craft-content-buddy/issues/27)
+
 ## 1.1.3 - 2024-05-31
 ### Fixed
 - Fixed issue with site translation on fresh install

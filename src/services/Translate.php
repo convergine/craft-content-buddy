@@ -148,7 +148,7 @@ class Translate extends Component {
 		$sections = [ [ 'value' => '', 'label' => 'Please Select' ] ];
         $_sections = version_compare(Craft::$app->getInfo()->version, '5.0', '>=') ? Craft::$app->entries->getAllSections() : Craft::$app->sections->getAllSections();
 		foreach ( $_sections as $section ) {
-			if ( $section->type == 'channel' ) {
+			if ( $section->type == 'channel' || $section->type == 'structure') {
 				foreach ( $section->getEntryTypes() as $type ) {
 					$sections[] = [
 						'value' => $section->id . ":" . $type->id,
@@ -258,31 +258,33 @@ class Translate extends Component {
 					                                ->all();
 					foreach ( $matrixFieldQuery->all() as $k => $matrixField ) {
 						$fieldsProcessed ++;
-						try {
-							$originalFieldValue = (string) $matrixField->getFieldValue( $handle );
-							$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->getFieldValue( $handle );
-							// heck field not empty
-							if ( strlen( $originalFieldValue ) == 0 ) {
-								$fieldsSkipped ++;
-								continue;
+						if(isset($matrixBlockTarget[ $k ])) {
+							try {
+								$originalFieldValue = (string) $matrixField->getFieldValue( $handle );
+								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->getFieldValue( $handle );
+								// heck field not empty
+								if ( strlen( $originalFieldValue ) == 0 ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+								//check if field is already translated and selected NOT OVERRIDE
+								if ( ! $override && $originalFieldValue != $targetFieldValue ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+
+								$translated_text = BuddyPlugin::getInstance()
+									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
+
+								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
+								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+								$fieldsTranslated ++;
+							} catch ( \Throwable $e ) {
+								Craft::dump( $e->getMessage() );
+								$fieldsError ++;
+								$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field, $k );
 							}
-							//check if field is already translated and selected NOT OVERRIDE
-							if ( ! $override && $originalFieldValue != $targetFieldValue ) {
-								$fieldsSkipped ++;
-								continue;
-							}
-
-							$translated_text = BuddyPlugin::getInstance()
-								->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
-
-							$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
-							Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
-
-							$fieldsTranslated ++;
-						} catch ( \Throwable $e ) {
-							Craft::dump( $e->getMessage() );
-							$fieldsError ++;
-							$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field, $k );
 						}
 					}
 

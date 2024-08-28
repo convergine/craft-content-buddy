@@ -155,9 +155,7 @@ class BuddyPlugin extends Plugin
 					$view = Craft::$app->getView();
 
 					// Load additional JS
-					$js = Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig',[
-						'isNewApi'=>BuddyPlugin::getInstance()->contentGenerator->isNewApi($settings->preferredModel)
-					]);
+					$js = Craft::$app->view->renderTemplate('convergine-contentbuddy/_scripts.twig');
 					if ($js) {
 						$view->registerJs($js, View::POS_END);
 					}
