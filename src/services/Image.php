@@ -20,18 +20,18 @@ use Craft;
 
 class Image {
 
-	public function generate($prompt, $folderId){
+	public function generate($prompt, $folderUID){
 		$settings = BuddyPlugin::getInstance()->getSettings();
 		$image_size = $settings->imageSize;
 		$engine = $settings->imageModel;
 		if($engine == 'openai'){
-			return $this->sendOpenaiImageRequest($prompt, $folderId, $image_size);
+			return $this->sendOpenaiImageRequest($prompt, $folderUID, $image_size);
 		}elseif ($engine == 'stability'){
-			return $this->sendStabilityImageRequest($prompt, $folderId, $image_size);
+			return $this->sendStabilityImageRequest($prompt, $folderUID, $image_size);
 		}
 
 	}
-	function sendOpenaiImageRequest( $prompt, $folderId, $dimensions ) {
+	function sendOpenaiImageRequest( $prompt, $folderUID, $dimensions ) {
 
 		$client = new Client();
 
@@ -56,7 +56,7 @@ class Image {
 
 		$assets = array();
 		foreach ( $data as $image ) {
-			$asset = $this->_uploadFileData( $folderId, $image['b64_json'], $dimensions, $imagePrompt );
+			$asset = $this->_uploadFileData( $folderUID, $image['b64_json'], $dimensions, $imagePrompt );
 			if ( $asset ) {
 				$assets[] = $asset;
 			}
@@ -65,7 +65,7 @@ class Image {
 		return $assets;
 	}
 
-	function sendStabilityImageRequest( $prompt, $folderId, $dimensions ) {
+	function sendStabilityImageRequest( $prompt, $folderUID, $dimensions ) {
 
 		$_dimension = explode('x',$dimensions);
 		$width = (int)$_dimension[0];
@@ -104,7 +104,7 @@ class Image {
 
 		$assets = array();
 		foreach ( $data as $image ) {
-			$asset = $this->_uploadFileData( $folderId, $image['base64'], $dimensions, $prompt );
+			$asset = $this->_uploadFileData( $folderUID, $image['base64'], $dimensions, $prompt );
 			if ( $asset ) {
 				$assets[] = $asset;
 			}
@@ -128,13 +128,13 @@ class Image {
 		return str_replace( "'", '', $imagePrompt );
 	}
 
-	private function _uploadFileData( $folderId, $imageData, $dimensions, $imagePrompt ) {
+	private function _uploadFileData( $folderUID, $imageData, $dimensions, $imagePrompt ) {
 		$imagePromptWithOnlyLetters = preg_replace( '/[^A-Za-z0-9\- ]/', '', $imagePrompt );
 		$imagePromptWithOnlyLetters = str_replace( ' ', '-', $imagePromptWithOnlyLetters );
 		$imagePromptWithOnlyLetters = substr( $imagePromptWithOnlyLetters, 0, 40 );
 		$imagePromptWithOnlyLetters = strtolower( $imagePromptWithOnlyLetters );
 
-		$folder      = Craft::$app->getAssets()->getFolderById( $folderId );
+		$folder      = Craft::$app->getAssets()->getFolderByUid( $folderUID );
 		$folder_path = Craft::getAlias( $folder->getVolume()->getFs()->getSettings()['path'] );
 		if ( ! is_dir( $folder_path ) ) {
 			throw new \Exception( 'Upload folder not found' );

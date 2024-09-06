@@ -111,8 +111,8 @@ class BuddyPlugin extends Plugin
 				$settings = BuddyPlugin::getInstance()->getSettings();
 
 				if (
-					array_key_exists($event->sender->id, $settings->enabledFields)
-					&& $settings->enabledFields[$event->sender->id]
+					array_key_exists($event->sender->handle, $settings->enabledFields)
+					&& $settings->enabledFields[$event->sender->handle]
 					&& $settings->apiToken
 				){
 					$event->html .= Craft::$app->view->renderTemplate('convergine-contentbuddy/_select.twig',

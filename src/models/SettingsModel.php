@@ -64,10 +64,11 @@ class SettingsModel extends Model
 	public string $systemMessage = '';
 
 	private array $_supportedFieldTypes = [
-        'craft\fields\PlainText',
-        'craft\redactor\Field',
-        'craft\ckeditor\Field'
-    ];
+		'craft\fields\PlainText',
+		'craft\redactor\Field',
+		'craft\ckeditor\Field',
+		'abmat\tinymce\Field'
+	];
 
 	public string $imageModel = 'openai';
 
@@ -89,7 +90,7 @@ class SettingsModel extends Model
 
 	public bool $generateImageFromText = false;
 
-	public int $generateImageAssetId = 0;
+    public string $generateImageAssetId = '';
 
 	/**
 	 * @return string

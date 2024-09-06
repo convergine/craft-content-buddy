@@ -40,7 +40,7 @@ class Translate extends Component {
 	}
 
 	public function getSectionFields( $id ) {
-        $isCraft5 = version_compare(Craft::$app->getInfo()->version, '5.0', '>=');
+		$isCraft5 = version_compare(Craft::$app->getInfo()->version, '5.0', '>=');
 
 		$_section     = explode( ":", $id );
 		$section      = $isCraft5 ? Craft::$app->entries->getSectionById( $_section[0] ) : Craft::$app->sections->getSectionById( $_section[0] );
@@ -61,17 +61,79 @@ class Translate extends Component {
         $isCraft5 = version_compare(Craft::$app->getInfo()->version, '5.0', '>=');
 
         if($isCraft5) {
-            foreach($layout->getCustomFields() as $field) {
-                if($this->_plugin->base->isSupportedFieldType($field) && $field->translationMethod != 'none') {
-                    $fields[] = [
-                        'name'   => $field->name,
-                        'handle' => $field->handle,
-                        'id'     => $field->id,
-                        'type'   => $this->_getClass( $field ),
-                        '_type'  => ( new \ReflectionClass( $field ) )->getName()
-                    ];
-                }
-            }
+	        foreach ( $layout->getTabs() as $tab ) {
+		        foreach ( $tab->getElements() as $fieldCont ) {
+			        if ( get_class( $fieldCont ) === 'craft\fieldlayoutelements\CustomField' ) {
+				        $field = $fieldCont->getField();
+
+				        if ( in_array(
+					             get_class( $field ),
+					             $this->_plugin->base->getSupportedFieldTypes()
+				             )
+				             && $field->translationMethod != 'none' ) {
+
+					        $fields[] = [
+						        'name'   => $field->name,
+						        'handle' => $field->handle,
+						        'id'     => $field->id,
+						        'group'  => '',
+						        'type'   => $this->_getClass( $field ),
+						        '_type'  => ( new \ReflectionClass( $field ) )->getName()
+					        ];
+
+				        } elseif ( in_array( get_class( $field ), [
+					        'craft\fields\Matrix'
+				        ] ) ) {
+					        /**
+					         * @var craft\fields\Matrix $field
+					         */
+							  foreach($field->getEntryTypes() as $entryType) {
+								  if ( ! isset( $matrixFields [ $field->handle ]['name'] ) ) {
+									  $matrixFields [ $field->handle ]['name']   = $field->name;
+									  $matrixFields [ $field->handle ]['handle'] = $entryType->handle;
+									  $matrixFields [ $field->handle ]['type']   = 'craft\fields\Matrix';
+									  $matrixFields [ $field->handle ]['fields'] = [];
+								  }
+
+								  //$entryType = Craft::$app->getEntries()->getEntryTypeByUid( $field->getSettings()['entryTypes'][0] );
+								  foreach ( $entryType->getFieldLayout()->getTabs() as $typeTab ) {
+									  foreach ( $typeTab->getElements() as $matrixLayoutElement ) {
+
+
+										  if ( get_class( $matrixLayoutElement ) !== 'craft\fieldlayoutelements\entries\EntryTitleField' ) {
+											  $matrixField = $matrixLayoutElement->getField();
+
+
+											  $matrixFields [ $field->handle ]['fields'][] = [
+												  'name'        => $matrixField->name,
+												  'handle'      => $matrixField->handle,
+												  'id'          => $matrixField->id,
+												  'blockName'   => $field->name,
+												  'blockHandle' => $field->handle,
+												  'type'        => $this->_getClass( $matrixField ),
+												  '_type'       => ( new \ReflectionClass( $matrixField ) )->getName()
+											  ];
+										  } elseif ( get_class( $matrixLayoutElement ) === 'craft\fieldlayoutelements\entries\EntryTitleField' ) {
+
+											  $matrixFields [ $field->handle ]['fields'][] = [
+												  'name'        => 'Title',
+												  'handle'      => 'title',
+												  'id'          => null,
+												  'blockName'   => $field->name,
+												  'blockHandle' => $field->handle,
+												  'type'        => 'Title',
+												  '_type'       => 'craft\fields\TextField'
+											  ];
+
+										  }
+
+									  }
+								  }
+							  }
+				        }
+			        }
+		        }
+	        }
         } else {
             foreach ( $layout->getTabs() as $tab ) {
                 foreach ( $tab->getElements() as $fieldCont ) {
@@ -103,7 +165,7 @@ class Translate extends Component {
                                     $matrixFields [ $field->handle ]['fields'] = [];
                                 }
                                 foreach ( \Craft::$app->getFields()->getAllFields( "matrixBlockType:" . $block->uid ) as $blockField ) {
-                                    //Craft::dump($blockField->handle);
+
                                     if ( in_array(
                                             ( new \ReflectionClass( $blockField ) )->getName(),
                                             $this->_plugin->base->getSupportedFieldTypes() ) && $blockField->translationMethod != 'none'
@@ -129,6 +191,9 @@ class Translate extends Component {
 		return [ 'regular' => $fields, 'matrix' => $matrixFields ];
 	}
 
+	private function _fillField($field) {
+
+	}
 	public function getSites() {
 		$sites = [ [ 'value' => '', 'label' => 'Please Select' ] ];
 		foreach ( Craft::$app->sites->getAllSites() as $site ) {
@@ -197,10 +262,10 @@ class Translate extends Component {
 					->send( $prompt . ": {$entry->title}", 30000, 0.7, true );
 
 				$_entry->title = $translated_text;
-				Craft::dump( $translated_text );
+
 				$fieldsTranslated ++;
 			} catch ( \Throwable $e ) {
-				Craft::dump( $e->getMessage() );
+
 				$fieldsError ++;
 				$this->_addLog( $translateId, $entry->id, $e->getMessage(), 'title' );
 			}
@@ -213,7 +278,7 @@ class Translate extends Component {
 				$_field      = explode( ":", $field );
 				$fieldType   = $_field[0];
 				$fieldHandle = $_field[1];
-				Craft::dump( $field );
+
 
 				if ( in_array( $fieldType, $this->_plugin->base->getSupportedFieldTypes() ) ) {
 					$fieldsProcessed ++;
@@ -238,24 +303,25 @@ class Translate extends Component {
 						$_entry->setFieldValue( $fieldHandle, $translated_text );
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
-						Craft::dump( $e->getMessage() );
 						$fieldsError ++;
 						$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field );
 					}
 
-
+				// process Craft4 Matrix field
 				} elseif ( $fieldType == 'craft\fields\Matrix' && class_exists('craft\elements\MatrixBlock') ) {
-					Craft::dump( $_field );
+
 					$block            = $_field[2];
 					$handle           = $_field[3];
-					$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block );
+
+					$matrixFieldQuery = $entry->getFieldValue( $block )->type( $fieldHandle );
 
 					$matrixBlockTarget = \craft\elements\MatrixBlock::find()
-					                                ->field( $fieldHandle )
+					                                ->field( $block )
 					                                ->ownerId( $_entry->id )
-					                                ->type( $block )
+					                                ->type( $fieldHandle )
 					                                ->siteId( $translate_to )
 					                                ->all();
+
 					foreach ( $matrixFieldQuery->all() as $k => $matrixField ) {
 						$fieldsProcessed ++;
 						if(isset($matrixBlockTarget[ $k ])) {
@@ -281,13 +347,84 @@ class Translate extends Component {
 
 								$fieldsTranslated ++;
 							} catch ( \Throwable $e ) {
-								Craft::dump( $e->getMessage() );
 								$fieldsError ++;
 								$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field, $k );
 							}
 						}
 					}
 
+				// process Craft5 Matrix field
+				}elseif ($fieldType == 'craft\fields\Matrix'){
+					$block            = $_field[2];
+					$handle           = $_field[3];
+
+					$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block );
+
+					$matrixBlockTarget = \craft\elements\Entry::find()
+					                                                ->field( $fieldHandle )
+					                                                ->ownerId( $_entry->id )
+					                                                ->type( $block )
+					                                                ->siteId( $translate_to )
+					                                                ->all();
+					foreach ( $matrixFieldQuery->all() as $k => $matrixField ) {
+						$fieldsProcessed ++;
+						// process Matrix Title field
+						if($handle == 'title'){
+
+							try {
+								$originalFieldValue = (string) $matrixField-> $handle ;
+								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->$handle ;
+								// heck field not empty
+								if ( strlen( $originalFieldValue ) == 0 ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+								//check if field is already translated and selected NOT OVERRIDE
+								if ( ! $override && $originalFieldValue != $targetFieldValue ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+
+								$translated_text = BuddyPlugin::getInstance()
+									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
+
+								$matrixBlockTarget[ $k ]->$handle = $translated_text ;
+								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+								$fieldsTranslated ++;
+							} catch ( \Throwable $e ) {
+								$fieldsError ++;
+								$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field, $k );
+							}
+							// process Matrix Custom fields
+						}elseif(isset($matrixBlockTarget[ $k ])) {
+							try {
+								$originalFieldValue = (string) $matrixField->getFieldValue( $handle );
+								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->getFieldValue( $handle );
+								// heck field not empty
+								if ( strlen( $originalFieldValue ) == 0 ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+								//check if field is already translated and selected NOT OVERRIDE
+								if ( ! $override && $originalFieldValue != $targetFieldValue ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+
+								$translated_text = BuddyPlugin::getInstance()
+									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
+
+								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
+								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+								$fieldsTranslated ++;
+							} catch ( \Throwable $e ) {
+								$fieldsError ++;
+								$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field, $k );
+							}
+						}
+					}
 				}
 
 
@@ -348,12 +485,12 @@ class Translate extends Component {
 						->send( $prompt . ": {$entry->title}", 30000, 0.7, true );
 
 					$_entry->title = $translated_text;
-					Craft::dump( $translated_text );
+
 					$fieldsTranslated ++;
 					$fieldsError --;
 					$titleErrorLog->delete();
 				} catch ( \Throwable $e ) {
-					Craft::dump( $e->getMessage() );
+
 					$this->_updateLog( $titleErrorLog, $e->getMessage() );
 				}
 			}
@@ -376,18 +513,18 @@ class Translate extends Component {
 						try {
 							$translated_text = BuddyPlugin::getInstance()
 								->request->send( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 30000, 0.7, true );
-							Craft::dump( $translated_text );
+
 							$_entry->setFieldValue( $fieldHandle, $translated_text );
 							$fieldsTranslated ++;
 							$fieldsError --;
 							$logRecord->delete();
 						} catch ( \Throwable $e ) {
-							Craft::dump( $e->getMessage() );
+
 							$this->_updateLog( $logRecord, $e->getMessage() );
 						}
 					}
 				} elseif ( $fieldType == 'craft\fields\Matrix' && class_exists('craft\elements\MatrixBlock')) {
-					Craft::dump( $_field );
+
 					$block            = $_field[2];
 					$handle           = $_field[3];
 					$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block );
@@ -414,7 +551,7 @@ class Translate extends Component {
 								$fieldsError --;
 								$logRecord->delete();
 							} catch ( \Throwable $e ) {
-								Craft::dump( $e->getMessage() );
+
 								$this->_updateLog( $logRecord, $e->getMessage() );
 							}
 						}
@@ -441,12 +578,14 @@ class Translate extends Component {
 		return str_replace( [
 			'craft\fields\\',
 			'craft\redactor\Field',
-            'craft\ckeditor\Field'
+			'craft\ckeditor\Field',
+			'abmat\tinymce\Field'
 		],
 			[
 				'',
 				'Redactor',
-                'CK Editor'
+				'CK Editor',
+				'Tinymce Editor'
 			], ( new \ReflectionClass( $object ) )->getName() );
 	}
 
@@ -484,10 +623,18 @@ class Translate extends Component {
 			$_field = explode( ":", $field );
 			if ( in_array( $_field[0], $this->_plugin->base->getSupportedFieldTypes() ) ) {
 				$fieldsCount ++;
-			} elseif ( $_field[0] == 'craft\fields\Matrix' ) {
-				$fieldHandle      = $_field[1];
-				$block            = $_field[2];
+			} elseif ( $_field[0] == 'craft\fields\Matrix' && class_exists('craft\elements\MatrixBlock')) {
+				$fieldHandle      = $_field[2];
+				$block            = $_field[1];
 				$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block )->all();
+				$fieldsCount      += count( $matrixFieldQuery );
+			}else{
+				$fieldHandle = $_field[1];
+				$block            = $_field[2];
+				$handle           = $_field[3];
+
+				$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block )->all();
+
 				$fieldsCount      += count( $matrixFieldQuery );
 			}
 		}
@@ -532,7 +679,6 @@ class Translate extends Component {
 	public function getTranslatedFields(Element $entry) {
 		$fieldLayout = $entry->getFieldLayout();
 
-		//Craft::dump($this->_getLayoutFields($fieldLayout));
 		return $this->_getLayoutFields($fieldLayout);
 	}
 

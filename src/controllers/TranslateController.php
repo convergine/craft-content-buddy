@@ -24,7 +24,7 @@ class TranslateController extends \craft\web\Controller {
 				'sites' => BuddyPlugin::getInstance()->translate->getSites(),
 				'sections' => BuddyPlugin::getInstance()->translate->getSections(),
 				'items' => TranslateRecord::find()->all(),
-                'isCraft5' => version_compare(Craft::$app->getInfo()->version, '5.0', '>='),
+				'isCraft5' => version_compare(Craft::$app->getInfo()->version, '5.0', '>='),
 			]);
 	}
 
@@ -35,13 +35,12 @@ class TranslateController extends \craft\web\Controller {
 		return $this->renderTemplate('convergine-contentbuddy/translate/_fields',
 			[
 				'fields' => BuddyPlugin::getInstance()->translate->getSectionFields($section),
-                'isCraft5' => version_compare(Craft::$app->getInfo()->version, '5.0', '>=')
+				'isCraft5' => version_compare(Craft::$app->getInfo()->version, '5.0', '>=')
 			]);
 	}
 
 	public function actionProcess(){
 		$request = \Craft::$app->getRequest();
-		//Craft::dump($request->post());
 
 		$section = $request->getParam('section');
 		$translate_to = $request->getParam('translate_to');
@@ -65,9 +64,6 @@ class TranslateController extends \craft\web\Controller {
 		}
 		$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
 		$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
-		//$lang = $translate_to_site->language;
-		//Craft::dump($primarySiteId);
-		//Craft::dump($enabledFields);
 
 		$translateRecord = new TranslateRecord();
 		$translateRecord->siteId = $translate_to;
@@ -84,7 +80,6 @@ class TranslateController extends \craft\web\Controller {
 		$translateRecord->override = $override?1:0;
 		$translateRecord->jobIds = '';
 		$translateRecord->save();
-		//Craft::dump($translateRecord->id);
 		$entries = Entry::find()
 		                ->sectionId( $sectionId )
 		                ->typeId($sectionType)
@@ -134,10 +129,8 @@ class TranslateController extends \craft\web\Controller {
 	public function actionRerun(){
 
 		$request = \Craft::$app->getRequest();
-		//Craft::dump($request->post());
 
 		$translationId = $request->getParam('translationId');
-		//Craft::dump($translationId);
 
 		$translationRecord = TranslateRecord::findOne(['id'=>$translationId]);
 
@@ -189,9 +182,11 @@ class TranslateController extends \craft\web\Controller {
 		$enabledFields = $request->getParam('enabledFields');
 		$instructions = $request->getParam('instructions','');
 		$override = $request->getParam('override');
-
+		$siteId = $request->getParam('siteId');
 		$id =  $request->getParam('elementId');
-		$entry = Craft::$app->entries->getEntryById($id);
+
+		$entry = Craft::$app->entries->getEntryById($id,$siteId);
+
 		$sectionId = $entry->getSection()->id;
 		$sectionType = $entry->getSection()->type;
 
@@ -208,7 +203,7 @@ class TranslateController extends \craft\web\Controller {
 
 			foreach ($f['fields'] as $mf){
 
-				$enabledFields[]='craft\\fields\\Matrix:'.$f['handle'].':'.$mf['blockHandle'].":{$mf['handle']}";
+				$enabledFields[]='craft\\fields\\Matrix:'.$mf['blockHandle'].':'.$f['handle'].":{$mf['handle']}";
 			}
 		}
 
@@ -303,4 +298,5 @@ class TranslateController extends \craft\web\Controller {
 		$delay = 0;
 		return $delay;
 	}
+
 }

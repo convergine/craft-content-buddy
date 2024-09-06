@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.5 - 2024-09-06
+### Changed
+- Exporting project configurations now utilizes config handles.
+- Removed the word limit on prompt templates.
+
+### Fixed
+- Resolved matrix field translation issues in CraftCMS 5.x for both single-page and full-site translations. [Issue #27](https://github.com/convergine/craft-content-buddy/issues/27)
+
 ## 1.1.4 - 2024-08-28
 ### Added
 - Added GPT-4o and GPT-4o mini to the selectable models in API settings.

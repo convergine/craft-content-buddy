@@ -46,10 +46,10 @@ class Base {
 
 	public function getSupportedFieldTypes(): array{
 		return [
-            //'craft\fieldlayoutelements\entries\EntryTitleField',
 			'craft\fields\PlainText',
 			'craft\redactor\Field',
-            'craft\ckeditor\Field'
+			'craft\ckeditor\Field',
+			'abmat\tinymce\Field'
 		];
 	}
 

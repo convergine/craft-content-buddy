@@ -62,8 +62,8 @@ class PromptProcessor {
 				'replaceText'=>1
 			];
 		}elseif ($prompt == '_generate_images_'){
-			$assetId = BuddyPlugin::getInstance()->getSettings()->generateImageAssetId;
-			$assets = (new Image())->generate($query,$assetId);
+			$assetUID = BuddyPlugin::getInstance()->getSettings()->generateImageAssetId;
+			$assets = (new Image())->generate($query,$assetUID);
 			$content = $query;
 			if($assets){
 				$content = $this->_addImages( $content, $assets );

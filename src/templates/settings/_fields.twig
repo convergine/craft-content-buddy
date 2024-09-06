@@ -69,8 +69,8 @@
                             {% endif %}
                             <td class="enabled-column">
                                 {{ forms.lightswitch({
-                                    name: 'enabledFields['~field.id~'].key',
-                                    on: settings.enabledFields[field.id] is defined and settings.enabledFields[field.id] == '1',
+                                    name: 'enabledFields['~field.handle~'].key',
+                                    on: settings.enabledFields[field.handle] is defined and settings.enabledFields[field.handle] == '1',
                                 }) }}
                             </td>
                         </tr>
@@ -117,8 +117,8 @@
                                 <td class="group-column">{{ field.group }}</td>
                                 <td class="enabled-column">
                                     {{ forms.lightswitch({
-                                        name: 'enabledFields['~field.id~'].key',
-                                        on: settings.enabledFields[field.id] is defined and settings.enabledFields[field.id] == '1',
+                                        name: 'enabledFields['~field.handle~'].key',
+                                        on: settings.enabledFields[field.handle] is defined and settings.enabledFields[field.handle] == '1',
                                     }) }}
                                 </td>
                             </tr>

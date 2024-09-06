@@ -57,7 +57,7 @@ class SettingsController extends \craft\web\Controller {
 				'volumeId' => $volume->id
 			] );
 			foreach ( $_assets_folders as $folder ) {
-				$assets_folders[] = [ 'value' => $folder->id, 'label' => $folder->name ];
+				$assets_folders[] = [ 'value' => $folder->uid, 'label' => $folder->name ];
 			}
 		}
 
