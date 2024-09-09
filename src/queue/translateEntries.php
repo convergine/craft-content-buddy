@@ -51,7 +51,6 @@ class translateEntries extends BaseJob
 
 		$this->setProgress($this->_queue, 0);
 		foreach ($this->entriesIds as $id){
-			$this->setProgress($this->_queue, $step / $total, \Craft::t('convergine-contentbuddy', 'Translate entries {step} of {total}', compact('step', 'total')));
 			$entry = Entry::findOne($id);
 			if($entry){
 				if($this->isRerun){
@@ -72,10 +71,8 @@ class translateEntries extends BaseJob
 							$this->instructions
 						);
 				}
-
-
 			}
-
+            $this->setProgress($this->_queue, $step / $total, \Craft::t('convergine-contentbuddy', 'Translate entries {step} of {total}', compact('step', 'total')));
 			$step++;
 		}
 

@@ -7,51 +7,53 @@
 
         {# % set _fields = craft.app.fields.getAllFields %#}
 
-        {% if fields.regular|length %}
-            <div class="tableview tablepane">
+        {% if fields.regular|length or fields.matrix|length %}
+            {% if fields.regular|length %}
+                <div class="tableview tablepane">
 
-                <table class="data fullwidth">
-                    <thead>
-                    <tr>
-                        <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
-                        <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
-                        <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
-                        {% if not isCraft5 %}
-                            <th scope="col" style="width: 20%">{{ 'Group' |t('convergine-contentbuddy') }}</th>
-                        {% endif %}
-                        <th class="thin" style="width: 10%">{{ 'Translate?' |t('convergine-contentbuddy') }}</th>
-
-                    </tr>
-                    </thead>
-                    <tbody>
-
-                    {% for field in fields.regular %}
-                        {% set fildName = craft %}
-
-                        <tr class="s-{{ field.id }}">
-                            <td class="label-column">{{ field.name }}</td>
-                            <td class="handle-column">
-                                <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button" aria-label="Copy to clipboard" tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
-                                    <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
-                                    <span data-icon="clipboard" aria-hidden="true"></span>
-                                </div></td>
-                            <td class="group-column">{{ field.type }}</td>
+                    <table class="data fullwidth">
+                        <thead>
+                        <tr>
+                            <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
+                            <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
+                            <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
                             {% if not isCraft5 %}
-                                <td class="group-column">{{ field.group }}</td>
+                                <th scope="col" style="width: 20%">{{ 'Group' |t('convergine-contentbuddy') }}</th>
                             {% endif %}
-                            <td class="enabled-column">
-                                {{ forms.lightswitch({
-                                    name: 'enabledFields[]',
-                                    value:field._type ~ ':' ~ field.handle,
-                                    on: 0,
-                                }) }}
-                            </td>
-                        </tr>
+                            <th class="thin" style="width: 10%">{{ 'Translate?' |t('convergine-contentbuddy') }}</th>
 
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                        </tr>
+                        </thead>
+                        <tbody>
+
+                        {% for field in fields.regular %}
+                            {% set fildName = craft %}
+
+                            <tr class="s-{{ field.id }}">
+                                <td class="label-column">{{ field.name }}</td>
+                                <td class="handle-column">
+                                    <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button" aria-label="Copy to clipboard" tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
+                                        <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
+                                        <span data-icon="clipboard" aria-hidden="true"></span>
+                                    </div></td>
+                                <td class="group-column">{{ field.type }}</td>
+                                {% if not isCraft5 %}
+                                    <td class="group-column">{{ field.group }}</td>
+                                {% endif %}
+                                <td class="enabled-column">
+                                    {{ forms.lightswitch({
+                                        name: 'enabledFields[]',
+                                        value:field._type ~ ':' ~ field.handle,
+                                        on: 0,
+                                    }) }}
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
 
             {% if fields.matrix|length %}
                 <div class="content-pane" style="margin-top: 40px">
@@ -86,7 +88,7 @@
                                             <td class="enabled-column">
                                                 {{ forms.lightswitch({
                                                     name: 'enabledFields[]',
-                                                    value:matrixFild.type ~ ':' ~ field.blockHandle ~ ':' ~ matrixFild.handle ~ ':' ~ field.handle,
+                                                    value: field._field,
                                                     on: 0,
                                                 }) }}
                                             </td>

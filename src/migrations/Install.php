@@ -41,7 +41,7 @@ class Install extends Migration {
 		$this->createTable( BuddyPromptRecord::tableName(), [
 			'id'       => $this->primaryKey(),
 			'label'    => $this->string()->notNull(),
-			'template' => $this->string()->notNull(),
+			'template' => $this->text()->notNull(),
 			'active'   => $this->boolean()->notNull()->defaultValue( true ),
 
 			'replaceText'     => $this->integer()->notNull()->defaultValue( 1 ),

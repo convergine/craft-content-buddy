@@ -119,7 +119,7 @@ class TranslateController extends \craft\web\Controller {
 		$translateRecord->jobIds = join(',',$jobIds);
 
 		$translateRecord->save();
-		
+
 		Craft::$app->session->setNotice( Craft::t(
 			'convergine-contentbuddy',
 			'translationStarted' ) );
@@ -195,15 +195,12 @@ class TranslateController extends \craft\web\Controller {
 
 		$enabledFields = [];
 		$entryFields = $this->_plugin->translate->getTranslatedFields($entry);
-
-			foreach ($entryFields['regular'] as $f){
+			foreach ($entryFields['regular'] as $f) {
 				$enabledFields[]="{$f['_type']}:{$f['handle']}";
 			}
-		foreach ($entryFields['matrix'] as $f){
-
-			foreach ($f['fields'] as $mf){
-
-				$enabledFields[]='craft\\fields\\Matrix:'.$mf['blockHandle'].':'.$f['handle'].":{$mf['handle']}";
+		foreach ($entryFields['matrix'] as $f) {
+			foreach ($f['fields'] as $mf) {
+                $enabledFields[] = $mf['_field'];
 			}
 		}
 
