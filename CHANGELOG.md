@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.7 - 2024-09-09
+### Fixed
+- Hotfix for CraftCMS 4.x single-page and full-site translations.
+
 ## 1.1.6 - 2024-09-09
 ### Fixed
 - Resolved issues with translation of multiple entry types and nested matrix fields in CraftCMS 5.x for both single-page and full-site translations.

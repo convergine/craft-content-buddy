@@ -122,6 +122,7 @@ class Translate extends Component {
                                             ( new \ReflectionClass( $blockField ) )->getName(),
                                             $this->_plugin->base->getSupportedFieldTypes() ) && $blockField->translationMethod != 'none'
                                     ) {
+                                        $fullHandle = $block->handle.':'.$field->handle.':'.$blockField->handle;
                                         $matrixFields [ $field->handle ]['fields'][] = [
                                             'name'        => $blockField->name,
                                             'handle'      => $blockField->handle,
@@ -129,7 +130,8 @@ class Translate extends Component {
                                             'blockName'   => $block->name,
                                             'blockHandle' => $block->handle,
                                             'type'        => $this->_getClass( $blockField ),
-                                            '_type'       => ( new \ReflectionClass( $blockField ) )->getName()
+                                            '_type'       => ( new \ReflectionClass( $blockField ) )->getName(),
+                                            '_field'      => 'craft\\fields\\Matrix:'.$fullHandle,
                                         ];
                                     }
                                 }
