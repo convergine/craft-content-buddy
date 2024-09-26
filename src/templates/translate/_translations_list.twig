@@ -58,7 +58,7 @@
                     </td>
                     <td>
                         {{ craft.contentbuddy.getTranslationStatus(item.id)|raw }}
-                        {% if craft.contentbuddy.hasActiveJobs(item.id) ==0 %}
+                        {# % if craft.contentbuddy.hasActiveJobs(item.id) ==0 %}
                             {% if item.fieldsError > 0 %}
                                 <form method="post">
                                     {{ hiddenInput('translationId',item.id) }}
@@ -70,7 +70,7 @@
                                     </button>
                                 </form>
                             {% endif %}
-                        {% endif %}
+                        {% endif %#}
                     </td>
                     <td class="delete-column">
                         {% if craft.contentbuddy.hasActiveJobs(item.id) ==0 %}

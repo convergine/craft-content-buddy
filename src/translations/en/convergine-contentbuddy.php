@@ -124,6 +124,8 @@
 	'selectLanguageInstructions'=>'Select the language you would like to translate the selected section. You can select only the languages that are set up in Settings ➝ Sites',
 	'Translations Log'=>'Translations Log',
 	'translateFieldsDescriptionText'=>'Select the fields that will be translated in the selected section.',
+	'Translate Matrix Fields'=>'Translate Matrix Fields',
+	'translateMatrixFieldsText'=>'Translate all Matrix fields content, recursively',
 
 
 	/* General error messages*/

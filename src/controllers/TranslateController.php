@@ -47,6 +47,7 @@ class TranslateController extends \craft\web\Controller {
 		$enabledFields = $request->getParam('enabledFields');
 		$instructions = $request->getParam('instructions');
 		$override = $request->getParam('override');
+		$translateMatrix = $request->getParam('translateMatrix');
 
 		if(!$section || !$translate_to || !$enabledFields){
 			Craft::$app->getSession()->setError('Please select section, site and fields to translate.');
@@ -61,6 +62,9 @@ class TranslateController extends \craft\web\Controller {
 			if($v==''){
 				unset($enabledFields[$k]);
 			}
+		}
+		if($translateMatrix){
+			$enabledFields[]="craft\\fields\\Matrix:fields";
 		}
 		$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
 		$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
@@ -180,7 +184,7 @@ class TranslateController extends \craft\web\Controller {
 		$section = $request->getParam('section');
 		$translate_to = $request->getParam('translate_to');
 		$enabledFields = $request->getParam('enabledFields');
-		$instructions = $request->getParam('instructions','');
+		$instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code');
 		$override = $request->getParam('override');
 		$siteId = $request->getParam('siteId');
 		$id =  $request->getParam('elementId');
@@ -198,11 +202,18 @@ class TranslateController extends \craft\web\Controller {
 			foreach ($entryFields['regular'] as $f) {
 				$enabledFields[]="{$f['_type']}:{$f['handle']}";
 			}
-		foreach ($entryFields['matrix'] as $f) {
-			foreach ($f['fields'] as $mf) {
-                $enabledFields[] = $mf['_field'];
+			if(version_compare(Craft::$app->getInfo()->version, '5.0', '>=')){
+				if(count($entryFields['matrix'])){
+					$enabledFields[]="craft\\fields\\Matrix:fields";
+				}
+			}else{
+				foreach ($entryFields['matrix'] as $f) {
+					foreach ($f['fields'] as $mf) {
+						$enabledFields[] = $mf['_field'];
+					}
+				}
 			}
-		}
+
 
 
 		$translateRecord = new TranslateRecord();
@@ -215,7 +226,7 @@ class TranslateController extends \craft\web\Controller {
 		$translateRecord->sectionType = $sectionType;
 		$translateRecord->fieldsProcessed = 0;
 		$translateRecord->fieldsError = 0;
-		$translateRecord->entriesSubmitted = 0;
+		$translateRecord->entriesSubmitted = 1;
 		$translateRecord->fieldsSkipped = 0;
 		$translateRecord->fieldsTranslated = 0;
 		$translateRecord->override = 1;//$override?1:0;
@@ -233,7 +244,7 @@ class TranslateController extends \craft\web\Controller {
 				'translationId'=>$translateRecord->id
 			]),10,$this->_getDelay()
 		);
-		$translateRecord->entriesSubmitted = $items;
+		$translateRecord->entriesSubmitted = 1;
 
 		$translateRecord->fieldsCount = count($enabledFields);
 

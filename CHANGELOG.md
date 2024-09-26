@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.8 - 2024-09-26
+### Changed
+- Removed choices for individual matrix field translation, allowing to toggle all matrix fields at once.
+
+### Fixed
+- Fixed an issue with modifying prompt instructions.
+
 ## 1.1.7 - 2024-09-09
 ### Fixed
 - Hotfix for CraftCMS 4.x single-page and full-site translations.
