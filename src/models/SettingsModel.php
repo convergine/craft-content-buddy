@@ -53,10 +53,20 @@ class SettingsModel extends Model
 	 */
 	public string $imagesStyles = 'colourful';
 
-	/**
-	 * @var string
-	 */
-	public string $imageSize = '512x512';
+    /**
+     * @var string
+     */
+    public string $imageSize = '512x512';
+
+    /**
+     * @var string
+     */
+    public string $imageSizeDalle3 = '1024x1024';
+
+    /**
+     * @var string
+     */
+    public string $imageSizeStability = '512x512';
 
 	/**
 	 * @var string
@@ -72,11 +82,13 @@ class SettingsModel extends Model
 
 	public string $imageModel = 'openai';
 
+    public string $dalleModel = 'dall-e-3';
+
 	// stability ai options
 
 	public string $stabilityAPIKey = '';
 
-	public string $stabilityEngine = 'stable-diffusion-512-v2-1';
+	public string $stabilityEngine = 'sd3';
 
 	public string $stabilitySampler = 'DDIM';
 

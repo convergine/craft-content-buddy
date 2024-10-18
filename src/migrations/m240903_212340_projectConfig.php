@@ -24,7 +24,10 @@ class m240903_212340_projectConfig extends Migration {
             foreach($settings->enabledFields as $id => $value) {
                 if(is_numeric($id)) {
                     $field = Craft::$app->getFields()->getFieldById($id);
-                    $fields[$field->handle] = $value;
+						  if($field){
+							  $fields[$field->handle] = $value;
+						  }
+
                 } else {
                     $fields[$id] = $value;
                 }

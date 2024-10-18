@@ -18,6 +18,7 @@
     'imageDescription' => 'The size of the images you want to generate with DALL-E for the generated content. The larger the image, the more expensive it is.',
 	'systemMessageDescription' => 'If anything is added in this textarea - then ALL prompts sent to API will include it at the end of the prompt:',
 	'imageModelDescription' => 'Select the default image generation API.',
+    'dalleModelDescription' => 'Select the default model that will be used when generating an image using OpenAI. For more information, see https://platform.openai.com/docs/models/dall-e',
 
 	/* Settings -> Api Page */
 	'API: Access Token'=>'API: Access Token',

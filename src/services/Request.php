@@ -30,7 +30,7 @@ class Request {
 			$model = $this->_settings->preferredModel;
 
 			$maxTokens = min( $maxTokens, $this->_getMaxTokensForModel( $model ) );
-			if($isTranslate){
+			if($isTranslate && $model!='gpt-4o-mini' && $model!='gpt-4o'){
 				$maxTokens = $maxTokens /2;
 			}
 
@@ -67,9 +67,9 @@ class Request {
 
 	protected function _getMaxTokensForModel( $model ) {
         return match($model) {
-            "gpt-4o-mini" => 15900,
+	        "gpt-4o", "gpt-4o-mini" => 15900,
             "gpt-4" => 7900,
-            "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo" => 3900,
+             "gpt-4-turbo", "gpt-3.5-turbo" => 3900,
             default => 2000
         };
 	}

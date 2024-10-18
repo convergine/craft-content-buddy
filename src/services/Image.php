@@ -14,31 +14,35 @@
 namespace convergine\contentbuddy\services;
 
 use convergine\contentbuddy\BuddyPlugin;
+use convergine\contentbuddy\models\SettingsModel;
+use Craft;
 use craft\elements\Asset;
 use GuzzleHttp\Client;
-use Craft;
 
 class Image {
 
-	public function generate($prompt, $folderUID){
+	public function generate($prompt, $folderUID) {
 		$settings = BuddyPlugin::getInstance()->getSettings();
-		$image_size = $settings->imageSize;
-		$engine = $settings->imageModel;
-		if($engine == 'openai'){
-			return $this->sendOpenaiImageRequest($prompt, $folderUID, $image_size);
-		}elseif ($engine == 'stability'){
+        $engine = $settings->imageModel;
+		if($engine == 'openai') {
+            $model = $settings->dalleModel;
+            $image_size = $model == 'dall-e-3' ? $settings->imageSizeDalle3 : $settings->imageSize;
+			return $this->sendOpenaiImageRequest($model, $prompt, $folderUID, $image_size);
+		} else if ($engine == 'stability') {
+            $image_size = $settings->imageSizeStability;
 			return $this->sendStabilityImageRequest($prompt, $folderUID, $image_size);
 		}
-
+        return null;
 	}
-	function sendOpenaiImageRequest( $prompt, $folderUID, $dimensions ) {
 
+	function sendOpenaiImageRequest($model, $prompt, $folderUID, $dimensions ) {
 		$client = new Client();
 
 		$imagePrompt = $this->_applyImageStylesToPrompt( $prompt );
 
 		$imageResponse = $client->request( 'POST', 'https://api.openai.com/v1/images/generations', [
 			'body'    => json_encode( [
+                'model'           => $model,
 				'prompt'          => $imagePrompt,
 				'n'               => 1,
 				'size'            => $dimensions,
@@ -71,47 +75,139 @@ class Image {
 		$width = (int)$_dimension[0];
 		$height = (int)$_dimension[1];
 
+        /** @var SettingsModel $settings */
 		$settings = BuddyPlugin::getInstance()->getSettings();
 
 		$client = new Client();
 
-		$imageResponse = $client->request( 'POST', 'https://api.stability.ai/v1/generation/' . $settings->stabilityEngine . '/text-to-image', [
-			'body'    => json_encode( [
-				'samples' => 1,
-				'width' => $width,
-				'height' => $height,
-				'sampler' => $settings->stabilitySampler,
-				'steps' => $settings->stabilitySteps,
-				'cfg_scale' => $settings->stabilityScale,
-				'seed' => 0,
-				'style_preset' => $settings->stabilityStyle,
-				'text_prompts' => [
-					[
-						'text' => $prompt,
-						'weight' => 1,
-					],
-				]
-			] ),
-			'headers' => [
-				'Authorization' => $settings->getStabilityApiKey(),//'sk-AkfUldDWjYCGZ5D154vP7ZxFrxeBRP6QhuYEsItzNf8zChTJ',
-				'Content-Type'  => 'application/json',
-			],
-		] );
+        $model = $settings->stabilityEngine;
+        $apiEndpoint = $this->getStabilityApiEndpoint($model);
+        $apiData = $this->getStabilityApiData($model,$width,$height,$settings,$prompt);
+
+		$imageResponse = $client->request( 'POST', 'https://api.stability.ai'.$apiEndpoint, $apiData);
 
 		$body = $imageResponse->getBody();
-		$json = json_decode( $body, true );
-		$data = $json['artifacts'] ?? [];
+        $json = json_decode( $body, true );
+        Craft::info("ContentBuddy Image Result: " . $body, __METHOD__);
 
-		$assets = array();
-		foreach ( $data as $image ) {
-			$asset = $this->_uploadFileData( $folderUID, $image['base64'], $dimensions, $prompt );
-			if ( $asset ) {
-				$assets[] = $asset;
-			}
-		}
+        $assets = array();
+
+        if($this->isStableDiffusion3($model)) {
+            $image = $json['image'] ?? null;
+            $asset = $this->_uploadFileData( $folderUID, $image, $dimensions, $prompt );
+            if ( $asset ) {
+                $assets[] = $asset;
+            }
+        } else {
+            $data = $json['artifacts'] ?? [];
+            foreach ( $data as $image ) {
+                $asset = $this->_uploadFileData( $folderUID, $image['base64'], $dimensions, $prompt );
+                if ( $asset ) {
+                    $assets[] = $asset;
+                }
+            }
+        }
 
 		return $assets;
 	}
+
+    private function isStableDiffusion3($model) : bool {
+        return in_array($model, ['sd3','core','ultra']);
+    }
+
+    private function getStabilityApiEndpoint($model) : string {
+        if($this->isStableDiffusion3($model)) {
+            return "/v2beta/stable-image/generate/$model";
+        } else {
+            return "/v1/generation/$model/text-to-image";
+        }
+    }
+
+    private function getStabilityApiData($model,$width,$height,$settings,$prompt) : array {
+        if($this->isStableDiffusion3($model)) {
+            return [
+                'multipart' => [
+                    [
+                        'name' => 'prompt',
+                        'contents' => $prompt,
+                    ],
+                    [
+                        'name' => 'width',
+                        'contents' => $width,
+                    ],
+                    [
+                        'name' => 'height',
+                        'contents' => $height,
+                    ],
+                    [
+                        'name' => 'sampler',
+                        'contents' => $settings->stabilitySampler,
+                    ],
+                    [
+                        'name' => 'steps',
+                        'contents' => $settings->stabilitySteps,
+                    ],
+                    [
+                        'name' => 'cfg_scale',
+                        'contents' => $settings->stabilityScale,
+                    ],
+                    [
+                        'name' => 'seed',
+                        'contents' => 0,
+                    ],
+                    [
+                        'name' => 'style_preset',
+                        'contents' => $settings->stabilityStyle,
+                    ],
+                    [
+                        'name' => 'samples',
+                        'contents' => 1,
+                    ],
+                ],
+                'headers' => [
+                    'Authorization' => "Bearer ".$settings->getStabilityApiKey(),
+                    'Accept'  => 'application/json',
+                ],
+            ];
+        } else {
+            return [
+                'body'    => json_encode([
+                    'samples' => 1,
+                    'width' => $width,
+                    'height' => $height,
+                    'sampler' => $settings->stabilitySampler,
+                    'steps' => $settings->stabilitySteps,
+                    'cfg_scale' => $settings->stabilityScale,
+                    'seed' => 0,
+                    'style_preset' => $settings->stabilityStyle,
+                    'text_prompts' => [
+                        [
+                            'text' => $prompt,
+                            'weight' => 1,
+                        ],
+                    ]
+                ]),
+                'headers' => [
+                    'Authorization' => $settings->getStabilityApiKey(),
+                    'Content-Type'  => 'application/json',
+                ],
+            ];
+        }
+    }
+
+    private function getStabilityApiHeaders($model,$key) : array {
+        if(in_array($model, ['sd3','core','ultra'])) {
+            return [
+                'Authorization' => "Bearer $key",
+                'Accept'  => 'image/*',
+            ];
+        } else {
+            return [
+                'Authorization' => $key,
+                'Content-Type'  => 'application/json',
+            ];
+        }
+    }
 
 	private function _applyImageStylesToPrompt( $prompt ) {
 		$stylesArray = BuddyPlugin::getInstance()->getSettings()->imagesStyles;

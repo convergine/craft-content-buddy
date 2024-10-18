@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.9 - 2024-10-18
+### Added
+- Added support for DALL-E 3 and Stable Diffusion v3 engines in the Image Generation Settings.
+
+### Changed
+- Updated translation prompt parameters to support large-scale translations using the GPT-4o and GPT-4o-mini models, ensuring more efficient handling of complex multilingual content.
+
+### Fixed
+- Resolved and issue with keyboard shortcuts not working after running prompts. [Issue #30](https://github.com/convergine/craft-content-buddy/issues/30)
+- Fixed a migration error related to project configurations.
+
 ## 1.1.8 - 2024-09-26
 ### Changed
 - Removed choices for individual matrix field translation, allowing to toggle all matrix fields at once.

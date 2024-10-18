@@ -27,8 +27,15 @@ $(document).ready(function () {
         let $button = $('button[data-hash="' + hash + '"]');
         let $input = $button.closest('.input').find('input, textarea').first();
 
-        $this.parents('.buddy-menu').css({'display': 'none', opacity: 0});
-        $('[aria-controls="' + $this.parents('.buddy-menu').attr('id') + '"]').attr('aria-expanded', 'false');
+        let disclosureMenu = $button.data('disclosureMenu');
+        if(disclosureMenu) {
+            disclosureMenu.hide();
+        } else {
+            let $menu = $('#' + $button.attr('aria-controls'));
+            if($menu.length) {
+                $menu.hide();
+            }
+        }
 
         let fieldType = $button.closest('.field').attr('data-type');
         let query = getInputSelection(fieldType, $input);
