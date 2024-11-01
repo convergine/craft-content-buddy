@@ -184,7 +184,7 @@ class TranslateController extends \craft\web\Controller {
 		$section = $request->getParam('section');
 		$translate_to = $request->getParam('translate_to');
 		$enabledFields = $request->getParam('enabledFields');
-		$instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code');
+		$instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code. only return the translation');
 		$override = $request->getParam('override');
 		$siteId = $request->getParam('siteId');
 		$id =  $request->getParam('elementId');

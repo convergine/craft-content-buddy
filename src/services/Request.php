@@ -13,96 +13,29 @@
 
 namespace convergine\contentbuddy\services;
 
+use convergine\contentbuddy\api\text\OpenAi;
+use convergine\contentbuddy\api\text\XAi;
 use convergine\contentbuddy\BuddyPlugin;
-use GuzzleHttp\Client;
-use yii\helpers\StringHelper;
+use convergine\contentbuddy\models\SettingsModel;
 
 class Request {
-
-	protected $_settings;
+	protected SettingsModel $settings;
 
 	public function __construct() {
-		$this->_settings = BuddyPlugin::getInstance()->getSettings();
+        /** @var SettingsModel $settings */
+		$settings = BuddyPlugin::getInstance()->getSettings();
+        $this->settings = $settings;
 	}
 
-	public function send( $prompt, $maxTokens, $temperature,$isTranslate = false ) {
-		try {
-			$model = $this->_settings->preferredModel;
+	public function send($prompt, $maxTokens, $temperature, $isTranslate = false) {
+        $textAi = $this->settings->textAi;
 
-			$maxTokens = min( $maxTokens, $this->_getMaxTokensForModel( $model ) );
-			if($isTranslate && $model!='gpt-4o-mini' && $model!='gpt-4o'){
-				$maxTokens = $maxTokens /2;
-			}
-
-			$client = new Client();
-			$res = $client->request( 'POST', $this->_getEndpoint( $model ), [
-				'body'    => $this->_buildTextGenerationRequestBody( $model, $prompt, $maxTokens, $temperature ),
-				'headers' => [
-					'Authorization' => 'Bearer ' . $this->_settings->getApiKey(),
-					'Content-Type'  => 'application/json',
-				],
-				'http_errors'=>false
-			] );
-
-			$body = $res->getBody();
-			$json = json_decode( $body, true );
-			if(isset($json['error'])){
-				$message = $json['error']['message'];
-
-				throw new \Exception( $message );
-			}
-		} catch ( \Throwable $e ) {
-			$message = $e->getMessage();
-			$message .= "<br><br>Prompt:<br>" . StringHelper::truncateWords($prompt,20,'...',true);
-			$message .= "<br><br>Model: " . $model;
-			$message .= "<br>Max tokens: " . $maxTokens;
-
-			throw new \Exception( $message );
-		}
-
-		$choices = $json['choices'];
-
-		return $this->_getTextGenerationBasedOnModel( $model, $choices );
-	}
-
-	protected function _getMaxTokensForModel( $model ) {
-        return match($model) {
-	        "gpt-4o", "gpt-4o-mini" => 15900,
-            "gpt-4" => 7900,
-             "gpt-4-turbo", "gpt-3.5-turbo" => 3900,
-            default => 2000
-        };
-	}
-
-	protected function _buildTextGenerationRequestBody( $model, $prompt, $maxTokensToGenerate, $temperature = 0.7 ) {
-        $messages = [];
-
-        $systemMessage = $this->_settings->systemMessage;
-        if ( ! empty( $systemMessage ) ) {
-            $messages[] = [
-                'role'    => 'system',
-                'content' => $systemMessage,
-            ];
+        if($textAi == 'xai') {
+            $textApi = new XAi();
+        } else { //default to openai
+            $textApi = new OpenAi();
         }
 
-        $messages[] = [
-            'role'    => 'user',
-            'content' => $prompt,
-        ];
-
-        return json_encode( [
-            'model'       => $model,
-            'messages'    => $messages,
-            "temperature" => $temperature,
-            'max_tokens'  => $maxTokensToGenerate,
-        ] );
-	}
-
-	protected function _getTextGenerationBasedOnModel( $model, $choices ) {
-        return trim( $choices[0]['message']['content'] );
-	}
-
-	protected function _getEndpoint( $model ) {
-        return 'https://api.openai.com/v1/chat/completions';
+        return $textApi->sendRequest($prompt, $maxTokens, $temperature, $isTranslate);
 	}
 }

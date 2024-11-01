@@ -37,7 +37,8 @@
     {% endif %}
 {% endif %}
 
-{% if craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings.getApiKey|length %}
+{% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
+{% if (settings.textAi == 'openai' and settings.getOpenAiApiKey|length) or (settings.textAi == 'xai' and settings.getXAiApiKey|length) %}
 
     {% set prompts = craft.contentbuddy.getPrompts(true) %}
     function contentBuddyAppendPrompts(){

@@ -39,7 +39,14 @@
             padding: 2px 6px;
         }
     </style>
-    {% if settings.apiToken == ''%}
+
+    {% if settings.textAi == 'openai' and settings.apiToken == '' %}
+        <ul class="buddy-alert error" style="display: block">
+            <li>{{ 'Need to setup API: Access Token'|t('convergine-contentbuddy')}}</li>
+        </ul>
+    {% endif %}
+
+    {% if settings.textAi == 'xai' and settings.xAiApiKey == '' %}
         <ul class="buddy-alert error" style="display: block">
             <li>{{ 'Need to setup API: Access Token'|t('convergine-contentbuddy')}}</li>
         </ul>

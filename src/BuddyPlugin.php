@@ -51,7 +51,7 @@ class BuddyPlugin extends Plugin
 	}
 
 
-	protected function _setComponents(){
+	protected function _setComponents() {
 		$this->setComponents([
 			'promptService' => Prompt::class,
 			'contentGenerator' => ContentGenerator::class,
@@ -62,18 +62,15 @@ class BuddyPlugin extends Plugin
 		]);
 	}
 
-	protected function _setRoutes(){
+	protected function _setRoutes() {
 		// Register CP routes
 		Event::on(
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_CP_URL_RULES,
 			function (RegisterUrlRulesEvent $event) {
-
-
-				$event->rules['convergine-contentbuddy/settings/general'] = 'convergine-contentbuddy/settings/general';
-				$event->rules['convergine-contentbuddy/settings/api'] = 'convergine-contentbuddy/settings/api';
+				$event->rules['convergine-contentbuddy/settings/text-generation'] = 'convergine-contentbuddy/settings/text-generation';
+                $event->rules['convergine-contentbuddy/settings/image-generation'] = 'convergine-contentbuddy/settings/image-generation';
 				$event->rules['convergine-contentbuddy/settings/fields'] = 'convergine-contentbuddy/settings/fields';
-				$event->rules['convergine-contentbuddy/settings/image-generation'] = 'convergine-contentbuddy/settings/image-generation';
 
 				$event->rules['convergine-contentbuddy/content-generator'] = 'convergine-contentbuddy/content-generator/index';
 
@@ -86,12 +83,11 @@ class BuddyPlugin extends Plugin
 
 				$event->rules['convergine-contentbuddy/site-translate'] = 'convergine-contentbuddy/translate/index';
 				$event->rules['convergine-contentbuddy/site-translate/log'] = 'convergine-contentbuddy/translate/log';
-
 			}
 		);
 	}
 
-	protected function _setEvents(){
+	protected function _setEvents() {
 		Event::on(
 			CraftVariable::class,
 			CraftVariable::EVENT_INIT,
@@ -113,7 +109,7 @@ class BuddyPlugin extends Plugin
 				if (
 					array_key_exists($event->sender->handle, $settings->enabledFields)
 					&& $settings->enabledFields[$event->sender->handle]
-					&& $settings->apiToken
+					&& (($settings->textAi == 'openai' && $settings->apiToken) || ($settings->textAi == 'xai' && $settings->xAiApiKey))
 				){
 					$event->html .= Craft::$app->view->renderTemplate('convergine-contentbuddy/_select.twig',
 						[ 'event' => $event, 'hash' => StringHelper::UUID()] );
@@ -131,13 +127,14 @@ class BuddyPlugin extends Plugin
 
 				/** @var SettingsModel $settings */
 				$settings = BuddyPlugin::getInstance()->getSettings();
+				if (Craft::$app->getRequest()->getIsCpRequest()) {
+					if ( ! in_array( true, $settings->enabledFields, false ) ) {
+						Craft::$app->getSession()->setError( Craft::t( 'convergine-contentbuddy', 'Content Buddy fields are not selected in settings. Please select fields in plugin settings under \'Fields Settings\' tab.' ) );
+					}
 
-				if (!in_array(true, $settings->enabledFields, false)){
-					Craft::$app->getSession()->setError(Craft::t('convergine-contentbuddy', 'Content Buddy fields are not selected in settings. Please select fields in plugin settings under \'Fields Settings\' tab.'));
-				}
-
-				if ($settings->apiToken === ''){
-					Craft::$app->getSession()->setError(Craft::t('convergine-contentbuddy', 'API Access Token required.'));
+                    if (($settings->textAi === 'openai' && $settings->apiToken === '') || ($settings->textAi === 'xai' && $settings->xAiApiKey === '')){
+                        Craft::$app->getSession()->setError(Craft::t('convergine-contentbuddy', 'API Access Token required.'));
+					}
 				}
 			}
 		);
@@ -198,8 +195,7 @@ class BuddyPlugin extends Plugin
 	 * @throws \Twig\Error\SyntaxError
 	 * @throws \yii\base\Exception
 	 */
-	protected function settingsHtml(): ?string
-	{
+	protected function settingsHtml(): ?string {
 		return \Craft::$app->getView()->renderTemplate(
 			'convergine-contentbuddy/settings',
 			[ 'settings' => $this->getSettings() ]
@@ -209,8 +205,7 @@ class BuddyPlugin extends Plugin
 	/**
 	 * @return string
 	 */
-	public function getPluginName(): string
-	{
+	public function getPluginName(): string {
 		return $this->name;
 	}
 
@@ -218,8 +213,7 @@ class BuddyPlugin extends Plugin
 	/**
 	 * @return array|null
 	 */
-	public function getCpNavItem(): ?array
-	{
+	public function getCpNavItem(): ?array {
 		$nav = parent::getCpNavItem();
 
 		$nav['label'] = \Craft::t('convergine-contentbuddy', $this->getPluginName());
@@ -240,7 +234,7 @@ class BuddyPlugin extends Plugin
 			];
 			$nav['subnav']['settings'] = [
 				'label' => Craft::t('convergine-contentbuddy', 'Settings'),
-				'url' => 'convergine-contentbuddy/settings/general',
+				'url' => 'convergine-contentbuddy/settings/text-generation',
 			];
 		}
 
@@ -250,9 +244,7 @@ class BuddyPlugin extends Plugin
 	/**
 	 * @return mixed
 	 */
-	public function getSettingsResponse(): mixed
-	{
-		return Craft::$app->controller->redirect(UrlHelper::cpUrl('convergine-contentbuddy/settings/general'));
+	public function getSettingsResponse(): mixed {
+		return Craft::$app->controller->redirect(UrlHelper::cpUrl('convergine-contentbuddy/settings/text-generation'));
 	}
-
 }

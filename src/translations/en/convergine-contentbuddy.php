@@ -10,6 +10,7 @@
     /* Settings -> General Page */
     'OpenAI Preferred Model' => 'OpenAI Preferred model',
     'modelDescription' => 'Some models are more capable than others. For example, the davinci model is more capable than the ada model, which is more capable than the babbage model, and so on. The davinci model is the most capable model, but it is also the most expensive one. The ada model is the least capable model, but it is also the cheapest. For more information, see https://platform.openai.com/docs/models',
+    'xAiModelDescription' => 'For more information and a list of current models, see https://docs.x.ai/docs#models',
     'Language for Text Generation' => 'Language for Text Generation',
     'languageDescription' => 'The language of the text you want to generate. For consistent results, make sure that the text you write in your post is written in the same language you picked here.',
     'Image Generation Styles' => 'Image Generation Styles',

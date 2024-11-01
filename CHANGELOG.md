@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.10 - 2024-11-01
+### Added
+- Added x.AI Grok to the available models for text generation.
+
+### Fixed
+- Fixed a migration error related to project configurations.
+
 ## 1.1.9 - 2024-10-18
 ### Added
 - Added support for DALL-E 3 and Stable Diffusion v3 engines in the Image Generation Settings.

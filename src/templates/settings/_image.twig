@@ -26,6 +26,14 @@
         }) }}
 
         <div id="openai" class="{% if settings.imageModel !='openai' and settings.imageModel !='openai-dall-e-2' %}hidden{% endif %}">
+            {{ forms.autosuggestField({
+                label: 'API: Access Token'|t('convergine-contentbuddy'),
+                name: 'apiToken',
+                value: settings.apiToken,
+                instructions: 'Access token for the OpenAI API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+
             {{ forms.selectField({
                 label: 'Dall.E Model'|t('convergine-contentbuddy'),
                 name: 'dalleModel',

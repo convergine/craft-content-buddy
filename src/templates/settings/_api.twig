@@ -12,26 +12,67 @@
     <input type="hidden" name="action" value="plugins/save-plugin-settings">
     <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
     {% namespace 'settings' %}
-        {{ forms.autosuggestField({
-            label: 'API: Access Token'|t('convergine-contentbuddy'),
-            name: 'apiToken',
-            value: settings.apiToken,
-            instructions: 'Access token for the ChatGPT API'|t('convergine-contentbuddy'),
-            suggestEnvVars: true,
+        {{ forms.selectField({
+            label: 'AI Service'|t('convergine-contentbuddy'),
+            name: 'textAi',
+            value: settings.textAi,
+            options: {
+                "openai": "OpenAI",
+                "xai": "xAI"
+            },
+            toggle: true
         }) }}
 
+        <div id="openai" class="{% if settings.textAi != 'openai' %}hidden{% endif %}">
+            {{ forms.selectField({
+                label: 'OpenAI Preferred Model'|t('convergine-contentbuddy'),
+                name: 'preferredModel',
+                value: settings.preferredModel,
+                instructions: 'modelDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "gpt-4o": "gpt-4o",
+                    "gpt-4o-mini": "gpt-4o-mini",
+                    "gpt-4-turbo": "gpt-4-turbo",
+                    "gpt-4": "gpt-4",
+                    "gpt-3.5-turbo": "gpt-3.5-turbo",
+                }
+            }) }}
 
+            {{ forms.autosuggestField({
+                label: 'API: Access Token'|t('convergine-contentbuddy'),
+                name: 'apiToken',
+                value: settings.apiToken,
+                instructions: 'Access token for the ChatGPT API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+        </div>
 
-        {{ forms.textField({
-            label: 'API: Max Tokens'|t('convergine-contentbuddy'),
-            name: 'maxTokens',
-            value: settings.maxTokens,
-            autofocus: true,
-            instructions: 'maxAmountTokensDescription'|t('convergine-contentbuddy'),
-            first: false,
-            type: 'number',
+        <div id="xai" class="{% if settings.textAi != 'xai' %}hidden{% endif %}">
+            {{ forms.selectField({
+                label: 'xAI Preferred Model'|t('convergine-contentbuddy'),
+                name: 'xAiModel',
+                value: settings.xAiModel,
+                instructions: 'xAiModelDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "grok-beta": "grok-beta",
+                }
+            }) }}
+
+            {{ forms.autosuggestField({
+                label: 'xAI API Key'|t('convergine-contentbuddy'),
+                name: 'xAiApiKey',
+                value: settings.xAiApiKey,
+                instructions: 'API Key for the xAI API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+        </div>
+
+        {{ forms.textareaField({
+            label: 'System Message'|t('convergine-contentbuddy'),
+            name: 'systemMessage',
+            value: settings.systemMessage,
+            instructions: 'systemMessageDescription'|t('convergine-contentbuddy')
         }) }}
-
 
         <div class="buddy-slider-cont field">
             <div class="heading">
@@ -54,47 +95,47 @@
             </div>
         </div>
 
-        <div class="buddy-slider-cont field">
-            <div class="heading">
-                <label>{{ 'Frequency Penalty'|t('convergine-contentbuddy') }}</label>
-            </div>
-            <div class="flex">{{ 'frequencyPenaltyDescription'|t('convergine-contentbuddy')}}</div>
-            <div class="flex">
-                <input
-                        type="range"
-                        step="0.1"
-                        min="-2"
-                        max="2"
-                        class="buddy-slider"
-                        id="frequencyPenalty"
-                        value="{{ settings.frequencyPenalty }}"
-                        name="frequencyPenalty"
-                        data-gtm-form-interact-field-id="0"
-                >
-                <span>{{ settings.frequencyPenalty }}</span>
-            </div>
-        </div>
+{#        <div class="buddy-slider-cont field">#}
+{#            <div class="heading">#}
+{#                <label>{{ 'Frequency Penalty'|t('convergine-contentbuddy') }}</label>#}
+{#            </div>#}
+{#            <div class="flex">{{ 'frequencyPenaltyDescription'|t('convergine-contentbuddy')}}</div>#}
+{#            <div class="flex">#}
+{#                <input#}
+{#                        type="range"#}
+{#                        step="0.1"#}
+{#                        min="-2"#}
+{#                        max="2"#}
+{#                        class="buddy-slider"#}
+{#                        id="frequencyPenalty"#}
+{#                        value="{{ settings.frequencyPenalty }}"#}
+{#                        name="frequencyPenalty"#}
+{#                        data-gtm-form-interact-field-id="0"#}
+{#                >#}
+{#                <span>{{ settings.frequencyPenalty }}</span>#}
+{#            </div>#}
+{#        </div>#}
 
-        <div class="buddy-slider-cont field">
-            <div class="heading">
-                <label>{{ 'Presence Penalty'|t('convergine-contentbuddy') }}</label>
-            </div>
-            <div class="flex">{{ 'presencePenaltyDescription'|t('convergine-contentbuddy')}}</div>
-            <div class="flex">
-                <input
-                    type="range"
-                    step="0.1"
-                    min="-2"
-                    max="2"
-                    class="buddy-slider"
-                    id="presencePenalty"
-                    value="{{ settings.presencePenalty }}"
-                    name="presencePenalty"
-                    data-gtm-form-interact-field-id="0"
-            >
-            <span>{{ settings.presencePenalty }}</span>
-            </div>
-        </div>
+{#        <div class="buddy-slider-cont field">#}
+{#            <div class="heading">#}
+{#                <label>{{ 'Presence Penalty'|t('convergine-contentbuddy') }}</label>#}
+{#            </div>#}
+{#            <div class="flex">{{ 'presencePenaltyDescription'|t('convergine-contentbuddy')}}</div>#}
+{#            <div class="flex">#}
+{#                <input#}
+{#                    type="range"#}
+{#                    step="0.1"#}
+{#                    min="-2"#}
+{#                    max="2"#}
+{#                    class="buddy-slider"#}
+{#                    id="presencePenalty"#}
+{#                    value="{{ settings.presencePenalty }}"#}
+{#                    name="presencePenalty"#}
+{#                    data-gtm-form-interact-field-id="0"#}
+{#            >#}
+{#            <span>{{ settings.presencePenalty }}</span>#}
+{#            </div>#}
+{#        </div>#}
 
     {% endnamespace %}
 {% endblock %}

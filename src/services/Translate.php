@@ -785,6 +785,9 @@ class Translate extends Component {
 	}
 
 	private function _addLog( $translationId, $entryId, $message, $field, $blockId = 0 ) {
+        if($field instanceof FieldInterface) {
+            $field = $field->handle;
+        }
 		$logRecord                = new TranslateLogRecord();
 		$logRecord->translationId = $translationId;
 		$logRecord->message       = $message;

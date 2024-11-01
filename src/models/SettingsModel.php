@@ -13,15 +13,25 @@ class SettingsModel extends Model
 	 */
 	public string $apiToken = '';
 
-	/**
-	 * @var string
-	 */
-	public string $preferredModel = 'gpt-3.5-turbo';
+    /**
+     * @var string
+     */
+    public string $textAi = 'openai';
 
-	/**
-	 * @var int
-	 */
-	public int $maxTokens = 256;
+    /**
+     * @var string
+     */
+    public string $preferredModel = 'gpt-3.5-turbo';
+
+    /**
+     * @var string
+     */
+    public string $xAiModel = 'grok-beta';
+
+    /**
+     * @var string
+     */
+    public string $xAiApiKey = '';
 
 	/**
 	 * @var double
@@ -104,13 +114,19 @@ class SettingsModel extends Model
 
     public string $generateImageAssetId = '';
 
-	/**
-	 * @return string
-	 */
-	public function getApiKey(): string
-	{
-		return App::parseEnv($this->apiToken);
-	}
+    /**
+     * @return string
+     */
+    public function getOpenAiApiKey(): string {
+        return App::parseEnv($this->apiToken);
+    }
+
+    /**
+     * @return string
+     */
+    public function getXAiApiKey(): string {
+        return App::parseEnv($this->xAiApiKey);
+    }
 
 	/**
 	 * @return string
