@@ -27,9 +27,8 @@ class XAi extends TextApi {
 
             $body = $res->getBody();
             $json = json_decode( $body, true );
-            if(isset($json['error'])){
-                $message = $json['error']['message'];
-
+            if(isset($json['error'])) {
+                $message = $json['error'];
                 throw new Exception( $message );
             }
         } catch ( Throwable $e ) {

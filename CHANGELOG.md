@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.11 - 2024-11-11
+### Fixed
+- Fixed error handling for x.AI processing.
+
 ## 1.1.10 - 2024-11-01
 ### Added
 - Added x.AI Grok to the available models for text generation.
