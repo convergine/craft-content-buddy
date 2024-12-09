@@ -15,6 +15,13 @@ $(document).ready(function () {
             } else {
                 $input.css('padding-right', '125px');
             }
+
+        }else if($field.attr('data-type') == 'craft\\ckeditor\\Field'){
+
+            if($input.parent().find(".ck-sticky-panel")){
+
+                $input.parent().find(".ck-sticky-panel").css('padding-right', '125px');
+            }
         }
     });
 
@@ -51,7 +58,7 @@ $(document).ready(function () {
     });
 
     function checkInputText(query) {
-        if(query.length < 5) {
+        if(query.length < 3) {
             alert(selectPromptText);
             return false;
         }
@@ -76,7 +83,8 @@ $(document).ready(function () {
         } else if(typeof $input !== "undefined") {
             let s = $input[0].selectionStart;
             let e = $input[0].selectionEnd;
-            return $input.val().substring(s, e);
+            let selectedText = $input.val().substring(s, e);
+            return selectedText?selectedText:text;
         } else {
             return '';
         }

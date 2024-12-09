@@ -46,6 +46,10 @@
 	'stabilityCFGDescription' => 'Prompt strength (CFG scale) controls how much the final image will adhere to your prompt. Lower values would give the model more "creativity", while higher values will produce a final image that\'s close to your prompt.',
 	'Enable Generate Image From Text' => 'Enable Generate Image From Text',
 
+	/* Settings -> general */
+	'General'=>'General',
+	'Enable \"Site Translation\" plugin menu'=>'Enable \"Site Translation\" plugin menu',
+
 	/* Prompts Page */
 	'Edit Prompt'=>'Edit Prompt',
 	'New Prompt'=>'New Prompt',

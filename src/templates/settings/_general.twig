@@ -1,0 +1,22 @@
+{% extends 'convergine-contentbuddy/_layouts/_settings' %}
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+{% import '_includes/forms' as forms %}
+
+{% set title = 'General' %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% set fullPageForm = true %}
+
+{% block content %}
+    {{ craft.contentbuddy.checkLicense()|raw }}
+    <input type="hidden" name="action" value="plugins/save-plugin-settings">
+    <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
+    {% namespace 'settings' %}
+        {{ forms.lightswitchField({
+            label: "Enable \"Site Translation\" plugin menu"|t('convergine-contentbuddy'),
+            name: 'enableTranslationMenu',
+            on: settings.enableTranslationMenu,
+        }) }}
+
+    {% endnamespace %}
+{% endblock %}

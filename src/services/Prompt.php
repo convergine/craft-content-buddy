@@ -38,6 +38,7 @@ class Prompt extends \craft\base\Component {
 		$promptRecord->wordsType = $promptModel->wordsType;
 		$promptRecord->wordsNumber = $promptModel->wordsNumber;
 		$promptRecord->wordsMultiplier = $promptModel->wordsMultiplier;
+		$promptRecord->order = $promptModel->order;
 
 		return $promptRecord->save();
 
@@ -60,7 +61,7 @@ class Prompt extends \craft\base\Component {
 			$prompts =  $prompts->where(['active' => true]);
 		}
 
-		$prompts =  $prompts->all();
+		$prompts =  $prompts->orderBy(['order'=>SORT_ASC])->all();
 
 		return $prompts;
 	}

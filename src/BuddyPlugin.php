@@ -13,6 +13,8 @@ use Craft;
 use craft\base\Element;
 use craft\base\Field;
 use craft\base\Plugin;
+use craft\controllers\ElementsController;
+use craft\events\DefineElementEditorHtmlEvent;
 use craft\events\DefineFieldHtmlEvent;
 use craft\events\DefineHtmlEvent;
 use craft\events\RegisterUrlRulesEvent;
@@ -69,8 +71,9 @@ class BuddyPlugin extends Plugin
 			UrlManager::EVENT_REGISTER_CP_URL_RULES,
 			function (RegisterUrlRulesEvent $event) {
 				$event->rules['convergine-contentbuddy/settings/text-generation'] = 'convergine-contentbuddy/settings/text-generation';
-                $event->rules['convergine-contentbuddy/settings/image-generation'] = 'convergine-contentbuddy/settings/image-generation';
+				$event->rules['convergine-contentbuddy/settings/image-generation'] = 'convergine-contentbuddy/settings/image-generation';
 				$event->rules['convergine-contentbuddy/settings/fields'] = 'convergine-contentbuddy/settings/fields';
+				$event->rules['convergine-contentbuddy/settings/general'] = 'convergine-contentbuddy/settings/general';
 
 				$event->rules['convergine-contentbuddy/content-generator'] = 'convergine-contentbuddy/content-generator/index';
 
@@ -167,6 +170,17 @@ class BuddyPlugin extends Plugin
 						}
 					}
 
+				}
+			);
+
+			Event::on(
+				ElementsController::class,
+				ElementsController::EVENT_DEFINE_EDITOR_CONTENT,
+				function (DefineElementEditorHtmlEvent $event) {
+					$js = Craft::$app->view->renderTemplate('convergine-contentbuddy/_title_field_scripts_external.twig',[
+						'hash' => 'title-hash-'.time()
+					]);
+					$event->html = $event->html."<script>".$js."</script>";
 				}
 			);
 		}

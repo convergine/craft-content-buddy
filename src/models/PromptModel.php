@@ -69,6 +69,11 @@ class PromptModel extends Model
 	public string $uid;
 
 	/**
+	 * @var int
+	 */
+	public int $order=0;
+
+	/**
 	 * @return DateTime
 	 */
 	public function getDateCreated(): DateTime

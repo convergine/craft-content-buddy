@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.12 - 2024-12-09
+### Changed
+- Allow changing the order of the prompts in the Quick Menu. [Issue #32](https://github.com/convergine/craft-content-buddy/issues/32)
+- Added an option to toggle the translation button in the Quick Menu. [Issue #33](https://github.com/convergine/craft-content-buddy/issues/33)
+
+### Fixed
+- Adjusted the max tokens limit for x.AI Grok to resolve usage issues.
+- Resolved an issue where the title field from the Navigation plugin was not displaying the Quick Menu.
+- Adjusted CK Editor field UI to display the Quick Menu properly. [Issue #34](https://github.com/convergine/craft-content-buddy/issues/34)
+- Resolved an issue where translations could override the slug with the original site's slug.
+
 ## 1.1.11 - 2024-11-11
 ### Fixed
 - Fixed error handling for x.AI processing.

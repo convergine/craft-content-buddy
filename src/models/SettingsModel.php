@@ -114,6 +114,8 @@ class SettingsModel extends Model
 
     public string $generateImageAssetId = '';
 
+	public bool $enableTranslationMenu = true;
+
     /**
      * @return string
      */

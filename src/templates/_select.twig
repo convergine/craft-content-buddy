@@ -23,9 +23,10 @@
 
 {% set currentLang = "" %}
 {% set currentLocale = "" %}
+{% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
 
 {% set displayTranslationPrompts = false %}
-{% if craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings.usePageLang %}
+{% if settings.usePageLang %}
     {% for site in craft.app.sites.getAllSites() %}
         {% if site.handle == craft.app.request.getQueryParam('site') %}
             {% set currentLang = site.language %}
@@ -38,7 +39,7 @@
     {% endif %}
 {% endif %}
 
-{% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
+
 {% if (settings.textAi == 'openai' and settings.getOpenAiApiKey|length) or (settings.textAi == 'xai' and settings.getXAiApiKey|length) %}
 
     {% set prompts = craft.contentbuddy.getPrompts(true) %}
@@ -51,7 +52,7 @@ margin-right: 5px;" width="18" height="18" viewBox="0 0 18 18" fill="none">
     </svg></button>
         <div id="{{ fieldId }}" class="menu menu--disclosure buddy-menu">
             <ul class="padded">
-                {% if craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings.generateImageFromText %}
+                {% if settings.generateImageFromText %}
                 <li><a href="javascript:void(0)" class="doAi" type="button" role="button"
                        data-hash="{{ hash }}"
                        data-prompt="_generate_images_"
@@ -73,7 +74,7 @@ margin-right: 5px;" width="18" height="18" viewBox="0 0 18 18" fill="none">
 
         </div>
     </div>
-{% if craft.app.sites.getAllSites()|length > 1 %}
+{% if craft.app.sites.getAllSites()|length > 1 and settings.enableTranslationMenu%}
     {% set translateBtnAttributes = {
         class: ['btn', '', 'buddy-prompt-button', 'menubtn'],
         type: 'button',

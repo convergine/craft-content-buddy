@@ -20,7 +20,7 @@ use convergine\contentbuddy\records\BuddyPromptRecord;
 class PromptsController extends \craft\web\Controller {
 	public function actionIndex() {
 		return $this->renderTemplate( 'convergine-contentbuddy/prompts/_index', [
-			'prompts' => BuddyPromptRecord::find()->all()
+			'prompts' => BuddyPromptRecord::find()->orderBy(['order'=>SORT_ASC])->all()
 		] );
 	}
 
@@ -55,6 +55,7 @@ class PromptsController extends \craft\web\Controller {
 		$promptModel->wordsType = $request->getRequiredParam( 'wordsType' );
 		$promptModel->wordsNumber = $request->getRequiredParam( 'wordsNumber' );
 		$promptModel->wordsMultiplier = $request->getRequiredParam( 'wordsMultiplier' );
+		$promptModel->order = $request->getRequiredParam( 'order' );
 
 		if ( ! $promptModel->validate() ) {
 			return $this->renderTemplate( 'convergine-contentbuddy/prompts/_edit', [
@@ -78,5 +79,22 @@ class PromptsController extends \craft\web\Controller {
 			\Craft::$app->getSession()->setNotice(\Craft::t('convergine-contentbuddy', "Prompt removed"));
 		}
 		return $this->redirect( 'convergine-contentbuddy/prompts' );
+	}
+
+	public function actionReorder() {
+		$this->requirePostRequest();
+		$ids = \Craft::$app->getRequest()->getBodyParam('ids');
+
+		if (is_array($ids)) {
+			foreach ($ids as $sortOrder => $id) {
+				$record = BuddyPromptRecord::findOne($id);
+				$record->order = $sortOrder + 1;
+				$record->save();
+			}
+
+			return $this->asJson(['success' => true]);
+		}
+
+		return $this->asJson(['success' => false, 'error' => 'Invalid data']);
 	}
 }

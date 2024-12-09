@@ -402,16 +402,16 @@ class Translate extends Component {
 
 	public function processMatrixFields(Entry $entry_from, int $translate_to, int $translateId, string $prompt, $override,$or_entry = true) : array {
 		$target = [];
-
-        if(!$or_entry && !empty($entry_from->title) && $entry_from->getIsTitleTranslatable()) {
-            try {
-                $translated_text = BuddyPlugin::getInstance()
-                    ->request->send( $prompt . ": {$entry_from->title}", 30000, 0.7, true );
-                $target['title'] = $translated_text;
-            } catch ( \Throwable $e ) {
-                $this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), 'title', 0 );
-            }
-        }
+		$targetEntry = Entry::find()->id( $entry_from->id )->siteId( $translate_to )->one();
+		if(!$or_entry && !empty($entry_from->title) && $entry_from->getIsTitleTranslatable()) {
+			try {
+				$translated_text = BuddyPlugin::getInstance()
+					->request->send( $prompt . ": {$entry_from->title}", 30000, 0.7, true );
+				$target['title'] = $translated_text;
+			} catch ( \Throwable $e ) {
+				$this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), 'title', 0 );
+			}
+		}
 
 		foreach ($entry_from->fieldLayout->getCustomFields() as $field) {
 			$translatedValue   = null;
@@ -447,7 +447,7 @@ class Translate extends Component {
 				$target[$field->handle] = $translatedValue;
 			} else {
 				if(!$or_entry){
-					$target[$field->handle] = $field->serializeValue($entry_from->getFieldValue($field->handle), $entry_from);
+					$target[$field->handle] = $field->serializeValue($targetEntry->getFieldValue($field->handle), $targetEntry);
 				}
 
 			}

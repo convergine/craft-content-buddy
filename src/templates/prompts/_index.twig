@@ -32,23 +32,27 @@
 
             {{ craft.contentbuddy.checkLicense()|raw }}
 
-            <table class="data fullwidth">
+            <table class="data fullwidth " id="prompts_table" data-sortable>
                 <thead>
                 <tr>
+                    <th scope="col"></th>
                     <th scope="col">{{ 'Id' |t('app') }}</th>
                     <th scope="col">{{ 'Label' |t('app') }}</th>
                     <th scope="col">{{ 'Prompt Template' |t('convergine-contentbuddy') }}</th>
                     <th scope="col">{{ 'Temperature' |t('convergine-contentbuddy') }}</th>
                     <th scope="col">{{ 'Words Count' |t('convergine-contentbuddy') }}</th>
                     <th scope="col">{{ 'Enabled' |t('convergine-contentbuddy') }}</th>
+                    <th scope="col">{{ 'Order' |t('convergine-contentbuddy') }}</th>
                     <th class="thin"></th>
                     <th class="thin"></th>
                 </tr>
                 </thead>
+                <tbody>
                 {% for prompt in prompts %}
-                    <tbody>
-                    <tr class="s-{{ prompt.id }}">
-                        <td class="id-column">{{ prompt.id }}</td>
+
+                    <tr class="s-{{ prompt.id }}" data-level="1" data-id="{{ prompt.id }}" data-descendants="0">
+                        <td class="sort-column"  data-titlecell="" scope="row"><a class="move icon" title="Reorder" aria-label="Reorder" role="button">&nbsp;</a></td>
+                        <td class="id-column"  data-titlecell="" scope="row">{{ prompt.id }}</td>
                         <td class="label-column"><a href="{{ cpUrl('convergine-contentbuddy/prompts/edit/' ~ prompt.id) }}">{{ prompt.label }}</a></td>
                         <td class="prompt-template-column">{{ prompt.template }}</td>
                         <td class="temperature-column">{{ prompt.temperature }}</td>
@@ -60,11 +64,13 @@
                             {% endif %}
                         </td>
                         <td class="enabled-column"><span class="status {{ prompt.active ? 'live' : 'disabled' }}" role="img" aria-label="Status: Live"></span></td>
+                        <td class="temperature-column">{{ prompt.order }}</td>
                         <td class="edit-column"><a href="{{ cpUrl('convergine-contentbuddy/prompts/edit/' ~ prompt.id) }}" class="edit icon" title="{{ 'Edit'|t('app') }}" role="button"></a></td>
                         <td class="delete-column"><a href="{{ cpUrl('convergine-contentbuddy/prompts/delete/' ~ prompt.id) }}" class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
                     </tr>
-                    </tbody>
+
                 {% endfor %}
+                </tbody>
             </table>
         </div>
     {% else %}
@@ -78,3 +84,29 @@
         }
     </style>
 {% endblock %}
+{% js %}
+    Craft.initUiElements(); // Ensure Craft's JavaScript hooks into the sortable table
+
+    // Handle row sorting and save the new order via Ajax
+    const $table = $('#prompts_table');
+    const sortable = new Garnish.DragSort($table.find('tbody tr'), {
+    handle: '.move',
+    //helper: $table.find('tbody'),
+    axis: 'y',
+    container: $table.find('tbody'),
+    onSortChange: function() {
+    const sortedIds = $table.find('tbody tr').map(function() {
+    return $(this).data('id');
+    }).get();
+
+    // Save the sorted order via Ajax
+    Craft.postActionRequest('convergine-contentbuddy/prompts/reorder', { ids: sortedIds }, function(response) {
+    if (response.success) {
+    Craft.cp.displayNotice('Order updated successfully.');
+    } else {
+    Craft.cp.displayError('Failed to save order.');
+    }
+    });
+    }
+    });
+{% endjs %}

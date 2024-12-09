@@ -49,6 +49,7 @@ class Install extends Migration {
 			'wordsNumber'     => $this->integer()->notNull(),
 			'wordsMultiplier' => $this->float()->notNull(),
 			'temperature'     => $this->float()->notNull(),
+            'order'           => $this->integer()->defaultValue(99),
 
 			'dateCreated' => $this->dateTime()->notNull(),
 			'dateUpdated' => $this->dateTime()->notNull(),

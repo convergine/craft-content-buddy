@@ -22,9 +22,10 @@
 
 {% set currentLang = "" %}
 {% set currentLocale = "" %}
+{% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
 
 {% set displayTranslationPrompts = false %}
-{% if craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings.usePageLang %}
+{% if settings.usePageLang %}
     {% for site in craft.app.sites.getAllSites() %}
         {% if site.handle == craft.app.request.getQueryParam('site') %}
             {% set currentLang = 'Using the locale '|t('convergine-contentbuddy') ~ site.language %}
@@ -37,7 +38,7 @@
     {% endif %}
 {% endif %}
 
-{% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
+
 {% if (settings.textAi == 'openai' and settings.getOpenAiApiKey|length) or (settings.textAi == 'xai' and settings.getXAiApiKey|length) %}
 
     {% set prompts = craft.contentbuddy.getPrompts(true) %}
@@ -81,7 +82,7 @@
             $("#title").css('padding-right', '66px');
         })
     }
-    {% if craft.app.sites.getAllSites()|length > 1 %}
+    {% if craft.app.sites.getAllSites()|length > 1 and settings.enableTranslationMenu %}
         {% set translateBtnAttributes = {
             class: ['btn', '', 'buddy-prompt-button', 'menubtn'],
             type: 'button',

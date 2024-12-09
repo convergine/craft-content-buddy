@@ -13,7 +13,11 @@ class XAi extends TextApi {
         try {
             $model = $this->settings->xAiModel;
 
-            $maxTokens = min( $maxTokens, $this->getMaxTokensForModel($model));
+	        if($isTranslate) {
+		        $maxTokens = max( $maxTokens, $this->getMaxTokensForModel( $model ) );
+	        }else{
+		        $maxTokens = min( $maxTokens, $this->getMaxTokensForModel( $model ) );
+	        }
 
             $client = new Client();
             $res = $client->request( 'POST', $this->getEndpoint($model), [

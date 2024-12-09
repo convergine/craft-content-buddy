@@ -5,3 +5,12 @@
     name: 'active',
     on: (element) ? element.active : true
 }) }}
+ {{ forms.textField({
+     label: 'Order'|t('convergine-contentbuddy'),
+     name: 'order',
+     errors: prompt.getErrors('order'),
+     required: true,
+     first: false,
+     value: prompt.order,
+     autofocus: true,
+ }) }}

@@ -11,6 +11,14 @@ class SettingsController extends \craft\web\Controller {
 	/**
 	 * @return Response
 	 */
+
+	public function actionGeneral(): Response {
+		$settings = BuddyPlugin::getInstance()->getSettings();
+
+		return $this->renderTemplate( 'convergine-contentbuddy/settings/_general', [
+			'settings' => $settings,
+		] );
+	}
 	public function actionTextGeneration(): Response {
 		$settings = BuddyPlugin::getInstance()->getSettings();
 
