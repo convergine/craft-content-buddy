@@ -1,124 +1,127 @@
 {% import '_includes/forms' as forms %}
 
-<div style="margin-bottom: 48px;">
-    <p>{{ 'translateFieldsDescriptionText'|t('convergine-contentbuddy') }}</p>
-</div>
+{% if fields == 'all' %}
+    <div>
+        <p style="color:red">{{ 'Translate all available sections'|t('convergine-contentbuddy') }}</p>
+    </div>
+{% else %}
+    <div style="margin-bottom: 48px;">
+        <p>{{ 'translateFieldsDescriptionText'|t('convergine-contentbuddy') }}</p>
+    </div>
+    {% if fields.regular|length or fields.matrix|length %}
+        {% if fields.regular|length %}
+            <div class="tableview tablepane">
 
-{# % set _fields = craft.app.fields.getAllFields % #}
+                <table class="data fullwidth">
+                    <thead>
+                    <tr>
+                        <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
+                        <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
+                        {% if not isCraft5 %}
+                            <th scope="col" style="width: 20%">{{ 'Group' |t('convergine-contentbuddy') }}</th>
+                        {% endif %}
+                        <th class="thin" style="width: 10%">{{ 'Translate?' |t('convergine-contentbuddy') }}</th>
 
-        {% if fields.regular|length or fields.matrix|length %}
-            {% if fields.regular|length %}
-                <div class="tableview tablepane">
+                    </tr>
+                    </thead>
+                    <tbody>
 
-                    <table class="data fullwidth">
-                        <thead>
-                        <tr>
-                            <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
-                            <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
-                            <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
+                    {% for field in fields.regular %}
+                        {% set fildName = craft %}
+
+                        <tr class="s-{{ field.id }}">
+                            <td class="label-column">{{ field.name }}</td>
+                            <td class="handle-column">
+                                <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button" aria-label="Copy to clipboard"
+                                     tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
+                                    <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
+                                    <span data-icon="clipboard" aria-hidden="true"></span>
+                                </div>
+                            </td>
+                            <td class="group-column">{{ field.type }}</td>
                             {% if not isCraft5 %}
-                                <th scope="col" style="width: 20%">{{ 'Group' |t('convergine-contentbuddy') }}</th>
+                                <td class="group-column">{{ field.group }}</td>
                             {% endif %}
-                            <th class="thin" style="width: 10%">{{ 'Translate?' |t('convergine-contentbuddy') }}</th>
-
+                            <td class="enabled-column">
+                                {{ forms.lightswitch({
+                                    name: 'enabledFields[]',
+                                    value:field._type ~ ':' ~ field.handle,
+                                    on: 0,
+                                }) }}
+                            </td>
                         </tr>
-                        </thead>
-                        <tbody>
 
-                        {% for field in fields.regular %}
-                            {% set fildName = craft %}
-
-                            <tr class="s-{{ field.id }}">
-                                <td class="label-column">{{ field.name }}</td>
-                                <td class="handle-column">
-                                    <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button" aria-label="Copy to clipboard"
-                                         tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
-                                        <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
-                                        <span data-icon="clipboard" aria-hidden="true"></span>
-                                    </div>
-                                </td>
-                                <td class="group-column">{{ field.type }}</td>
-                                {% if not isCraft5 %}
-                                    <td class="group-column">{{ field.group }}</td>
-                                {% endif %}
-                                <td class="enabled-column">
-                                    {{ forms.lightswitch({
-                                        name: 'enabledFields[]',
-                                        value:field._type ~ ':' ~ field.handle,
-                                        on: 0,
-                                    }) }}
-                                </td>
-                            </tr>
-
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
-
-            {% if fields.matrix|length %}
-                {% if isCraft5 %}
-                    {{ forms.lightswitchField({
-                        label: "Translate Matrix Fields"|t('convergine-contentbuddy'),
-                        name: 'translateMatrix',
-                        on: false,
-                        instructions: 'translateMatrixFieldsText'|t('convergine-contentbuddy')
-                    }) }}
-                {% else %}
-                    <div class="content-pane" style="margin-top: 40px">
-                        <h2 style="margin-top: 40px">{{ 'Matrix Fields'|t('convergine-contentbuddy') }}</h2>
-                        <div class="tableview">
-                            {% for matrixFild in fields.matrix %}
-                                <h3>{{ matrixFild.name }}</h3>
-                                <table class="data fullwidth">
-                                    <thead>
-                                    <tr>
-                                        <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
-                                        <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
-                                        <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
-                                        <th scope="col" style="width: 20%">{{ 'Block' |t('convergine-contentbuddy') }}</th>
-                                        <th class="thin" style="width: 10%">{{ 'Translate?' |t('convergine-contentbuddy') }}</th>
-
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% if matrixFild.fields|length %}
-                                        {% for field in matrixFild.fields %}
-
-                                            <tr class="s-{{ field.id }}">
-                                                <td class="label-column">{{ field.name }}</td>
-                                                <td class="handle-column">
-                                                    <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button"
-                                                         aria-label="Copy to clipboard" tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
-                                                        <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
-                                                        <span data-icon="clipboard" aria-hidden="true"></span>
-                                                    </div>
-                                                </td>
-                                                <td class="group-column">{{ field.type }}</td>
-                                                <td class="group-column">{{ field.blockName }}</td>
-                                                <td class="enabled-column">
-                                                    {{ forms.lightswitch({
-                                                        name: 'enabledFields[]',
-                                                        value: field._field,
-                                                        on: 0,
-                                                    }) }}
-                                                </td>
-                                            </tr>
-
-                                        {% endfor %}
-                                    {% endif %}
-                                    </tbody>
-                                </table>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
-            {% endif %}
-        {% else %}
-            <div>
-                <p>{{ 'No fields exist yet.'|t('convergine-contentbuddy') }}</p>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
         {% endif %}
+
+        {% if fields.matrix|length %}
+            {% if isCraft5 %}
+                {{ forms.lightswitchField({
+                    label: "Translate Matrix Fields"|t('convergine-contentbuddy'),
+                    name: 'translateMatrix',
+                    on: false,
+                    instructions: 'translateMatrixFieldsText'|t('convergine-contentbuddy')
+                }) }}
+            {% else %}
+                <div class="content-pane" style="margin-top: 40px">
+                    <h2 style="margin-top: 40px">{{ 'Matrix Fields'|t('convergine-contentbuddy') }}</h2>
+                    <div class="tableview">
+                        {% for matrixFild in fields.matrix %}
+                            <h3>{{ matrixFild.name }}</h3>
+                            <table class="data fullwidth">
+                                <thead>
+                                <tr>
+                                    <th scope="col" style="width: 30%">{{ 'Label' |t('convergine-contentbuddy') }}</th>
+                                    <th scope="col" style="width: 30%">{{ 'Handle' |t('convergine-contentbuddy') }}</th>
+                                    <th scope="col" style="width: 10%">{{ 'Field type' |t('convergine-contentbuddy') }}</th>
+                                    <th scope="col" style="width: 20%">{{ 'Block' |t('convergine-contentbuddy') }}</th>
+                                    <th class="thin" style="width: 10%">{{ 'Translate?' |t('convergine-contentbuddy') }}</th>
+
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% if matrixFild.fields|length %}
+                                    {% for field in matrixFild.fields %}
+
+                                        <tr class="s-{{ field.id }}">
+                                            <td class="label-column">{{ field.name }}</td>
+                                            <td class="handle-column">
+                                                <div id="fields-handle-attribute" class="code small light copytextbtn" title="Copy to clipboard" role="button"
+                                                     aria-label="Copy to clipboard" tabindex="0" onclick="navigator.clipboard.writeText('{{ field.handle }}')">
+                                                    <input type="text" value="{{ field.handle }}" readonly="" size="{{ field.handle|length }}" tabindex="-1">
+                                                    <span data-icon="clipboard" aria-hidden="true"></span>
+                                                </div>
+                                            </td>
+                                            <td class="group-column">{{ field.type }}</td>
+                                            <td class="group-column">{{ field.blockName }}</td>
+                                            <td class="enabled-column">
+                                                {{ forms.lightswitch({
+                                                    name: 'enabledFields[]',
+                                                    value: field._field,
+                                                    on: 0,
+                                                }) }}
+                                            </td>
+                                        </tr>
+
+                                    {% endfor %}
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        <div>
+            <p>{{ 'No fields exist yet.'|t('convergine-contentbuddy') }}</p>
+        </div>
+    {% endif %}
+{% endif %}
 </div>
 
 

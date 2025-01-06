@@ -132,6 +132,10 @@
 	'translateFieldsDescriptionText'=>'Select the fields that will be translated in the selected section.',
 	'Translate Matrix Fields'=>'Translate Matrix Fields',
 	'translateMatrixFieldsText'=>'Translate all Matrix fields content, recursively',
+	'To All Languages'=>'To All Languages',
+	'All Sections'=>'All Sections',
+	'Enable bulk translation to all languages at once'=>'Enable bulk translation to all languages at once',
+	'Translate all available sections'=>'Translate all available sections',
 
 
 	/* General error messages*/

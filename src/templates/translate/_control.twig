@@ -6,10 +6,16 @@
         <ul class="padded">
             {% for siteId, site in sites %}
             <li>
-                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to \'{{ site }}\'')){$('.action-input').val('convergine-contentbuddy/translate/process-entry');
+                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to \'{{ site }}\'')){$('.action-input').val('{{ action }}');
                             $('#translate_to').val('{{ siteId }}');$('#main-form').submit()}">{{ site }}</a>
             </li>
             {% endfor %}
+            {% if enableBulkTranslation %}
+            <li>
+                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to all languages')){$('.action-input').val('{{ action }}');
+                        $('#translate_to').val('all');$('#main-form').submit()}">{{  'To All Languages'|t('convergine-contentbuddy')}}</a>
+            </li>
+            {% endif %}
         </ul>
 
     </div>

@@ -137,5 +137,12 @@
 {#            </div>#}
 {#        </div>#}
 
+        {{ forms.lightswitchField({
+            label: 'Translate Slugs'|t('convergine-contentbuddy'),
+            name: 'translateSlugs',
+            instructions: 'If enabled, entry slugs will also be translated.'|t('convergine-contentbuddy'),
+            on: settings.translateSlugs is defined and settings.translateSlugs == '1'
+        }) }}
+
     {% endnamespace %}
 {% endblock %}

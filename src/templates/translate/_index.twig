@@ -53,8 +53,16 @@
             on: false,
             instructions: 'overwriteExistingTranslationsDescription'|t('convergine-contentbuddy')
         }) }}
+
+        {{ forms.lightswitchField({
+            label: 'Translate Slugs'|t('convergine-contentbuddy'),
+            name: 'translateSlugs',
+            instructions: 'If enabled, entry slugs will also be translated.'|t('convergine-contentbuddy'),
+            on: settings.translateSlugs is defined and settings.translateSlugs == '1'
+        }) }}
+
         {{ craft.contentbuddy.checkLicense()|raw }}
-        <button type="submit" class="btn submit add icon" id="buddy_generate_entry"
+        <button type="submit" class="btn submit add icon" id="buddy_generate_translation"
                 aria-label="Generate new entry"
         >
             <div class="label">{{ 'Generate Translations'|t('convergine-contentbuddy') }}</div>
@@ -74,6 +82,12 @@
             $("#section").on("change", function(){
                 if($(this).val() != "")
                     getFields($(this).val())
+            })
+            $("#buddy_generate_translation").on('click',function(){
+                if($('#section').val() == 'all'){
+                    return confirm('Are you sure translate all sections?')
+                }
+                return true
             })
             $(".translate-delete").on('click',function (e){
                 e.preventDefault()

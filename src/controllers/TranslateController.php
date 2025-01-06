@@ -3,6 +3,7 @@ namespace convergine\contentbuddy\controllers;
 
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\queue\translateEntries;
+use convergine\contentbuddy\queue\translateSections;
 use convergine\contentbuddy\records\TranslateLogRecord;
 use convergine\contentbuddy\records\TranslateRecord;
 use Craft;
@@ -22,9 +23,10 @@ class TranslateController extends \craft\web\Controller {
 		return $this->renderTemplate('convergine-contentbuddy/translate/_index',
 			[
 				'sites' => BuddyPlugin::getInstance()->translate->getSites(),
-				'sections' => BuddyPlugin::getInstance()->translate->getSections(),
+				'sections' => BuddyPlugin::getInstance()->translate->getSections($this->_plugin->getSettings()->enableBulkTranslation),
 				'items' => TranslateRecord::find()->all(),
 				'isCraft5' => version_compare(Craft::$app->getInfo()->version, '5.0', '>='),
+                'settings' => BuddyPlugin::getInstance()->getSettings()
 			]);
 	}
 
@@ -34,7 +36,7 @@ class TranslateController extends \craft\web\Controller {
 
 		return $this->renderTemplate('convergine-contentbuddy/translate/_fields',
 			[
-				'fields' => BuddyPlugin::getInstance()->translate->getSectionFields($section),
+				'fields' => $section=='all'?'all':BuddyPlugin::getInstance()->translate->getSectionFields($section),
 				'isCraft5' => version_compare(Craft::$app->getInfo()->version, '5.0', '>=')
 			]);
 	}
@@ -48,81 +50,128 @@ class TranslateController extends \craft\web\Controller {
 		$instructions = $request->getParam('instructions');
 		$override = $request->getParam('override');
 		$translateMatrix = $request->getParam('translateMatrix');
+        $translateSlugs = $request->getParam('translateSlugs');
 
-		if(!$section || !$translate_to || !$enabledFields){
+		if(!$section || !$translate_to || (!$enabledFields && $section !=='all')){
 			Craft::$app->getSession()->setError('Please select section, site and fields to translate.');
 			return $this->redirectToPostedUrl();
 
 		}
-		$_section = explode(':',$section);
-		$sectionId = $_section[0];
-		$sectionType = $_section[1];
-
-		foreach ($enabledFields as $k=>$v){
-			if($v==''){
-				unset($enabledFields[$k]);
-			}
-		}
-		if($translateMatrix){
-			$enabledFields[]="craft\\fields\\Matrix:fields";
-		}
-		$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
-		$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
-
-		$translateRecord = new TranslateRecord();
-		$translateRecord->siteId = $translate_to;
-		$translateRecord->instructions = $instructions;
-		$translateRecord->fields = json_encode($enabledFields);
-		$translateRecord->fieldsCount = 0;
-		$translateRecord->sectionId = $sectionId;
-		$translateRecord->sectionType = $sectionType;
-		$translateRecord->fieldsProcessed = 0;
-		$translateRecord->fieldsError = 0;
-		$translateRecord->entriesSubmitted = 0;
-		$translateRecord->fieldsSkipped = 0;
-		$translateRecord->fieldsTranslated = 0;
-		$translateRecord->override = $override?1:0;
-		$translateRecord->jobIds = '';
-		$translateRecord->save();
-		$entries = Entry::find()
-		                ->sectionId( $sectionId )
-		                ->typeId($sectionType)
-		                ->siteId( $primarySiteId );
-		$entries = $this->_plugin->translate->setBatchLimit($entries);
-		$items = $fields = 0;
-		$jobIds = [];
-		foreach ($entries as $entry){
-			$batch = [];
-			foreach ($entry as $b){
-				$batch[]=$b->id;
-
-				$fields += $this->_plugin->translate->getEntryFieldsCount($b,$enabledFields);
-
+		$sectionsList = [];
+		$translateAllSections = false;
+		if($section === 'all'){
+			$translateAllSections = true;
+			$sections = BuddyPlugin::getInstance()->translate->getSections(false);
+			foreach ($sections as $s){
+				if($s['value']) {
+					//$sectionsList[] = $s['value'];
+					$jobId = \craft\helpers\Queue::push(
+						new translateSections( [
+							'sectionId'         => $s['value'],
+							'translateToSiteId' => $translate_to,
+							'instructions'      => $instructions,
+							'override'          => $override,
+                            'translateSlugs'    => $translateSlugs
+						] ), 10
+					);
+				}
 			}
 
+		}else {
+			$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
+			$_section    = explode( ':', $section );
+			$sectionId   = $_section[0];
+			$sectionType = $_section[1];
+			$_enabledFields = [];
 
-			$items+=count($batch);
-			$jobId = \craft\helpers\Queue::push(
-				new translateEntries([
-					'entriesIds' => $batch,
-					'translateToSiteId' => $translate_to,
-					'enabledFields' => $enabledFields,
-					'instructions' => $instructions,
-					'translationId'=>$translateRecord->id
-				]),10,$this->_getDelay()
-			);
-			if($jobId){
-				$jobIds[]=$jobId;
+			foreach ( $enabledFields as $k => $v ) {
+				if ( $v != '' ) {
+					unset( $enabledFields[ $k ] );
+					$_enabledFields[] = $v;
+				}
+			}
+			if ( $translateMatrix ) {
+				$_enabledFields[] = "craft\\fields\\Matrix:fields";
 			}
 
+			$translate_to_list = [];
+			if($translate_to === 'all'){
+				$sectionSites = version_compare(Craft::$app->getInfo()->version, '5.0', '>=') ? Craft::$app->entries->getSectionById($sectionId) : Craft::$app->sections->getSectionById($sectionId);
+				foreach ( $sectionSites->getSiteSettings() as $site ) {
+					if ( $site->siteId != $primarySiteId ) {
+						$translate_to_list[] = $site->siteId;
+					}
+
+				}
+			}else{
+				$translate_to_list[] = $translate_to;
+			}
+
+			/*Craft::dump($section);
+			Craft::dump($_enabledFields);
+			Craft::dump($translate_to_list);*/
+
+
+			//$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
+			foreach ( $translate_to_list as $translate_to_site_id ) {
+
+				$translateRecord                   = new TranslateRecord();
+				$translateRecord->siteId           = $translate_to_site_id;
+				$translateRecord->instructions     = $instructions;
+				$translateRecord->fields           = json_encode( $_enabledFields );
+				$translateRecord->fieldsCount      = 0;
+				$translateRecord->sectionId        = $sectionId;
+				$translateRecord->sectionType      = $sectionType;
+				$translateRecord->fieldsProcessed  = 0;
+				$translateRecord->fieldsError      = 0;
+				$translateRecord->entriesSubmitted = 0;
+				$translateRecord->fieldsSkipped    = 0;
+				$translateRecord->fieldsTranslated = 0;
+				$translateRecord->override         = $override ? 1 : 0;
+				$translateRecord->jobIds           = '';
+				$translateRecord->save();
+				$entries = Entry::find()
+				                ->sectionId( $sectionId )
+				                ->typeId( $sectionType )
+				                ->siteId( $primarySiteId );
+				$entries = $this->_plugin->translate->setBatchLimit( $entries );
+				$items   = $fields = 0;
+				$jobIds  = [];
+				foreach ( $entries as $entry ) {
+					$batch = [];
+					foreach ( $entry as $b ) {
+						$batch[] = $b->id;
+
+						$fields += $this->_plugin->translate->getEntryFieldsCount( $b, $_enabledFields );
+
+					}
+
+
+					$items += count( $batch );
+					$jobId = \craft\helpers\Queue::push(
+						new translateEntries( [
+							'entriesIds'        => $batch,
+							'translateToSiteId' => $translate_to_site_id,
+							'enabledFields'     => $_enabledFields,
+							'instructions'      => $instructions,
+							'translationId'     => $translateRecord->id
+						] ), 10, $this->_getDelay()
+					);
+					if ( $jobId ) {
+						$jobIds[] = $jobId;
+					}
+
+				}
+				$translateRecord->entriesSubmitted = $items;
+
+				$translateRecord->fieldsCount = $fields;
+
+				$translateRecord->jobIds = join( ',', $jobIds );
+
+				$translateRecord->save();
+			}
 		}
-		$translateRecord->entriesSubmitted = $items;
 
-		$translateRecord->fieldsCount = $fields;
-
-		$translateRecord->jobIds = join(',',$jobIds);
-
-		$translateRecord->save();
 
 		Craft::$app->session->setNotice( Craft::t(
 			'convergine-contentbuddy',
@@ -188,14 +237,29 @@ class TranslateController extends \craft\web\Controller {
 		$override = $request->getParam('override');
 		$siteId = $request->getParam('siteId');
 		$id =  $request->getParam('elementId');
+        $translateSlugs = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
+
+		$entry = Craft::$app->entries->getEntryById($id);
+		$translate_to_list = [];
+		if($translate_to === 'all'){
+			$sectionSites = $entry->getSection()->getSiteSettings();
+			foreach ( $sectionSites as $site ) {
+				if ( $site->siteId != $siteId ) {
+					$translate_to_list[] = $site->siteId;
+				}
+
+			}
+		}else{
+			$translate_to_list[] = $translate_to;
+		}
 
 		$entry = Craft::$app->entries->getEntryById($id,$siteId);
 
 		$sectionId = $entry->getSection()->id;
 		$sectionType = $entry->getSection()->type;
 
-		$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
-		$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
+		//$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
+		//$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
 
 		$enabledFields = [];
 		$entryFields = $this->_plugin->translate->getTranslatedFields($entry);
@@ -213,7 +277,88 @@ class TranslateController extends \craft\web\Controller {
 					}
 				}
 			}
+		foreach ($translate_to_list as $translate_to_siteId) {
 
+
+			$translateRecord                   = new TranslateRecord();
+			$translateRecord->siteId           = $translate_to_siteId;
+			$translateRecord->idEntry          = $id;
+			$translateRecord->instructions     = $instructions;
+			$translateRecord->fields           = json_encode( $enabledFields );
+			$translateRecord->fieldsCount      = 0;
+			$translateRecord->sectionId        = $sectionId;
+			$translateRecord->sectionType      = $sectionType;
+			$translateRecord->fieldsProcessed  = 0;
+			$translateRecord->fieldsError      = 0;
+			$translateRecord->entriesSubmitted = 1;
+			$translateRecord->fieldsSkipped    = 0;
+			$translateRecord->fieldsTranslated = 0;
+			$translateRecord->override         = 1;//$override?1:0;
+			$translateRecord->jobIds           = '';
+			$translateRecord->save();
+
+			$items                             = $fields = 0;
+			$jobIds                            = [];
+			$jobId                             = \craft\helpers\Queue::push(
+				new translateEntries( [
+					'entriesIds'        => [ $id ],
+					'translateToSiteId' => (int)$translate_to_siteId,
+					'enabledFields'     => $enabledFields,
+					'instructions'      => $instructions,
+					'translationId'     => $translateRecord->id,
+                    'translateSlugs'    => $translateSlugs
+				] ), 10, $this->_getDelay()
+			);
+			$translateRecord->entriesSubmitted = 1;
+
+			$translateRecord->fieldsCount = count( $enabledFields );
+
+			$translateRecord->jobIds = $jobId;
+
+			$translateRecord->save();
+		}
+
+		Craft::$app->session->setNotice( Craft::t(
+			'convergine-contentbuddy',
+			'entryTranslationStarted' ) );
+		return $this->redirectToPostedUrl();
+	}
+
+	public function actionProcessCategory(){
+		$request = \Craft::$app->getRequest();
+
+		//$section = $request->getParam('section');
+		$translate_to = $request->getParam('translate_to');
+		$enabledFields = $request->getParam('enabledFields');
+		$instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code. only return the translation');
+		$override = $request->getParam('override');
+		$siteId = $request->getParam('siteId');
+		$id =  $request->getParam('elementId');
+
+		$category = Craft::$app->categories->getCategoryById($id,$siteId);
+
+		$sectionId = 0;
+		$sectionType = 0;
+
+		//$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
+		//$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
+
+		$enabledFields = [];
+		$entryFields = $this->_plugin->translate->getTranslatedFields($category);
+		foreach ($entryFields['regular'] as $f) {
+			$enabledFields[]="{$f['_type']}:{$f['handle']}";
+		}
+		if(version_compare(Craft::$app->getInfo()->version, '5.0', '>=')){
+			if(count($entryFields['matrix'])){
+				$enabledFields[]="craft\\fields\\Matrix:fields";
+			}
+		}else{
+			foreach ($entryFields['matrix'] as $f) {
+				foreach ($f['fields'] as $mf) {
+					$enabledFields[] = $mf['_field'];
+				}
+			}
+		}
 
 
 		$translateRecord = new TranslateRecord();

@@ -19,4 +19,13 @@
         }) }}
 
     {% endnamespace %}
+
+    {% namespace 'settings' %}
+        {{ forms.lightswitchField({
+            label: "Enable bulk translation to all languages at once"|t('convergine-contentbuddy'),
+            name: 'enableBulkTranslation',
+            on: settings.enableBulkTranslation,
+        }) }}
+
+    {% endnamespace %}
 {% endblock %}

@@ -116,6 +116,11 @@ class SettingsModel extends Model
 
 	public bool $enableTranslationMenu = true;
 
+    public bool $translateSlugs = false;
+
+    //Enable bulk translation to all languages at once
+    public bool $enableBulkTranslation = false;
+
     /**
      * @return string
      */

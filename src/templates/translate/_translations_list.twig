@@ -23,6 +23,7 @@
             <tbody>
 
             {% for item in items %}
+                {% set sectionName = '' %}
                 {% if isCraft5 %}
                     {% set section = craft.app.entries.getSectionById(item.sectionId) %}
                 {% else %}
@@ -31,9 +32,20 @@
 
                 {% set site = craft.app.sites.getSiteById(item.siteId) %}
 
+                {% if section %}
+                    {% set sectionName = section.name %}
+                {% else %}
+                    {% set category = craft.categories()
+                        .id(item.idEntry)
+                        .one() %}
+                    {% if category %}
+                        {% set sectionName =  'Category: ' ~ category.group.name %}
+                    {% endif %}
+                {% endif %}
+
                 {% if site %}
                 <tr class="s-{{ item.id }}">
-                    <td class="label-column">{{ section.name }}</td>
+                    <td class="label-column">{{ sectionName }}</td>
                     <td class="handle-column">
                         {{ site.name }} ({{ site.language }})
                     </td>

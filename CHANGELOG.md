@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.13 - 2025-01-06
+### Added
+- Added an option to translate content to all languages at once.
+- Allow translating of entry slugs. [Issue #28](https://github.com/convergine/craft-content-buddy/issues/28)
+
 ## 1.1.12 - 2024-12-09
 ### Changed
 - Allow changing the order of the prompts in the Quick Menu. [Issue #32](https://github.com/convergine/craft-content-buddy/issues/32)
