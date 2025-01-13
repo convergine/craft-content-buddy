@@ -1211,10 +1211,16 @@ class Translate extends Component {
 	public function getEntryTranslateControl( Element $entry ): string {
 		$currentSite = $entry->siteId;
 		$sites       = [];
+		$sectionSites = [];
 		if($entry::class == 'craft\elements\Category'){
 			$sectionSites = $entry->getSupportedSites();
-		}else{
-			$sectionSites = $entry->getSection()->getSiteSettings();
+		}elseif($entry::class == 'craft\elements\Entry'){
+			if(version_compare(Craft::$app->getInfo()->version, '5.0', '>=')) {
+				$sectionSites = $entry->getSection()->getSiteSettings();
+			}else{
+				$section = \Craft::$app->sections->getSectionById($entry->sectionId);
+				$sectionSites = $section->getSiteSettings();
+			}
 		}
 
 		foreach ( $sectionSites as $site ) {

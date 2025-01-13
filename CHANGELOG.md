@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.14 - 2025-01-13
+### Fixed
+- Fixed an issue that prevented the Users and Assets sections from opening. [Issue #35](https://github.com/convergine/craft-content-buddy/issues/35)
+
 ## 1.1.13 - 2025-01-06
 ### Added
 - Added an option to translate content to all languages at once.
