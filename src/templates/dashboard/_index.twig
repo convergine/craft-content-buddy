@@ -1,0 +1,40 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+
+{% set plugin = craft.app.getModule('convergine-contentbuddy') %}
+{% set crumbs = [
+    { label: plugin.name, url: url('convergine-contentbuddy') },
+    { label: "Dashboard"|t('convergine-contentbuddy'), url: url('convergine-contentbuddy') },
+] %}
+
+{% set selectedSubnavItem = 'dashboard' %}
+
+{% set fullPageForm = false %}
+{% set title = "Content Buddy"|t('convergine-contentbuddy') %}
+
+{% block content %}
+    <div class="buddy-image-grid">
+        <div class="buddy-image-block">
+            <a href="{{ url('convergine-contentbuddy/content-generator') }}">
+                <img src="{{ view.getAssetManager().getPublishedUrl('@convergine/contentbuddy/assets/images/dashboard/articles.png', true) }}" alt="Generate Articles" />
+            </a>
+        </div>
+        <div class="buddy-image-block">
+            <a href="{{ url('convergine-contentbuddy/settings/image-generation') }}">
+                <img src="{{ view.getAssetManager().getPublishedUrl('@convergine/contentbuddy/assets/images/dashboard/images.png', true) }}" alt="Generate Images" />
+            </a>
+        </div>
+        <div class="buddy-image-block">
+            <a href="{{ url('convergine-contentbuddy/site-translate') }}">
+                <img src="{{ view.getAssetManager().getPublishedUrl('@convergine/contentbuddy/assets/images/dashboard/translations.png', true) }}" alt="Generate Translations" />
+            </a>
+        </div>
+        <div class="buddy-image-block buddy-coming-soon">
+            <img src="{{ view.getAssetManager().getPublishedUrl('@convergine/contentbuddy/assets/images/dashboard/audio_coming_soon.png', true) }}" alt="Generate Audio (Coming Soon)" />
+        </div>
+        <div class="buddy-image-block buddy-coming-soon">
+            <img src="{{ view.getAssetManager().getPublishedUrl('@convergine/contentbuddy/assets/images/dashboard/videos_coming_soon.png', true) }}" alt="Generate Videos (Coming Soon)" />
+        </div>
+    </div>
+{% endblock %}

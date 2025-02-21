@@ -40,7 +40,6 @@ class BuddyPlugin extends Plugin
 	public ?string $name = 'Content Buddy';
 
 	public function init() {
-
         /* plugin initialization */
 		$this->hasCpSection = true;
 		$this->hasCpSettings = true;
@@ -51,7 +50,6 @@ class BuddyPlugin extends Plugin
 		$this->_setEvents();
 	
 	}
-
 
 	protected function _setComponents() {
 		$this->setComponents([
@@ -70,10 +68,13 @@ class BuddyPlugin extends Plugin
 			UrlManager::class,
 			UrlManager::EVENT_REGISTER_CP_URL_RULES,
 			function (RegisterUrlRulesEvent $event) {
+                $event->rules['convergine-contentbuddy'] = 'convergine-contentbuddy/dashboard/index';
+
 				$event->rules['convergine-contentbuddy/settings/text-generation'] = 'convergine-contentbuddy/settings/text-generation';
 				$event->rules['convergine-contentbuddy/settings/image-generation'] = 'convergine-contentbuddy/settings/image-generation';
 				$event->rules['convergine-contentbuddy/settings/fields'] = 'convergine-contentbuddy/settings/fields';
 				$event->rules['convergine-contentbuddy/settings/general'] = 'convergine-contentbuddy/settings/general';
+				$event->rules['convergine-contentbuddy/settings/translation'] = 'convergine-contentbuddy/settings/translation';
 
 				$event->rules['convergine-contentbuddy/content-generator'] = 'convergine-contentbuddy/content-generator/index';
 
@@ -234,6 +235,10 @@ class BuddyPlugin extends Plugin
 		$nav['url'] = 'convergine-contentbuddy';
 
 		if (Craft::$app->getUser()->getIsAdmin()) {
+            $nav['subnav']['dashboard'] = [
+                'label' => Craft::t('convergine-contentbuddy', 'Dashboard'),
+                'url' => 'convergine-contentbuddy',
+            ];
 			$nav['subnav']['content-generator'] = [
 				'label' => Craft::t('convergine-contentbuddy', 'Content Generator'),
 				'url' => 'convergine-contentbuddy/content-generator',

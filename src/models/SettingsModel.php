@@ -18,11 +18,25 @@ class SettingsModel extends Model
      */
     public string $textAi = 'openai';
 
+	/**
+	 * @var string
+	 */
+	public string $translationAi = 'openai';
+
     /**
      * @var string
      */
     public string $preferredModel = 'gpt-3.5-turbo';
 
+	/**
+	 * @var string
+	 */
+	public string $preferredTranslationModel = 'gpt-3.5-turbo';
+
+	/**
+	 * @var string
+	 */
+	public string $deepLApiKey = '';
     /**
      * @var string
      */
@@ -98,7 +112,7 @@ class SettingsModel extends Model
 
 	public string $stabilityAPIKey = '';
 
-	public string $stabilityEngine = 'sd3';
+	public string $stabilityEngine = 'sd3.5-large';
 
 	public string $stabilitySampler = 'DDIM';
 
@@ -121,6 +135,13 @@ class SettingsModel extends Model
     //Enable bulk translation to all languages at once
     public bool $enableBulkTranslation = false;
 
+    public int $delayLanguage = 30;
+    public int $delayEntry = 10;
+    public int $delaySection = 10;
+
+    public int $maxAttempts = 5;
+    public int $ttr = 300;
+
     /**
      * @return string
      */
@@ -134,6 +155,13 @@ class SettingsModel extends Model
     public function getXAiApiKey(): string {
         return App::parseEnv($this->xAiApiKey);
     }
+
+	/**
+	 * @return string
+	 */
+	public function getDeepLApiKey(): string {
+		return App::parseEnv($this->deepLApiKey);
+	}
 
 	/**
 	 * @return string

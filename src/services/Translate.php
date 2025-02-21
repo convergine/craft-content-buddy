@@ -14,6 +14,7 @@
 namespace convergine\contentbuddy\services;
 
 use convergine\contentbuddy\BuddyPlugin;
+use convergine\contentbuddy\models\SettingsModel;
 use convergine\contentbuddy\queue\translateEntries;
 use convergine\contentbuddy\records\TranslateLogRecord;
 use convergine\contentbuddy\records\TranslateRecord;
@@ -281,7 +282,6 @@ class Translate extends Component {
 			$translate_to_list[] = $translate_to;
 		}
 
-		//$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
 		foreach ( $translate_to_list as $translate_to_site_id ) {
 
 			$translateRecord                   = new TranslateRecord();
@@ -306,7 +306,7 @@ class Translate extends Component {
 			$entries = $this->_plugin->translate->setBatchLimit( $entries );
 			$items   = $fields = 0;
 			$jobIds  = [];
-			foreach ( $entries as $entry ) {
+			foreach ( $entries as $index => $entry ) {
 				$batch = [];
 				foreach ( $entry as $b ) {
 					$batch[] = $b->id;
@@ -325,7 +325,7 @@ class Translate extends Component {
 						'instructions'      => $instructions,
 						'translationId'     => $translateRecord->id,
                         'translateSlugs'    => $translateSlugs
-					] ), 10, 0
+					] ), 10 + $index, 0
 				);
 				if ( $jobId ) {
 					$jobIds[] = $jobId;
@@ -364,7 +364,8 @@ class Translate extends Component {
 		$_entry = Category::find()->id( $entry->id )->siteId( $translate_to )->one();
 		if ( ! $_entry ) {
 			$entry->siteId = $translate_to;
-			Craft::$app->elements->saveElement( $entry, false );
+            Craft::info('Saving entry ('.$entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+            $this->saveElement($entry);
 			$_entry = $entry;
 		}
 
@@ -376,7 +377,7 @@ class Translate extends Component {
 			$prompt .= " following text";
 			try {
 				$translated_text = BuddyPlugin::getInstance()->request
-					->send( $prompt . ": {$entry->title}", 30000, 0.7, true );
+					->send( $prompt . ": {$entry->title}", 30000, 0.7, true ,$lang);
 
 				$_entry->title = $translated_text;
 
@@ -413,7 +414,7 @@ class Translate extends Component {
 
 					try {
 						$translated_text = BuddyPlugin::getInstance()
-							->request->send( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 30000, 0.7, true );
+							->request->send( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 30000, 0.7, true,$lang );
 						Craft::info( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 'content-buddy' );
 						Craft::info( $fieldHandle, 'content-buddy' );
 						Craft::info( $translated_text, 'content-buddy' );
@@ -459,10 +460,11 @@ class Translate extends Component {
 								}
 
 								$translated_text = BuddyPlugin::getInstance()
-									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
+									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true,$lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
-								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+                                Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                                $this->saveElement($matrixBlockTarget[ $k ]);
 
 								$fieldsTranslated ++;
 							} catch ( \Throwable $e ) {
@@ -477,14 +479,15 @@ class Translate extends Component {
 
 					$block       = $_field[1];
 
-					$fieldValues = $this->processMatrixFields( $entry, $translate_to, $translateId, $prompt, $override );
+					$fieldValues = $this->processMatrixFields($lang, $entry, $translate_to, $translateId, $prompt, $override);
 					$_entry->setFieldValues($fieldValues);
 				}
 
 
 			}
 
-			if ( Craft::$app->elements->saveElement( $_entry, false ) ) {
+            Craft::info('Saving entry ('.$_entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+			if ( $this->saveElement( $_entry ) ) {
 				$translateRecord->fieldsTranslated = $translateRecord->fieldsTranslated + $fieldsTranslated;
 				$translateRecord->fieldsError      = $translateRecord->fieldsError + $fieldsError;
 				$translateRecord->fieldsSkipped    = $translateRecord->fieldsSkipped + $fieldsSkipped;
@@ -523,7 +526,8 @@ class Translate extends Component {
 		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->one();
 		if ( ! $_entry ) {
 			$entry->siteId = $translate_to;
-			Craft::$app->elements->saveElement( $entry, false );
+            Craft::info('Saving entry ('.$entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+			$this->saveElement( $entry );
 			$_entry = $entry;
 		}
 
@@ -535,7 +539,7 @@ class Translate extends Component {
 			$prompt .= " following text";
 			try {
 				$translated_text = BuddyPlugin::getInstance()->request
-					->send( $prompt . ": {$entry->title}", 30000, 0.7, true );
+					->send( $prompt . ": {$entry->title}", 30000, 0.7, true,$lang );
 
 				$_entry->title = $translated_text;
 
@@ -572,7 +576,7 @@ class Translate extends Component {
 
 					try {
 						$translated_text = BuddyPlugin::getInstance()
-							->request->send( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 30000, 0.7, true );
+							->request->send( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 30000, 0.7, true,$lang );
 						Craft::info( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 'content-buddy' );
 						Craft::info( $fieldHandle, 'content-buddy' );
 						Craft::info( $translated_text, 'content-buddy' );
@@ -618,10 +622,11 @@ class Translate extends Component {
 								}
 
 								$translated_text = BuddyPlugin::getInstance()
-									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
+									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true,$lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
-								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+                                Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                                $this->saveElement( $matrixBlockTarget[ $k ] );
 
 								$fieldsTranslated ++;
 							} catch ( \Throwable $e ) {
@@ -636,14 +641,15 @@ class Translate extends Component {
 
 					$block       = $_field[1];
 
-					$fieldValues = $this->processMatrixFields( $entry, $translate_to, $translateId, $prompt, $override );
+					$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $prompt, $override );
 					$_entry->setFieldValues($fieldValues);
 				}
 
 
 			}
 
-			if ( Craft::$app->elements->saveElement( $_entry, false ) ) {
+            Craft::info('Saving entry ('.$_entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+			if ( $this->saveElement( $_entry ) ) {
 				$translateRecord->fieldsTranslated = $translateRecord->fieldsTranslated + $fieldsTranslated;
 				$translateRecord->fieldsError      = $translateRecord->fieldsError + $fieldsError;
 				$translateRecord->fieldsSkipped    = $translateRecord->fieldsSkipped + $fieldsSkipped;
@@ -660,13 +666,13 @@ class Translate extends Component {
 		return false;
 	}
 
-	public function processMatrixFields(Element $entry_from, int $translate_to, int $translateId, string $prompt, $override,$or_entry = true) : array {
+	public function processMatrixFields(string $lang, Element $entry_from, int $translate_to, int $translateId, string $prompt, $override,$or_entry = true) : array {
 		$target = [];
 		$targetEntry = Entry::find()->id( $entry_from->id )->siteId( $translate_to )->one();
 		if(!$or_entry && !empty($entry_from->title) && $entry_from->getIsTitleTranslatable()) {
 			try {
 				$translated_text = BuddyPlugin::getInstance()
-					->request->send( $prompt . ": {$entry_from->title}", 30000, 0.7, true );
+					->request->send( $prompt . ": {$entry_from->title}", 30000, 0.7, true,$lang );
 				$target['title'] = $translated_text;
 			} catch ( \Throwable $e ) {
 				$this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), 'title', 0 );
@@ -687,12 +693,11 @@ class Translate extends Component {
 
 						$_prompt         = $prompt . ": {$originalFieldValue}";
 						$translatedValue = BuddyPlugin::getInstance()
-							->request->send( $_prompt, 30000, 0.7, true );
+							->request->send( $_prompt, 30000, 0.7, true, $lang );
 
 						$translatedValue = trim( $translatedValue, '```html' );
 						$translatedValue = rtrim( $translatedValue, '```' );
 
-						//$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
 						//$fieldsError ++;
 						$this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), $field, 0 );
@@ -700,7 +705,7 @@ class Translate extends Component {
 				}
 			} elseif ( in_array( get_class( $field ), static::$matrixFields ) ) {
 				// dig deeper in Matrix fields
-				$translatedValue = $this->translateMatrixField( $entry_from, $field, $translate_to,  $translateId,  $prompt, $override );
+				$translatedValue = $this->translateMatrixField( $lang,$entry_from, $field, $translate_to,  $translateId,  $prompt, $override );
 
 			}
 			if ($translatedValue) {
@@ -715,7 +720,7 @@ class Translate extends Component {
 		return $target;
 	}
 
-	public function translateMatrixField(Element $element, FieldInterface $field,int $translate_to,  int $translateId, string $prompt, $override): array
+	public function translateMatrixField(string $lang, Element $element, FieldInterface $field,int $translate_to,  int $translateId, string $prompt, $override): array
 	{
 		$query = $element->getFieldValue($field->handle);
 
@@ -723,7 +728,7 @@ class Translate extends Component {
 		$serialized = $element->getSerializedFieldValues([$field->handle])[$field->handle];
 
 		foreach ($query->all() as $matrixElement) {
-			$translatedMatrixValues = $this->processMatrixFields($matrixElement,$translate_to, $translateId, $prompt,$override,false);
+			$translatedMatrixValues = $this->processMatrixFields($lang,$matrixElement,$translate_to, $translateId, $prompt,$override,false);
 			foreach ($translatedMatrixValues as $matrixFieldHandle => $value) {
 				// only set translated values in matrix array
 				if ($value && isset($serialized[$matrixElement->id])) {
@@ -796,7 +801,9 @@ class Translate extends Component {
 							->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
 
 						$matrixBlockTarget[ $k ]->$handle = $translated_text;
-						Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+                        Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                        $this->saveElement( $matrixBlockTarget[ $k ] );
 
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
@@ -823,7 +830,9 @@ class Translate extends Component {
 							->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
 
 						$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
-						Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+                        Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                        $this->saveElement( $matrixBlockTarget[ $k ] );
 
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
@@ -939,7 +948,9 @@ class Translate extends Component {
 									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
-								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+                                Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                                $this->saveElement( $matrixBlockTarget[ $k ] );
 
 								$fieldsTranslated ++;
 								$fieldsError --;
@@ -979,7 +990,9 @@ class Translate extends Component {
 									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
 
 								$matrixBlockTarget[ $k ]->$handle = $translated_text;
-								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+                                Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                                $this->saveElement( $matrixBlockTarget[ $k ] );
 
 								$fieldsTranslated ++;
 								$fieldsError --;
@@ -1000,7 +1013,9 @@ class Translate extends Component {
 									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
-								Craft::$app->elements->saveElement( $matrixBlockTarget[ $k ] );
+
+                                Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                                $this->saveElement( $matrixBlockTarget[ $k ] );
 
 								$fieldsTranslated ++;
 								$fieldsError --;
@@ -1015,7 +1030,9 @@ class Translate extends Component {
 				}
 
 			}
-			if ( Craft::$app->elements->saveElement( $_entry, false ) ) {
+
+            Craft::info('Saving entry ('.$_entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+			if ( $this->saveElement( $_entry ) ) {
 				$translateRecord->fieldsTranslated = $fieldsTranslated;
 				$translateRecord->fieldsError      = $fieldsError;
 
@@ -1037,7 +1054,8 @@ class Translate extends Component {
         $_entry = Entry::find()->id($entry->id)->siteId($translate_to)->one();
         if(!$_entry) {
             $entry->siteId = $translate_to;
-            Craft::$app->elements->saveElement($entry, false);
+            Craft::info('Saving entry ('.$entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+            $this->saveElement($entry);
             $_entry = $entry;
         }
 
@@ -1048,7 +1066,7 @@ class Translate extends Component {
             }
             $prompt .= " following URL slug";
             try {
-                $translated_text = BuddyPlugin::getInstance()->request->send($prompt . ": {$entry->slug}", 30000, 0.7, true);
+                $translated_text = BuddyPlugin::getInstance()->request->send($prompt . ": {$entry->slug}", 30000, 0.7, true, $lang);
 
                 $_entry->slug = $translated_text;
 
@@ -1056,7 +1074,8 @@ class Translate extends Component {
                 $hasError = true;
             }
 
-            if(Craft::$app->elements->saveElement($_entry)) {
+            Craft::info('Saving entry ('.$_entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+            if($this->saveElement($_entry)) {
                 return true;
             }
         }
@@ -1212,8 +1231,12 @@ class Translate extends Component {
 		$currentSite = $entry->siteId;
 		$sites       = [];
 		$sectionSites = [];
+
 		if($entry::class == 'craft\elements\Category'){
 			$sectionSites = $entry->getSupportedSites();
+		}elseif($entry::class == 'craft\elements\Asset'){
+			//TODO add support to assets
+			//$sectionSites = $entry->getSupportedSites();
 		}elseif($entry::class == 'craft\elements\Entry'){
 			if(version_compare(Craft::$app->getInfo()->version, '5.0', '>=')) {
 				$sectionSites = $entry->getSection()->getSiteSettings();
@@ -1221,6 +1244,9 @@ class Translate extends Component {
 				$section = \Craft::$app->sections->getSectionById($entry->sectionId);
 				$sectionSites = $section->getSiteSettings();
 			}
+		}
+		if(!$sectionSites){
+			return '';
 		}
 
 		foreach ( $sectionSites as $site ) {
@@ -1283,4 +1309,28 @@ class Translate extends Component {
 	private function isMatrixField( $field ): bool {
 		return get_class( $field ) === 'craft\fields\Matrix';
 	}
+
+    private function saveElement($element) : bool {
+        /** @var SettingsModel $settings */
+        $settings = BuddyPlugin::getInstance()->getSettings();
+        $maxAttempts = max($settings->maxAttempts,1);
+        $attempts = 0;
+        $success = false;
+        while($attempts < $maxAttempts && !$success) {
+            $attempts++;
+            try {
+                $success = Craft::$app->elements->saveElement($element, false, false);
+                if($success) {
+                    Craft::info('Element saved after '.$attempts.' attempts: ' . $element->id, 'content-buddy');
+                }
+            } catch(\Exception|\Throwable $e) {
+                $success = false;
+                if($attempts >= $maxAttempts) {
+                    Craft::error('Failed to save element after '.$maxAttempts.' attempts: ' . $e->getMessage(), 'content-buddy');
+                    throw $e;
+                }
+            }
+        }
+        return $success;
+    }
 }

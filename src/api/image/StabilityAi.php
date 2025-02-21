@@ -28,7 +28,7 @@ class StabilityAi extends ImageApi {
 
         $assets = array();
 
-        if($this->isStableDiffusion3($model)) {
+        if($this->isStableDiffusion3($model) || $this->isStableDiffusion3UC($model)) {
             $image = $json['image'] ?? null;
             $asset = $this->uploadFileData( $folderUID, $image, $image_size, $prompt );
             if ( $asset ) {
@@ -48,11 +48,17 @@ class StabilityAi extends ImageApi {
     }
 
     private function isStableDiffusion3($model) : bool {
-        return in_array($model, ['sd3','core','ultra']);
+        return str_starts_with($model, 'sd3');
+    }
+
+    private function isStableDiffusion3UC($model) : bool {
+        return in_array($model,['core','ultra']);
     }
 
     private function getStabilityApiEndpoint($model) : string {
         if($this->isStableDiffusion3($model)) {
+            return "/v2beta/stable-image/generate/sd3";
+        } else if($this->isStableDiffusion3UC($model)) {
             return "/v2beta/stable-image/generate/$model";
         } else {
             return "/v1/generation/$model/text-to-image";
@@ -60,8 +66,8 @@ class StabilityAi extends ImageApi {
     }
 
     private function getStabilityApiData($model,$width,$height,$prompt) : array {
-        if($this->isStableDiffusion3($model)) {
-            return [
+        if($this->isStableDiffusion3($model) || $this->isStableDiffusion3UC($model)) {
+            $data = [
                 'multipart' => [
                     [
                         'name' => 'prompt',
@@ -105,9 +111,21 @@ class StabilityAi extends ImageApi {
                     'Accept'  => 'application/json',
                 ],
             ];
+
+            if($this->isStableDiffusion3($model)) {
+                if($model == 'sd3') {
+                    $model = 'sd3.5-large';
+                }
+                $data['multipart'][] = [
+                    'name' => 'model',
+                    'contents' => $model,
+                ];
+            }
+
+            return $data;
         } else {
             return [
-                'body'    => json_encode([
+                'body' => json_encode([
                     'samples' => 1,
                     'width' => $width,
                     'height' => $height,

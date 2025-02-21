@@ -9,9 +9,10 @@ use Throwable;
 use yii\helpers\StringHelper;
 
 class OpenAi extends TextApi {
-    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false): string {
+    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $lang=''): string {
         try {
-            $model = $this->settings->preferredModel;
+
+            $model = $isTranslate?$this->settings->preferredTranslationModel:$this->settings->preferredModel;
 
             $maxTokens = min( $maxTokens, $this->getMaxTokensForModel( $model ) );
             if($isTranslate && $model!='gpt-4o-mini' && $model!='gpt-4o'){
@@ -65,19 +66,30 @@ class OpenAi extends TextApi {
             'content' => $prompt,
         ];
 
-        return json_encode( [
+        $body = [
             'model'       => $model,
             'messages'    => $messages,
-            "temperature" => $temperature,
-            'max_tokens'  => $maxTokensToGenerate,
-        ] );
+        ];
+
+        if($this->isReasoningModel($model)) {
+            $body['max_completion_tokens'] = $maxTokensToGenerate;
+        } else {
+            $body['max_tokens'] = $maxTokensToGenerate;
+            $body['temperature'] = $temperature;
+        }
+
+        return json_encode($body);
     }
 
-    private function getTextGenerationBasedOnModel($model, $choices) {
+    private function getTextGenerationBasedOnModel($model, $choices) : string {
         return trim( $choices[0]['message']['content'] );
     }
 
-    private function getEndpoint($model) {
+    private function isReasoningModel($model) : bool {
+        return in_array($model, ['o1', 'o1-mini', 'o3-mini']);
+    }
+
+    private function getEndpoint($model) : string {
         return 'https://api.openai.com/v1/chat/completions';
     }
 }

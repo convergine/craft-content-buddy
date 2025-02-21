@@ -63,4 +63,14 @@ class SettingsController extends \craft\web\Controller {
 			'folders'  => $assets_folders
 		] );
 	}
+
+	/**
+	 * @return Response
+	 */
+	public function actionTranslation(): Response {
+		$settings       = BuddyPlugin::getInstance()->getSettings();
+		return $this->renderTemplate( 'convergine-contentbuddy/settings/_translation', [
+			'settings' => $settings
+		] );
+	}
 }

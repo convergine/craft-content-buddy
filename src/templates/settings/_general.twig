@@ -18,14 +18,55 @@
             on: settings.enableTranslationMenu,
         }) }}
 
-    {% endnamespace %}
-
-    {% namespace 'settings' %}
         {{ forms.lightswitchField({
             label: "Enable bulk translation to all languages at once"|t('convergine-contentbuddy'),
             name: 'enableBulkTranslation',
             on: settings.enableBulkTranslation,
         }) }}
 
+        {{ forms.textField({
+            label: 'Site/Language Delay'|t('convergine-contentbuddy'),
+            name: 'delayLanguage',
+            value: settings.delayLanguage,
+            type: 'number',
+            min: 0,
+            instructions: 'delayLanguageDescription'|t('convergine-contentbuddy')
+        }) }}
+
+        {{ forms.textField({
+            label: 'Entry Delay'|t('convergine-contentbuddy'),
+            name: 'delayEntry',
+            value: settings.delayEntry,
+            type: 'number',
+            min: 0,
+            instructions: 'delayEntryDescription'|t('convergine-contentbuddy')
+        }) }}
+
+        {{ forms.textField({
+            label: 'Section Delay'|t('convergine-contentbuddy'),
+            name: 'delaySection',
+            value: settings.delaySection,
+            type: 'number',
+            min: 0,
+            instructions: 'delaySectionDescription'|t('convergine-contentbuddy')
+        }) }}
+
+        {{ forms.textField({
+            label: 'Max Attempts for Saving'|t('convergine-contentbuddy'),
+            name: 'maxAttempts',
+            value: settings.maxAttempts,
+            type: 'number',
+            min: 1,
+            instructions: 'maxAttemptsDescription'|t('convergine-contentbuddy')
+        }) }}
+
+        {{ forms.textField({
+            label: 'Time to Reserve'|t('convergine-contentbuddy'),
+            name: 'ttr',
+            value: settings.ttr,
+            type: 'number',
+            min: 0,
+            instructions: 'ttrDescription'|t('convergine-contentbuddy')
+        }) }}
     {% endnamespace %}
 {% endblock %}

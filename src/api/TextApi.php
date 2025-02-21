@@ -14,12 +14,12 @@ abstract class TextApi {
         $this->settings = $settings;
     }
 
-    function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false) {}
+    function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $lang='') {}
 
     protected function getMaxTokensForModel($model): int {
         return match($model) {
             "grok-beta" => 130000,
-            "gpt-4o", "gpt-4o-mini" => 15900,
+            "gpt-4o", "gpt-4o-mini", "o1", "o1-mini", "o3-mini" => 15900,
             "gpt-4" => 7900,
             "gpt-4-turbo", "gpt-3.5-turbo" => 3900,
             default => 2000

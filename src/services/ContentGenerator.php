@@ -353,7 +353,7 @@ class ContentGenerator {
 	public static function getTimeLimitAlert(){
 		$current_time = (int)trim(ini_get('max_execution_time'));
 		if($current_time < self::MIN_EXECUTION_TIME) {
-			return "<ul class='buddy-alert error' style='display:block;'><li>"
+			return "<ul class='buddy-alert error-license' style='display:block;'><li>"
 			       . Craft::t(
 					'convergine-contentbuddy',
 					'To avoid time-out errors, we strongly recommend changing your server <strong>max_execution_time</strong> to {preferred_time} (Current value: {current_time} seconds)',

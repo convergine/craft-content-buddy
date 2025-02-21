@@ -2,6 +2,7 @@
 namespace convergine\contentbuddy\controllers;
 
 use convergine\contentbuddy\BuddyPlugin;
+use convergine\contentbuddy\models\SettingsModel;
 use convergine\contentbuddy\queue\translateEntries;
 use convergine\contentbuddy\queue\translateSections;
 use convergine\contentbuddy\records\TranslateLogRecord;
@@ -50,7 +51,7 @@ class TranslateController extends \craft\web\Controller {
 		$instructions = $request->getParam('instructions');
 		$override = $request->getParam('override');
 		$translateMatrix = $request->getParam('translateMatrix');
-        $translateSlugs = $request->getParam('translateSlugs');
+		$translateSlugs = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
 
 		if(!$section || !$translate_to || (!$enabledFields && $section !=='all')){
 			Craft::$app->getSession()->setError('Please select section, site and fields to translate.');
@@ -62,9 +63,8 @@ class TranslateController extends \craft\web\Controller {
 		if($section === 'all'){
 			$translateAllSections = true;
 			$sections = BuddyPlugin::getInstance()->translate->getSections(false);
-			foreach ($sections as $s){
+			foreach ($sections as $index => $s){
 				if($s['value']) {
-					//$sectionsList[] = $s['value'];
 					$jobId = \craft\helpers\Queue::push(
 						new translateSections( [
 							'sectionId'         => $s['value'],
@@ -72,7 +72,7 @@ class TranslateController extends \craft\web\Controller {
 							'instructions'      => $instructions,
 							'override'          => $override,
                             'translateSlugs'    => $translateSlugs
-						] ), 10
+						] ), 10, $this->_getDelay(0,0,$index), $this->_getTTR()
 					);
 				}
 			}
@@ -107,13 +107,7 @@ class TranslateController extends \craft\web\Controller {
 				$translate_to_list[] = $translate_to;
 			}
 
-			/*Craft::dump($section);
-			Craft::dump($_enabledFields);
-			Craft::dump($translate_to_list);*/
-
-
-			//$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
-			foreach ( $translate_to_list as $translate_to_site_id ) {
+            foreach ( $translate_to_list as $indexLanguage => $translate_to_site_id ) {
 
 				$translateRecord                   = new TranslateRecord();
 				$translateRecord->siteId           = $translate_to_site_id;
@@ -137,7 +131,7 @@ class TranslateController extends \craft\web\Controller {
 				$entries = $this->_plugin->translate->setBatchLimit( $entries );
 				$items   = $fields = 0;
 				$jobIds  = [];
-				foreach ( $entries as $entry ) {
+				foreach ( $entries as $index => $entry ) {
 					$batch = [];
 					foreach ( $entry as $b ) {
 						$batch[] = $b->id;
@@ -148,15 +142,15 @@ class TranslateController extends \craft\web\Controller {
 
 
 					$items += count( $batch );
-					$jobId = \craft\helpers\Queue::push(
-						new translateEntries( [
-							'entriesIds'        => $batch,
-							'translateToSiteId' => $translate_to_site_id,
-							'enabledFields'     => $_enabledFields,
-							'instructions'      => $instructions,
-							'translationId'     => $translateRecord->id
-						] ), 10, $this->_getDelay()
-					);
+                    $jobId = \craft\helpers\Queue::push(
+                        new translateEntries( [
+                            'entriesIds'        => $batch,
+                            'translateToSiteId' => $translate_to_site_id,
+                            'enabledFields'     => $_enabledFields,
+                            'instructions'      => $instructions,
+                            'translationId'     => $translateRecord->id
+                        ] ), 10 + $indexLanguage, $this->_getDelay($indexLanguage,$index), $this->_getTTR()
+                    );
 					if ( $jobId ) {
 						$jobIds[] = $jobId;
 					}
@@ -194,14 +188,13 @@ class TranslateController extends \craft\web\Controller {
 
 		$jobIds = [];
 
-		foreach ($translationLogs as $entry){
+		foreach ($translationLogs as $index => $entry){
 			$batch = [];
 			foreach ($entry as $b){
 
 				$batch[]=$b->entryId;
 
 			}
-
 
 			$jobId = \craft\helpers\Queue::push(
 				new translateEntries([
@@ -211,7 +204,7 @@ class TranslateController extends \craft\web\Controller {
 					'instructions' => $translationRecord->instructions,
 					'translationId'=>$translationId,
 					'isRerun'=>true
-				]),10,$this->_getDelay()
+				]),10,$this->_getDelay(0,$index), $this->_getTTR()
 			);
 			if($jobId){
 				$jobIds[]=$jobId;
@@ -258,9 +251,6 @@ class TranslateController extends \craft\web\Controller {
 		$sectionId = $entry->getSection()->id;
 		$sectionType = $entry->getSection()->type;
 
-		//$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
-		//$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
-
 		$enabledFields = [];
 		$entryFields = $this->_plugin->translate->getTranslatedFields($entry);
 			foreach ($entryFields['regular'] as $f) {
@@ -277,7 +267,7 @@ class TranslateController extends \craft\web\Controller {
 					}
 				}
 			}
-		foreach ($translate_to_list as $translate_to_siteId) {
+		foreach ($translate_to_list as $index => $translate_to_siteId) {
 
 
 			$translateRecord                   = new TranslateRecord();
@@ -307,7 +297,7 @@ class TranslateController extends \craft\web\Controller {
 					'instructions'      => $instructions,
 					'translationId'     => $translateRecord->id,
                     'translateSlugs'    => $translateSlugs
-				] ), 10, $this->_getDelay()
+				] ), 10 + $index, $this->_getDelay($index), $this->_getTTR()
 			);
 			$translateRecord->entriesSubmitted = 1;
 
@@ -327,7 +317,6 @@ class TranslateController extends \craft\web\Controller {
 	public function actionProcessCategory(){
 		$request = \Craft::$app->getRequest();
 
-		//$section = $request->getParam('section');
 		$translate_to = $request->getParam('translate_to');
 		$enabledFields = $request->getParam('enabledFields');
 		$instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code. only return the translation');
@@ -339,9 +328,6 @@ class TranslateController extends \craft\web\Controller {
 
 		$sectionId = 0;
 		$sectionType = 0;
-
-		//$primarySiteId = Craft::$app->sites->getPrimarySite()->id;
-		//$translate_to_site = Craft::$app->sites->getSiteById($translate_to);
 
 		$enabledFields = [];
 		$entryFields = $this->_plugin->translate->getTranslatedFields($category);
@@ -387,7 +373,7 @@ class TranslateController extends \craft\web\Controller {
 				'enabledFields' => $enabledFields,
 				'instructions' => $instructions,
 				'translationId'=>$translateRecord->id
-			]),10,$this->_getDelay()
+			]),10,$this->_getDelay(), $this->_getTTR()
 		);
 		$translateRecord->entriesSubmitted = 1;
 
@@ -445,11 +431,18 @@ class TranslateController extends \craft\web\Controller {
 		return $this->redirect('convergine-contentbuddy/site-translate');
 	}
 
-	private function _getDelay(){
-		// set delay for GPT4 for 70 seconds to prevent limits
-		$delay = $this->_plugin->base->isGTP4()?70:0;
-		$delay = 0;
-		return $delay;
-	}
+    private function _getDelay($indexLanguage = 0, $indexEntry = 0, $indexSection = 0) : int {
+        /** @var SettingsModel $settings */
+        $settings = BuddyPlugin::getInstance()->getSettings();
+        return
+            $settings->delayLanguage * $indexLanguage +
+            $settings->delayEntry * $indexEntry +
+            $settings->delaySection * $indexSection;
+    }
 
+    private function _getTTR() : int {
+        /** @var SettingsModel $settings */
+        $settings = BuddyPlugin::getInstance()->getSettings();
+        return $settings->ttr;
+    }
 }

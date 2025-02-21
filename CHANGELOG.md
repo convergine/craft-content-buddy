@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.0 - 2025-02-21
+### Added
+- Added DeepL integration, available in text translation models.
+- Added o1 and o3-mini to the available models for OpenAI.
+- Added Stable Diffusion 3.5 models to the available list for image generation.
+- Added the ability to translate Categories.
+
+### Changed
+- Separated the translation and generation settings into two separate tabs in the plugin settings.
+- Allow the user to set delays for bulk translations.
+
+### Fixed
+- Fixed an issue with license notices displaying when they shouldn't.
+
 ## 1.1.14 - 2025-01-13
 ### Fixed
 - Fixed an issue that prevented the Users and Assets sections from opening. [Issue #35](https://github.com/convergine/craft-content-buddy/issues/35)

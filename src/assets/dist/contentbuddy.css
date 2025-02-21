@@ -1,17 +1,16 @@
 .buddy-alert {
-
 	margin-bottom: 10px;
 	padding: 10px 15px;
 
 	list-style-type: square;
 	display: none;
 }
-.buddy-alert.error{
-	background-color: #ffe3e3;
-	border-left: 5px solid #cf1124;
+.buddy-alert.error-license {
+	background-color: #d8e2ee;
+	border-left: 5px solid #3f4d5a;
 }
-.buddy-alert.error li{
-	color: rgb(207, 17, 36);
+.buddy-alert.error-license li {
+	color: #3f4d5a;
 }
 .buddy-alert.success{
 	background-color: #e2fde3;
@@ -105,3 +104,67 @@ min-width: 185px;
 	border: 1px solid #eee;
 	width: 49%;
 }
+
+.buddy-image-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 16px;
+}
+.buddy-image-block {
+	width: 100%;
+	text-align: center;
+}
+.buddy-image-block img {
+	max-width: 100%;
+	height: auto;
+}
+.buddy-image-block.buddy-coming-soon {
+	cursor: not-allowed;
+}
+.buddy-image-block a {
+	display: block;
+	position: relative;
+	overflow: hidden;
+}
+.buddy-image-block img {
+	transition: transform 0.3s ease;
+}
+.buddy-image-block a::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.1);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+	border-radius: 12px;
+}
+.buddy-image-block a:hover::after {
+	opacity: 1;
+}
+.buddy-image-block a:hover {
+	cursor: pointer;
+}
+@media (min-width: 992px) {
+	.buddy-image-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+@media (min-width: 1600px) {
+	.buddy-image-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+@media (min-width: 1800px) {
+	.buddy-image-grid {
+		grid-template-columns: repeat(5, 1fr);
+	}
+}
+@media (max-width: 480px) {
+	.buddy-image-grid {
+		grid-template-columns: 1fr;
+	}
+}
+

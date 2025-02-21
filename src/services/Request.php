@@ -13,6 +13,7 @@
 
 namespace convergine\contentbuddy\services;
 
+use convergine\contentbuddy\api\text\DeepL;
 use convergine\contentbuddy\api\text\OpenAi;
 use convergine\contentbuddy\api\text\XAi;
 use convergine\contentbuddy\BuddyPlugin;
@@ -22,20 +23,21 @@ class Request {
 	protected SettingsModel $settings;
 
 	public function __construct() {
-        /** @var SettingsModel $settings */
-		$settings = BuddyPlugin::getInstance()->getSettings();
-        $this->settings = $settings;
+		/** @var SettingsModel $settings */
+		$settings       = BuddyPlugin::getInstance()->getSettings();
+		$this->settings = $settings;
 	}
 
-	public function send($prompt, $maxTokens, $temperature, $isTranslate = false) {
-        $textAi = $this->settings->textAi;
+	public function send( $prompt, $maxTokens, $temperature, $isTranslate = false,$lang='' ) {
+		$textAi = $isTranslate ? $this->settings->translationAi:$this->settings->textAi;
+		if ( $textAi == 'deepl' ) {
+			$textApi = new DeepL();
+		}elseif ( $textAi == 'xai' ) {
+			$textApi = new XAi();
+		} else { //default to openai
+			$textApi = new OpenAi();
+		}
 
-        if($textAi == 'xai') {
-            $textApi = new XAi();
-        } else { //default to openai
-            $textApi = new OpenAi();
-        }
-
-        return $textApi->sendRequest($prompt, $maxTokens, $temperature, $isTranslate);
+		return $textApi->sendRequest( $prompt, $maxTokens, $temperature, $isTranslate, $lang );
 	}
 }

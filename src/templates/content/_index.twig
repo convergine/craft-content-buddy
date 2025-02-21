@@ -41,13 +41,13 @@
     </style>
 
     {% if settings.textAi == 'openai' and settings.apiToken == '' %}
-        <ul class="buddy-alert error" style="display: block">
+        <ul class="buddy-alert error-license" style="display: block">
             <li>{{ 'Need to setup API: Access Token'|t('convergine-contentbuddy')}}</li>
         </ul>
     {% endif %}
 
     {% if settings.textAi == 'xai' and settings.xAiApiKey == '' %}
-        <ul class="buddy-alert error" style="display: block">
+        <ul class="buddy-alert error-license" style="display: block">
             <li>{{ 'Need to setup API: Access Token'|t('convergine-contentbuddy')}}</li>
         </ul>
     {% endif %}
@@ -553,7 +553,7 @@ TL;DR:',
         </div>
         {{ min_execution_time_alert|raw }}
         {{ craft.contentbuddy.checkLicense()|raw }}
-        <ul class="buddy-alert error" id="buddy-alert-error">
+        <ul class="buddy-alert error-license" id="buddy-alert-error">
         </ul>
         <ul class="buddy-alert success" id="buddy-alert-success">
         </ul>
