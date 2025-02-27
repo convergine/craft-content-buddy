@@ -4,6 +4,7 @@
 ![Screenshot](./docs/images/image3.png)
 ![Screenshot](./docs/images/image5.png)
 ![Screenshot](./docs/images/image4.png)
+![Screenshot](./docs/images/image6.png)
 
 Content Buddy, an AI-powered CraftCMS plugin, simplifies your content creation tasks. Leveraging OpenAI's ChatGPT, it generates multi-lingual, keyword-focused articles and entries swiftly and efficiently. 
 
