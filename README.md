@@ -8,15 +8,19 @@
 
 Content Buddy, an AI-powered CraftCMS plugin, simplifies your content creation tasks. Leveraging OpenAI's ChatGPT, it generates multi-lingual, keyword-focused articles and entries swiftly and efficiently. 
 
-Configurable settings allow you to control the length and style of generated content, while the image inclusion feature, powered by DALL.E 2, visually enhances your posts. 
+Configurable settings allow you to control the length and style of generated content, while the image inclusion feature, powered by DALL.E, visually enhances your posts. 
 
 Additionally, the plugin offers the convenience of customized prompts, accessible via a dropdown menu in text fields, textareas, and redactor fields, giving your content a unique touch. 
 
 ## Features
 
-- **GPT-4 & GPT-3.5-turbo Support**: Content Buddy works with OpenAI's most advanced text generation models, including the latest GPT-4 and GPT-3.5-turbo, for exceptional human-like text generation.
+- **GPT-4o & GPT-4o mini Support, o1 & o3-mini Support**: Content Buddy works with OpenAI's most advanced text generation models, including the latest GPT-4o & GPT-4o mini, for exceptional human-like text generation.
 
-- **DALL.E 2 Image Generation**: Create perfect matching images for your posts directly from your editor using DALL.E 2 API.
+- **DALL.E 3 & 2 Image Generation**: Create perfect matching images for your posts directly from your editor using DALL.E 3 & 2 APIs.
+
+- **x.AI Grok Support**: Generate content with the latest x.AI Grok model, designed for generating high-quality, human-like text.
+
+- **DeepL Integration**: Translate text to multiple languages using DeepL's API.
 
 - **Manage Prompts**: Conveniently add, edit, and reorder prompts in all supported languages, accessible directly from the editor’s “AI” menu.
 
@@ -26,7 +30,7 @@ Additionally, the plugin offers the convenience of customized prompts, accessibl
 
 - **Multilingual Support**: Opt from an array of languages, with new ones added based on customer requests.
 
-- **Customizable Text Personality/Style**: Adjust the style or persona of the generated text (exclusive to GPT-4 and GPT-3.5-turbo).
+- **Customizable Text Personality/Style**: Adjust the style or persona of the generated text.
 
 - **Comprehensive Paragraphs**: Generate full paragraphs on any topic.
 
@@ -77,7 +81,7 @@ composer require convergine/craft-content-buddy
 
 ## Roadmap
 - **Scheduled Content Generation**: allow Content Buddy to generate content on a schedule, with various controls, list of different topics etc.
-- **More Image AI Integrations**: integration with other generative AI projects, aside from DALL.E 2.
+- **More Image AI Integrations**: integration with other generative AI projects, aside from DALL.E.
 - **RSS Feeds Integration**: allow Content Buddy to generate content from RSS feeds and based on schedule.
 - **Model Fine-Tuning**: allow users to fine-tune models for their specific needs.
 - more settings and controls for plugin, including import/export settings functionality.
