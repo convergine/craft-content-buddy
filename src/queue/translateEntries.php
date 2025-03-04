@@ -2,6 +2,7 @@
 namespace convergine\contentbuddy\queue;
 
 use convergine\contentbuddy\BuddyPlugin;
+use craft\elements\Asset;
 use craft\elements\Category;
 use craft\elements\Entry;
 use craft\queue\BaseJob;
@@ -45,6 +46,7 @@ class translateEntries extends BaseJob
 
     public bool $translateSlugs = false;
 
+    public string $type = 'entry';
 
 	public function execute($queue):void
 	{
@@ -57,33 +59,42 @@ class translateEntries extends BaseJob
         }
 
 		$this->setProgress($this->_queue, 0);
-		foreach ($this->entriesIds as $id){
+
+		foreach($this->entriesIds as $id) {
 			$entry = Entry::findOne($id);
-			if($entry){
+            $category = Category::findOne($id);
+            $asset = Asset::findOne($id);
 
-					BuddyPlugin::getInstance()->translate
-						->translateEntry(
-							$entry,
-							$this->translateToSiteId,
-							$this->enabledFields,
-							$this->translationId,
-							$this->instructions
-						);
-
-			}else{
-				$category = Category::findOne($id);
-				if($category){
-					BuddyPlugin::getInstance()->translate
-						->translateCategory(
-							$category,
-							$this->translateToSiteId,
-							$this->enabledFields,
-							$this->translationId,
-							$this->instructions
-						);
-				}
-
+			if($entry) {
+                BuddyPlugin::getInstance()->translate->translateEntry(
+                    $entry,
+                    $this->translateToSiteId,
+                    $this->enabledFields,
+                    $this->translationId,
+                    $this->instructions
+                );
 			}
+
+            if($category) {
+                BuddyPlugin::getInstance()->translate->translateCategory(
+                    $category,
+                    $this->translateToSiteId,
+                    $this->enabledFields,
+                    $this->translationId,
+                    $this->instructions
+                );
+            }
+
+            if($asset) {
+                BuddyPlugin::getInstance()->translate->translateAsset(
+                    $asset,
+                    $this->translateToSiteId,
+                    $this->enabledFields,
+                    $this->translationId,
+                    $this->instructions
+                );
+            }
+
             $this->setProgress($this->_queue, $step / $total, \Craft::t('convergine-contentbuddy', 'Translate entries {step} of {total}', compact('step', 'total')));
 			$step++;
 		}
@@ -106,9 +117,14 @@ class translateEntries extends BaseJob
 	}
 
 
-	protected function defaultDescription(): string
-	{
+	protected function defaultDescription(): string {
 		$language = \Craft::$app->sites->getSiteById( $this->translateToSiteId )->language;
-		return "Translate entries to '{$language}':".join(', ',$this->entriesIds);
+        $type = match($this->type) {
+            'entry' => 'entries',
+            'category' => 'categories',
+            'asset' => 'assets',
+            default => 'elements',
+        };
+		return "Translate $type to '$language': ".join(', ',$this->entriesIds);
 	}
 }

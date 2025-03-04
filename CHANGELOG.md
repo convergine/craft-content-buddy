@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.1 - 2025-03-04
+### Added
+- Added the ability to translate Assets.
+
+### Fixed
+- Fixed and issue when translating Categories to all languages.
+
 ## 1.2.0 - 2025-02-21
 ### Added
 - Added DeepL integration, available in text translation models.

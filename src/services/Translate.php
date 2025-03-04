@@ -25,6 +25,7 @@ use craft\base\Field;
 use craft\base\FieldInterface;
 use craft\db\ActiveQuery;
 use craft\db\ActiveRecord;
+use craft\elements\Asset;
 use craft\elements\Category;
 use craft\elements\db\EntryQuery;
 use craft\elements\Entry;
@@ -503,6 +504,174 @@ class Translate extends Component {
 
 		return false;
 	}
+
+    public function translateAsset(
+        Asset $entry,
+        int $translate_to,
+        array $enabledFields,
+        int $translateId,
+        string $instructions = '',
+
+    ): bool {
+
+        $translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
+        $lang              = $translate_to_site->language;
+
+        $translateRecord = TranslateRecord::findOne( $translateId );
+        $override        = $translateRecord->override;
+        $hasError        = false;
+
+        $fieldsProcessed = $fieldsSkipped = $fieldsError = $fieldsTranslated = 0;
+
+
+        $_entry = Asset::find()->id( $entry->id )->siteId( $translate_to )->one();
+        if ( ! $_entry ) {
+            $entry->siteId = $translate_to;
+            Craft::info('Saving entry ('.$entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+            $this->saveElement($entry);
+            $_entry = $entry;
+        }
+
+        if ( $_entry ) {
+            $prompt = "Translate to {$lang}";
+            if ( $instructions ) {
+                $prompt .= ", {$instructions},";
+            }
+            $prompt .= " following text";
+            try {
+                $translated_text = BuddyPlugin::getInstance()->request
+                    ->send( $prompt . ": {$entry->title}", 30000, 0.7, true ,$lang);
+
+                $_entry->title = $translated_text;
+
+                $fieldsTranslated ++;
+            } catch ( \Throwable $e ) {
+
+                $fieldsError ++;
+                $this->_addLog( $translateId, $entry->id, $e->getMessage(), 'title' );
+            }
+            $fieldsProcessed ++;
+
+            //alt text
+            if(!empty($entry->alt)) {
+                try {
+                    $translated_text = BuddyPlugin::getInstance()->request->send( $prompt . ": {$entry->alt}", 30000, 0.7, true ,$lang);
+                    $_entry->alt = $translated_text;
+                } catch ( \Throwable $e ) {
+                    $this->_addLog( $translateId, $entry->id, $e->getMessage(), 'alt' );
+                }
+            }
+
+            foreach ( $enabledFields as $field ) {
+                if ( ! $field ) {
+                    continue;
+                }
+                $_field      = explode( ":", $field, 4 );
+                $fieldType   = $_field[0];
+                $fieldHandle = $_field[1];
+
+
+                if ( in_array( $fieldType, $this->_plugin->base->getSupportedFieldTypes() ) ) {
+                    $fieldsProcessed ++;
+                    // heck field not empty
+                    if ( strlen( (string) $entry->getFieldValue( $fieldHandle ) ) == 0 ) {
+                        $fieldsSkipped ++;
+                        continue;
+                    }
+
+                    //check if field is already translated and selected NOT OVERRIDE
+                    if ( ! $override && (string) $entry->getFieldValue( $fieldHandle ) != (string) $_entry->getFieldValue( $fieldHandle ) ) {
+                        $fieldsSkipped ++;
+                        continue;
+                    }
+
+                    try {
+                        $translated_text = BuddyPlugin::getInstance()
+                            ->request->send( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 30000, 0.7, true,$lang );
+                        Craft::info( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 'content-buddy' );
+                        Craft::info( $fieldHandle, 'content-buddy' );
+                        Craft::info( $translated_text, 'content-buddy' );
+                        $translated_text = trim( $translated_text, '```html' );
+                        $translated_text = rtrim( $translated_text, '```' );
+                        $_entry->setFieldValue( $fieldHandle, $translated_text );
+                        $fieldsTranslated ++;
+                    } catch ( \Throwable $e ) {
+                        $fieldsError ++;
+                        $this->_addLog( $translateId, $entry->id, $e->getMessage(), $field );
+                    }
+
+                    // process Craft4 Matrix field
+                } elseif ( $fieldType == 'craft\fields\Matrix' && class_exists( 'craft\elements\MatrixBlock' ) ) {
+
+                    $block  = $_field[2];
+                    $handle = $_field[3];
+
+                    $matrixFieldQuery = $entry->getFieldValue( $block )->type( $fieldHandle );
+
+                    $matrixBlockTarget = \craft\elements\MatrixBlock::find()
+                        ->field( $block )
+                        ->ownerId( $_entry->id )
+                        ->type( $fieldHandle )
+                        ->siteId( $translate_to )
+                        ->all();
+
+                    foreach ( $matrixFieldQuery->all() as $k => $matrixField ) {
+                        $fieldsProcessed ++;
+                        if ( isset( $matrixBlockTarget[ $k ] ) ) {
+                            try {
+                                $originalFieldValue = (string) $matrixField->getFieldValue( $handle );
+                                $targetFieldValue   = (string) $matrixBlockTarget[ $k ]->getFieldValue( $handle );
+                                // heck field not empty
+                                if ( strlen( $originalFieldValue ) == 0 ) {
+                                    $fieldsSkipped ++;
+                                    continue;
+                                }
+                                //check if field is already translated and selected NOT OVERRIDE
+                                if ( ! $override && $originalFieldValue != $targetFieldValue ) {
+                                    $fieldsSkipped ++;
+                                    continue;
+                                }
+
+                                $translated_text = BuddyPlugin::getInstance()
+                                    ->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true,$lang );
+
+                                $matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
+                                Craft::info('Saving entry ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                                $this->saveElement($matrixBlockTarget[ $k ]);
+
+                                $fieldsTranslated ++;
+                            } catch ( \Throwable $e ) {
+                                $fieldsError ++;
+                                $this->_addLog( $translateId, $entry->id, $e->getMessage(), $field, $k );
+                            }
+                        }
+                    }
+
+                    // process Craft5 Matrix field
+                } elseif ( $fieldType == 'craft\fields\Matrix' ) {
+                    $block       = $_field[1];
+                    $fieldValues = $this->processMatrixFields($lang, $entry, $translate_to, $translateId, $prompt, $override);
+                    $_entry->setFieldValues($fieldValues);
+                }
+            }
+
+            Craft::info('Saving entry ('.$_entry->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+            if ( $this->saveElement( $_entry ) ) {
+                $translateRecord->fieldsTranslated = $translateRecord->fieldsTranslated + $fieldsTranslated;
+                $translateRecord->fieldsError      = $translateRecord->fieldsError + $fieldsError;
+                $translateRecord->fieldsSkipped    = $translateRecord->fieldsSkipped + $fieldsSkipped;
+                $translateRecord->fieldsProcessed  = $translateRecord->fieldsProcessed + $fieldsProcessed;
+
+                $translateRecord->save();
+
+                return true;
+
+            }
+        }
+        $translateRecord->save();
+
+        return false;
+    }
 
 	public function translateEntry(
 		Entry $entry,
@@ -1196,7 +1365,7 @@ class Translate extends Component {
 
 	public function getTranslatedFields( Element $entry ) {
 		$fieldLayout = $entry->getFieldLayout();
-
+        Craft::info('Getting translated fields for entry ('.$entry->id.'): '.json_encode($fieldLayout), 'content-buddy');
 		return $this->_getLayoutFields( $fieldLayout );
 	}
 
@@ -1232,18 +1401,17 @@ class Translate extends Component {
 		$sites       = [];
 		$sectionSites = [];
 
-		if($entry::class == 'craft\elements\Category'){
+		if($entry::class == 'craft\elements\Category' || $entry::class == 'craft\elements\Asset') {
 			$sectionSites = $entry->getSupportedSites();
-		}elseif($entry::class == 'craft\elements\Asset'){
-			//TODO add support to assets
-			//$sectionSites = $entry->getSupportedSites();
-		}elseif($entry::class == 'craft\elements\Entry'){
-			if(version_compare(Craft::$app->getInfo()->version, '5.0', '>=')) {
-				$sectionSites = $entry->getSection()->getSiteSettings();
-			}else{
-				$section = \Craft::$app->sections->getSectionById($entry->sectionId);
-				$sectionSites = $section->getSiteSettings();
-			}
+		} else if($entry::class == 'craft\elements\Entry') {
+            if(!empty($entry->section)) { //not a headless entry
+                if(version_compare(Craft::$app->getInfo()->version, '5.0', '>=')) {
+                    $sectionSites = $entry->getSection()->getSiteSettings();
+                } else {
+                    $section = \Craft::$app->sections->getSectionById($entry->sectionId);
+                    $sectionSites = $section->getSiteSettings();
+                }
+            }
 		}
 		if(!$sectionSites){
 			return '';
@@ -1257,11 +1425,12 @@ class Translate extends Component {
 			}
 
 		}
-		$action = 'convergine-contentbuddy/translate/process-entry';
 
-		if($entry::class === 'craft\elements\Category'){
-			$action = 'convergine-contentbuddy/translate/process-category';
-		}
+        $action = match($entry::class) {
+            'craft\elements\Category' => 'convergine-contentbuddy/translate/process-category',
+            'craft\elements\Asset' => 'convergine-contentbuddy/translate/process-asset',
+            default => 'convergine-contentbuddy/translate/process-entry',
+        };
 
 		return Craft::$app->view->renderTemplate( 'convergine-contentbuddy/translate/_control.twig', [
 			'sites' => $sites,
