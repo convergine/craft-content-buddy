@@ -31,6 +31,7 @@ use craft\elements\db\EntryQuery;
 use craft\elements\Entry;
 use craft\errors\InvalidFieldException;
 use craft\models\FieldLayout;
+use craft\models\Site;
 use craft\queue\Queue;
 use yii\db\BatchQueryResult;
 
@@ -730,32 +731,47 @@ class Translate extends Component {
 
 
 				if ( in_array( $fieldType, $this->_plugin->base->getSupportedFieldTypes() ) ) {
+                    if($fieldType == 'craft\ckeditor\Field') {
+                        $entry_value = $entry->getFieldValue( $fieldHandle )->getRawContent();
+                    } else {
+                        $entry_value = $entry->getFieldValue( $fieldHandle );
+                    }
+
 					$fieldsProcessed ++;
 					// heck field not empty
-					if ( strlen( (string) $entry->getFieldValue( $fieldHandle ) ) == 0 ) {
+					if ( strlen( (string) $entry_value ) == 0 ) {
 						$fieldsSkipped ++;
 						continue;
 					}
 
 					//check if field is already translated and selected NOT OVERRIDE
-					if ( ! $override && (string) $entry->getFieldValue( $fieldHandle ) != (string) $_entry->getFieldValue( $fieldHandle ) ) {
+					if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
 						$fieldsSkipped ++;
 						continue;
 					}
 
 					try {
 						$translated_text = BuddyPlugin::getInstance()
-							->request->send( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 30000, 0.7, true,$lang );
-						Craft::info( $prompt . ": {$entry->getFieldValue( $fieldHandle )}", 'content-buddy' );
-						Craft::info( $fieldHandle, 'content-buddy' );
-						Craft::info( $translated_text, 'content-buddy' );
-						$translated_text = trim( $translated_text, '```html' );
-						$translated_text = rtrim( $translated_text, '```' );
+							->request->send( $prompt . ": {$entry_value}", 30000, 0.7, true,$lang );
+
+                        Craft::info( $prompt . ": {$entry_value}", 'content-buddy' );
+                        Craft::info( $fieldHandle, 'content-buddy' );
+                        Craft::info( $translated_text, 'content-buddy' );
+                        $translated_text = trim( $translated_text, '```html' );
+                        $translated_text = rtrim( $translated_text, '```' );
+
+                        if($fieldType == 'craft\ckeditor\Field') {
+                            $translated_text = $this->translateEntriesInCKEditorField($translated_text,$translate_to_site,$prompt);
+                            Craft::info('New CKEditor translated text: '.$translated_text, 'content-buddy');
+                        }
+
 						$_entry->setFieldValue( $fieldHandle, $translated_text );
+
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
 						$fieldsError ++;
 						$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field );
+                        Craft::error('Failed to translate field "'.$fieldHandle.'": '. $e->getMessage(), 'content-buddy' );
 					}
 
 					// process Craft4 Matrix field
@@ -1250,6 +1266,91 @@ class Translate extends Component {
         }
 
         return false;
+    }
+
+    /**
+     * @param $text string initially translated text
+     * @param $site Site site to translate to
+     * @param $prompt string prompt to use
+     * @return string full translated text including craft-entries
+     */
+    private function translateEntriesInCKEditorField(string $text, Site $site, string $prompt): string {
+        preg_match_all('/<craft-entry\s+[^>]*data-entry-id=["\'](\d+)["\'][^>]*>\s*(?:&nbsp;)?\s*<\/craft-entry>/', $text, $matches);
+        $entryIds = $matches[1];
+
+        $entryMap = [];
+
+        Craft::info("CKEditor nested entries: ".json_encode($entryIds), 'content-buddy');
+
+        foreach($entryIds as $id) {
+            $entry = Entry::find()->id($id)->one();
+
+            if($entry) {
+                try {
+                    Craft::info("Found nested Entry: ".$entry->title, 'content-buddy');
+
+                    $newEntry = new Entry();
+                    $newEntry->title = $this->translateText($entry->title, '', $site, $prompt);
+                    $newEntry->slug = $entry->slug;
+                    $newEntry->sectionId = $entry->sectionId;
+                    $newEntry->ownerId = $entry->ownerId;
+                    $newEntry->typeId = $entry->typeId;
+                    $newEntry->fieldId = $entry->fieldId;
+                    $newEntry->siteId = $site->id;
+                    $newEntry->enabled = true;
+
+                    Craft::info("Created new nested Entry: ".$newEntry->title.', sectionId: '.$newEntry->sectionId.', ownerId: '.$newEntry->ownerId.', typeId: '.$newEntry->typeId.', fieldId: '.$newEntry->fieldId, 'content-buddy');
+
+                    foreach($entry->getFieldValues() as $fieldHandle => $value) {
+                        $field = Craft::$app->fields->getFieldByHandle($fieldHandle);
+                        $fieldType = $field ? get_class($field) : 'Unknown';
+                        if(in_array($fieldType, $this->_plugin->base->getSupportedFieldTypes())) {
+                            $newEntry->setFieldValue($fieldHandle, $this->translateText($value, $fieldType, $site, $prompt));
+                            Craft::info("Saved field in new nested Entry: ".$fieldHandle, 'content-buddy');
+                        }
+                    }
+
+                    if($this->saveElement($newEntry)) {
+                        $entryMap[$id] = $newEntry->id;
+                        Craft::info("Saved new nested Entry: ".$newEntry->title, 'content-buddy');
+                    } else {
+                        Craft::error("Failed to save translated entry for ID: $id", __METHOD__);
+                    }
+                } catch(\Exception $e) {
+                    Craft::error("Failed to translate nested entry: ".$e->getMessage(), 'content-buddy');
+                }
+            }
+        }
+
+        Craft::info("CKEditor nested entries mapped: ".json_encode($entryMap), 'content-buddy');
+
+        $translatedText = preg_replace_callback(
+            '/(<craft-entry\s+[^>]*data-entry-id=["\'])(\d+)(["\'][^>]*>\s*(?:&nbsp;)?\s*<\/craft-entry>)/',
+            function ($matches) use ($entryMap) {
+                $originalId = $matches[2];
+                $newId = $entryMap[$originalId] ?? $originalId;
+                return $matches[1] . $newId . $matches[3];
+            },
+            $text
+        );
+
+        Craft::info("CKEditor translated text: $translatedText", 'content-buddy');
+
+        return $translatedText;
+    }
+
+    private function translateText($text, $fieldType, Site $site, $prompt): string {
+        $lang = $site->language;
+
+        $translated_text = BuddyPlugin::getInstance()->request->send( $prompt . ": " . $text, 30000, 0.7, true,$lang );
+
+        if($fieldType == 'craft\ckeditor\Field') {
+            $translated_text = $this->translateEntriesInCKEditorField($translated_text,$site,$prompt);
+        }
+
+        $translated_text = trim( $translated_text, '```html' );
+        $translated_text = rtrim( $translated_text, '```' );
+        return $translated_text;
     }
 
 	protected function _getClass( $object ): string {

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.2 - 2025-03-12
+### Added
+- Allow translating nested entries in CKEditor fields for CraftCMS 5.x.
+
 ## 1.2.1 - 2025-03-04
 ### Added
 - Added the ability to translate Assets.
