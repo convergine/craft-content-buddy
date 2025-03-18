@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.3 - 2025-03-18
+### Fixed
+- Fixed an issue with DeepL Pro API keys.
+
 ## 1.2.2 - 2025-03-12
 ### Added
 - Allow translating nested entries in CKEditor fields for CraftCMS 5.x.
@@ -11,7 +15,7 @@ All notable changes to this project will be documented in this file.
 - Added the ability to translate Assets.
 
 ### Fixed
-- Fixed and issue when translating Categories to all languages.
+- Fixed an issue when translating Categories to all languages.
 
 ## 1.2.0 - 2025-02-21
 ### Added

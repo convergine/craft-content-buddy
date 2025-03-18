@@ -35,7 +35,11 @@ class DeepL extends TextApi {
 
 			$body = $res->getBody();
 			$json = json_decode( $body, true );
-			if(isset($json['message'])){
+            Craft::info( 'Result: '.$body, 'content-buddy' );
+            if($res->getStatusCode() == 403) {
+                Craft::info( 'DeepL ERROR', 'content-buddy' );
+                throw new Exception( 'DeepL API key is invalid' );
+            } else if(isset($json['message'])) {
 				$message = $json['message'];
 				Craft::info( 'DeepL ERROR', 'content-buddy' );
 				Craft::info( $message, 'content-buddy' );
@@ -52,12 +56,13 @@ class DeepL extends TextApi {
 		return $this->_getTextGeneration($json );
 	}
 
-	private function getEndpoint() {
-		return "https://api-free.deepl.com/v2/translate";
+	private function getEndpoint() : string {
+        $api_key = $this->settings->getDeepLApiKey();
+		return str_ends_with($api_key,':fx') ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
 	}
 
-	private function _getTextGeneration( array $result):string {
-		return trim( $result['translations'][0]['text'] );
+	private function _getTextGeneration($result) : string {
+		return $result ? trim($result['translations'][0]['text']) : '';
 	}
 
 	private function _getTranslatedData($prompt,$lang ):array {
