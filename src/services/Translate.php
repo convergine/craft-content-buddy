@@ -702,11 +702,19 @@ class Translate extends Component {
 		}
 
 		if ( $_entry ) {
-			$prompt = "Translate to {$lang}";
-			if ( $instructions ) {
-				$prompt .= ", {$instructions},";
+
+			$prompt = "Translate to $lang";
+			if($instructions) {
+				$prompt .= ", $instructions,";
 			}
 			$prompt .= " following text";
+
+            $prompt_ckeditor = "Translate to $lang. Do not translate or remove any <craft-entry> tags";
+            if($instructions) {
+                $prompt_ckeditor .= ", $instructions,";
+            }
+            $prompt_ckeditor .= " following text";
+
 			try {
 				$translated_text = BuddyPlugin::getInstance()->request
 					->send( $prompt . ": {$entry->title}", 30000, 0.7, true,$lang );
@@ -751,17 +759,16 @@ class Translate extends Component {
 					}
 
 					try {
-						$translated_text = BuddyPlugin::getInstance()
-							->request->send( $prompt . ": {$entry_value}", 30000, 0.7, true,$lang );
+                        $translated_text = BuddyPlugin::getInstance()->request->send( ($fieldType == 'craft\ckeditor\Field' ? $prompt_ckeditor : $prompt) . ": {$entry_value}", 30000, 0.7, true, $lang);
 
-                        Craft::info( $prompt . ": {$entry_value}", 'content-buddy' );
-                        Craft::info( $fieldHandle, 'content-buddy' );
+                        Craft::info( ($fieldType == 'craft\ckeditor\Field' ? $prompt_ckeditor : $prompt) . ": {$entry_value}", 'content-buddy' );
+                        Craft::info( $fieldHandle . '(' . $fieldType . ')', 'content-buddy' );
                         Craft::info( $translated_text, 'content-buddy' );
                         $translated_text = trim( $translated_text, '```html' );
                         $translated_text = rtrim( $translated_text, '```' );
 
                         if($fieldType == 'craft\ckeditor\Field') {
-                            $translated_text = $this->translateEntriesInCKEditorField($translated_text,$translate_to_site,$prompt);
+                            $translated_text = $this->translateEntriesInCKEditorField($translated_text,$translate_to_site,$prompt_ckeditor);
                             Craft::info('New CKEditor translated text: '.$translated_text, 'content-buddy');
                         }
 

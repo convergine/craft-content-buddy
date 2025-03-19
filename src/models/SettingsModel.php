@@ -33,10 +33,16 @@ class SettingsModel extends Model
 	 */
 	public string $preferredTranslationModel = 'gpt-3.5-turbo';
 
-	/**
-	 * @var string
-	 */
-	public string $deepLApiKey = '';
+    /**
+     * @var string
+     */
+    public string $deepLApiKey = '';
+
+    /**
+     * @var string
+     */
+    public string $deepLApiVersion = 'v2';
+
     /**
      * @var string
      */
@@ -156,12 +162,19 @@ class SettingsModel extends Model
         return App::parseEnv($this->xAiApiKey);
     }
 
-	/**
-	 * @return string
-	 */
-	public function getDeepLApiKey(): string {
-		return App::parseEnv($this->deepLApiKey);
-	}
+    /**
+     * @return string
+     */
+    public function getDeepLApiKey(): string {
+        return App::parseEnv($this->deepLApiKey);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeepLApiVersion(): string {
+        return $this->deepLApiVersion;
+    }
 
 	/**
 	 * @return string

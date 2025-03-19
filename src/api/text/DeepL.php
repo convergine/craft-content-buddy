@@ -58,7 +58,12 @@ class DeepL extends TextApi {
 
 	private function getEndpoint() : string {
         $api_key = $this->settings->getDeepLApiKey();
-		return str_ends_with($api_key,':fx') ? "https://api-free.deepl.com/v2/translate" : "https://api.deepl.com/v2/translate";
+        $api_version = $this->settings->getDeepLApiVersion();
+        if($api_version == 'v1') {
+            return "https://api.deepl.com/v1/translate";
+        } else {
+            return str_ends_with($api_key,':fx') ? "https://api-free.deepl.com/".$api_version."/translate" : "https://api.deepl.com/".$api_version."/translate";
+        }
 	}
 
 	private function _getTextGeneration($result) : string {

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.4 - 2025-03-19
+### Changed
+- Allow selecting different API versions for DeepL.
+
+### Fixed
+- Fixed an issue with translating nested entries in CKEditor fields.
+
 ## 1.2.3 - 2025-03-18
 ### Fixed
 - Fixed an issue with DeepL Pro API keys.

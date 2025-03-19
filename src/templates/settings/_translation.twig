@@ -74,6 +74,16 @@
         </div>
 
         <div id="deepl" class="{% if settings.translationAi != 'deepl' %}hidden{% endif %}">
+            {{ forms.selectField({
+                label: 'DeepL API Version'|t('convergine-contentbuddy'),
+                name: 'deepLApiVersion',
+                value: settings.deepLApiVersion,
+                instructions: 'deepLApiVersionDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "v2": "v2",
+                    "v1": "v1",
+                }
+            }) }}
 
             {{ forms.autosuggestField({
                 label: 'DeepL API Key'|t('convergine-contentbuddy'),

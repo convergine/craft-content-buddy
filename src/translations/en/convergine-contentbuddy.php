@@ -25,6 +25,7 @@
     'delaySectionDescription' => 'During bulk translations, the plugin will add a delay of this amount of seconds for every extra section.',
     'maxAttemptsDescription' => 'The maximum number of attempts to try when saving an entry during translation. This is only an issue if another task or user is editing the same entry at the same time.',
     'ttrDescription' => 'The maximum time a translation task should wait around for the job to be handled before assuming it failed.',
+    'deepLApiVersionDescription' => 'API version to use. For more information, see https://developers.deepl.com/docs/getting-started/auth#api-versions',
 
 	/* Settings -> Api Page */
 	'API: Access Token'=>'API: Access Token',
