@@ -23,6 +23,8 @@ use craft\base\Component;
 use craft\base\Element;
 use craft\base\Field;
 use craft\base\FieldInterface;
+use craft\commerce\elements\db\ProductQuery;
+use craft\commerce\elements\Product;
 use craft\db\ActiveQuery;
 use craft\db\ActiveRecord;
 use craft\elements\Asset;
@@ -64,13 +66,17 @@ class Translate extends Component {
 		$isCraft5 = version_compare( Craft::$app->getInfo()->version, '5.0', '>=' );
 
 		$_section = explode( ":", $id );
-		$section  = $isCraft5 ? Craft::$app->entries->getSectionById( $_section[0] ) : Craft::$app->sections->getSectionById( $_section[0] );
-		$type     = $_section[1] ?? 0;
-		if ( $type ) {
-			$type = $isCraft5 ? Craft::$app->entries->getEntryTypeById( $type ) : Craft::$app->sections->getEntryTypeById( $type );
-		} else {
-			$type = $section->getEntryTypes()[0];
-		}
+        if($_section[0]==='product'){
+            $type = \craft\commerce\Plugin::getInstance()->getProductTypes()->getProductTypeById($_section[1]);
+        } else {
+            $section  = $isCraft5 ? Craft::$app->entries->getSectionById( $_section[0] ) : Craft::$app->sections->getSectionById( $_section[0] );
+            $type     = $_section[1] ?? 0;
+            if ( $type ) {
+                $type = $isCraft5 ? Craft::$app->entries->getEntryTypeById( $type ) : Craft::$app->sections->getEntryTypeById( $type );
+            } else {
+                $type = $section->getEntryTypes()[0];
+            }
+        }
 
 		$layout = $type->getFieldLayout();
 
@@ -237,6 +243,7 @@ class Translate extends Component {
 	public function getSections($enableBulkTranslation = false): array {
 		$sections  = [ [ 'value' => '', 'label' => 'Please Select' ] ];
 		$_sections = version_compare( Craft::$app->getInfo()->version, '5.0', '>=' ) ? Craft::$app->entries->getAllSections() : Craft::$app->sections->getAllSections();
+
 		foreach ( $_sections as $section ) {
 			if ( $section->type == 'channel' || $section->type == 'structure' ) {
 				foreach ( $section->getEntryTypes() as $type ) {
@@ -247,6 +254,19 @@ class Translate extends Component {
 				}
 			}
 		}
+
+        // if Commerce is installed, add product types to dropdown list
+        if(class_exists('craft\commerce\Plugin')) {
+            $productTypes = craft\commerce\Plugin::getInstance()->getProductTypes()->getAllProductTypes();
+            foreach ($productTypes as $productType) {
+                $sections[] = [
+                    'value' => 'product:' . $productType->id,
+                    'label' => 'Product - ' . $productType->name
+                ];
+            }
+        }
+
+
 		if($enableBulkTranslation){
 			$sections[] = [
 				'value' => 'all',
@@ -858,6 +878,191 @@ class Translate extends Component {
 		return false;
 	}
 
+
+    public function translateProduct(
+		Product $product,
+		int $translate_to,
+		array $enabledFields,
+		int $translateId,
+		string $instructions = '',
+
+	): bool {
+
+		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
+		$lang              = $translate_to_site->language;
+
+		$translateRecord = TranslateRecord::findOne( $translateId );
+		$override        = $translateRecord->override;
+		$hasError        = false;
+
+		$fieldsProcessed = $fieldsSkipped = $fieldsError = $fieldsTranslated = 0;
+
+
+		$_product = Product::find()->id( $product->id )->siteId( $translate_to )->one();
+		if ( ! $_product ) {
+			$product->siteId = $translate_to;
+            Craft::info('Saving entry ('.$product->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+			$this->saveElement( $product );
+			$_product = $product;
+		}
+
+		if ( $_product ) {
+
+			$prompt = "Translate to $lang";
+			if($instructions) {
+				$prompt .= ", $instructions,";
+			}
+			$prompt .= " following text";
+
+            $prompt_ckeditor = "Translate to $lang. Do not translate or remove any <craft-entry> tags";
+            if($instructions) {
+                $prompt_ckeditor .= ", $instructions,";
+            }
+            $prompt_ckeditor .= " following text";
+
+			try {
+				$translated_text = BuddyPlugin::getInstance()->request
+					->send( $prompt . ": {$product->title}", 30000, 0.7, true,$lang );
+
+				$_product->title = $translated_text;
+
+				$fieldsTranslated ++;
+			} catch ( \Throwable $e ) {
+
+				$fieldsError ++;
+				$this->_addLog( $translateId, $product->id, $e->getMessage(), 'title' );
+			}
+			$fieldsProcessed ++;
+
+			foreach ( $enabledFields as $field ) {
+				if ( ! $field ) {
+					continue;
+				}
+				$_field      = explode( ":", $field, 4 );
+				$fieldType   = $_field[0];
+				$fieldHandle = $_field[1];
+
+
+				if ( in_array( $fieldType, $this->_plugin->base->getSupportedFieldTypes() ) ) {
+                    if($fieldType == 'craft\ckeditor\Field') {
+                        $product_value = $product->getFieldValue( $fieldHandle )->getRawContent();
+                    } else {
+                        $product_value = $product->getFieldValue( $fieldHandle );
+                    }
+
+					$fieldsProcessed ++;
+					// heck field not empty
+					if ( strlen( (string) $product_value ) == 0 ) {
+						$fieldsSkipped ++;
+						continue;
+					}
+
+					//check if field is already translated and selected NOT OVERRIDE
+					if ( ! $override && (string) $product_value != (string) $_product->getFieldValue( $fieldHandle ) ) {
+						$fieldsSkipped ++;
+						continue;
+					}
+
+					try {
+                        $translated_text = BuddyPlugin::getInstance()->request->send( ($fieldType == 'craft\ckeditor\Field' ? $prompt_ckeditor : $prompt) . ": {$product_value}", 30000, 0.7, true, $lang);
+
+                        Craft::info( ($fieldType == 'craft\ckeditor\Field' ? $prompt_ckeditor : $prompt) . ": {$product_value}", 'content-buddy' );
+                        Craft::info( $fieldHandle . '(' . $fieldType . ')', 'content-buddy' );
+                        Craft::info( $translated_text, 'content-buddy' );
+                        $translated_text = trim( $translated_text, '```html' );
+                        $translated_text = rtrim( $translated_text, '```' );
+
+                        if($fieldType == 'craft\ckeditor\Field') {
+                            $translated_text = $this->translateEntriesInCKEditorField($translated_text,$translate_to_site,$prompt_ckeditor);
+                            Craft::info('New CKEditor translated text: '.$translated_text, 'content-buddy');
+                        }
+
+						$_product->setFieldValue( $fieldHandle, $translated_text );
+
+						$fieldsTranslated ++;
+					} catch ( \Throwable $e ) {
+						$fieldsError ++;
+						$this->_addLog( $translateId, $product->id, $e->getMessage(), $field );
+                        Craft::error('Failed to translate field "'.$fieldHandle.'": '. $e->getMessage(), 'content-buddy' );
+					}
+
+					// process Craft4 Matrix field
+				} elseif ( $fieldType == 'craft\fields\Matrix' && class_exists( 'craft\elements\MatrixBlock' ) ) {
+
+					$block  = $_field[2];
+					$handle = $_field[3];
+
+					$matrixFieldQuery = $product->getFieldValue( $block )->type( $fieldHandle );
+
+					$matrixBlockTarget = \craft\elements\MatrixBlock::find()
+					                                                ->field( $block )
+					                                                ->ownerId( $_product->id )
+					                                                ->type( $fieldHandle )
+					                                                ->siteId( $translate_to )
+					                                                ->all();
+
+					foreach ( $matrixFieldQuery->all() as $k => $matrixField ) {
+						$fieldsProcessed ++;
+						if ( isset( $matrixBlockTarget[ $k ] ) ) {
+							try {
+								$originalFieldValue = (string) $matrixField->getFieldValue( $handle );
+								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->getFieldValue( $handle );
+								// heck field not empty
+								if ( strlen( $originalFieldValue ) == 0 ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+								//check if field is already translated and selected NOT OVERRIDE
+								if ( ! $override && $originalFieldValue != $targetFieldValue ) {
+									$fieldsSkipped ++;
+									continue;
+								}
+
+								$translated_text = BuddyPlugin::getInstance()
+									->request->send( $prompt . ": {$originalFieldValue}", 30000, 0.7, true,$lang );
+
+								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
+                                Craft::info('Saving product ('.$matrixBlockTarget[ $k ]->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+                                $this->saveElement( $matrixBlockTarget[ $k ] );
+
+								$fieldsTranslated ++;
+							} catch ( \Throwable $e ) {
+								$fieldsError ++;
+								$this->_addLog( $translateId, $product->id, $e->getMessage(), $field, $k );
+							}
+						}
+					}
+
+					// process Craft5 Matrix field
+				} elseif ( $fieldType == 'craft\fields\Matrix' ) {
+
+					$block       = $_field[1];
+
+					$fieldValues = $this->processMatrixFields( $lang, $product, $translate_to, $translateId, $prompt, $override );
+					$_product->setFieldValues($fieldValues);
+				}
+
+
+			}
+
+            Craft::info('Saving product ('.$_product->id.') with site ('.$translate_to.') on line ('.__LINE__.')', 'content-buddy');
+			if ( $this->saveElement( $_product ) ) {
+				$translateRecord->fieldsTranslated = $translateRecord->fieldsTranslated + $fieldsTranslated;
+				$translateRecord->fieldsError      = $translateRecord->fieldsError + $fieldsError;
+				$translateRecord->fieldsSkipped    = $translateRecord->fieldsSkipped + $fieldsSkipped;
+				$translateRecord->fieldsProcessed  = $translateRecord->fieldsProcessed + $fieldsProcessed;
+
+				$translateRecord->save();
+
+				return true;
+
+			}
+		}
+		$translateRecord->save();
+
+		return false;
+	}
+
 	public function processMatrixFields(string $lang, Element $entry_from, int $translate_to, int $translateId, string $prompt, $override,$or_entry = true) : array {
 		$target = [];
 		$targetEntry = Entry::find()->id( $entry_from->id )->siteId( $translate_to )->one();
@@ -1393,7 +1598,7 @@ class Translate extends Component {
 		$logRecord->save();
 	}
 
-	public function setBatchLimit( ActiveQuery|EntryQuery $record ): BatchQueryResult {
+	public function setBatchLimit( ActiveQuery|EntryQuery|ProductQuery $record ): BatchQueryResult {
 
 		//Todo update limits
 		if ( $this->_plugin->base->isGTP4() ) {
@@ -1425,6 +1630,37 @@ class Translate extends Component {
 
 					try {
 						$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block )->all();
+						$fieldsCount      += count( $matrixFieldQuery );
+					} catch ( InvalidFieldException $e ) {
+						continue;
+					}
+				}
+			}
+		}
+
+		return $fieldsCount;
+	}
+
+
+    public function getProductFieldsCount( Product $product, array $fields ) {
+		$fieldsCount = 1;
+		foreach ( $fields as $field ) {
+			$_field = explode( ":", $field );
+			if ( in_array( $_field[0], $this->_plugin->base->getSupportedFieldTypes() ) ) {
+				$fieldsCount ++;
+			} elseif ( $_field[0] == 'craft\fields\Matrix' && class_exists( 'craft\elements\MatrixBlock' ) ) {
+				$fieldHandle      = $_field[2];
+				$block            = $_field[1];
+				$matrixFieldQuery = $product->getFieldValue( $fieldHandle )->type( $block )->all();
+				$fieldsCount      += count( $matrixFieldQuery );
+			} else {
+				if(isset($_field[2])) {
+					$fieldHandle = $_field[2];
+					$block       = $_field[1];
+					$handle      = $_field[3];
+
+					try {
+						$matrixFieldQuery = $product->getFieldValue( $fieldHandle )->type( $block )->all();
 						$fieldsCount      += count( $matrixFieldQuery );
 					} catch ( InvalidFieldException $e ) {
 						continue;
