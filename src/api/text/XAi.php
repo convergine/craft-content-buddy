@@ -9,9 +9,8 @@ use Throwable;
 use yii\helpers\StringHelper;
 
 class XAi extends TextApi {
-    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $lang=''): string {
+    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = ''): string {
         try {
-	        //TODO
             $model = $this->settings->xAiModel;
 
 	        if($isTranslate) {
@@ -22,7 +21,7 @@ class XAi extends TextApi {
 
             $client = new Client();
             $res = $client->request( 'POST', $this->getEndpoint($model), [
-                'body'    => $this->buildTextGenerationRequestBody( $model, $prompt, $maxTokens, $temperature ),
+                'body'    => $this->buildTextGenerationRequestBody( $model, $prompt, $maxTokens, $temperature, $isTranslate, $instructions ),
                 'headers' => [
                     'Authorization' => 'Bearer ' . $this->settings->getXAiApiKey(),
                     'Content-Type'  => 'application/json',
@@ -50,7 +49,7 @@ class XAi extends TextApi {
         return $this->getTextGenerationBasedOnModel( $model, $choices );
     }
 
-    private function buildTextGenerationRequestBody($model, $prompt, $maxTokensToGenerate, $temperature = 0.7) : string {
+    private function buildTextGenerationRequestBody($model, $prompt, $maxTokensToGenerate, $temperature = 0.7, $isTranslate = false, $instructions = '') : string {
         $messages = [];
 
         $systemMessage = $this->settings->systemMessage;
@@ -58,6 +57,28 @@ class XAi extends TextApi {
             $messages[] = [
                 'role'    => 'system',
                 'content' => $systemMessage,
+            ];
+        }
+
+        if($isTranslate) {
+            $systemContent = '';
+            if(str_contains($prompt, '</craft-entry>')) {
+                $systemContent = 'You are a translator. Do NOT remove, add new, translate, or alter any HTML (this includes <iframe> tags) or custom tags, especially <craft-entry> tags. These tags must remain exactly as they appear in the input. Example: \'<craft-entry data-entry-id="24"></craft-entry>\' should never be modified. Keep the tags in the same order and format as the original text.';
+            } else if(preg_match('/<[^>]*>/', $prompt)) {
+                $systemContent = 'You are a translator. Do NOT remove, add new, translate, or alter any HTML (this includes <iframe> tags) or custom tags. Keep the tags in the same order and format as the original text.';
+            }
+            if(!empty($systemContent)) {
+                $messages[] = [
+                    'role' => 'system',
+                    'content' => $systemContent
+                ];
+            }
+        }
+
+        if(!empty($instructions)) {
+            $messages[] = [
+                'role'    => 'system',
+                'content' => $instructions,
             ];
         }
 

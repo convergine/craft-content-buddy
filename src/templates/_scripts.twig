@@ -1,29 +1,6 @@
-{% set settings = craft.app.getPlugins.getPlugin('convergine-contentbuddy').settings %}
-
 $(document).ready(function () {
     let working = '{{ 'Working...'|t('convergine-contentbuddy') }}';
     let selectPromptText = '{{ 'selectPromptText'|t('convergine-contentbuddy') }}';
-
-    $('.buddy-button').each(function () {
-        let $this = $(this);
-        let $field = $this.parents('.field');
-        let $input = $field.find('.input input, .input textarea');
-        if($field.attr('data-type') !== 'craft\\redactor\\Field' && $field.attr('data-type') !== 'craft\\ckeditor\\Field') {
-            if($field.find('.chars-left').length) {
-                $input.css('padding-right', '158px');
-                $field.find('.chars-left').css('padding-right', '128px')
-            } else {
-                $input.css('padding-right', '125px');
-            }
-
-        }else if($field.attr('data-type') == 'craft\\ckeditor\\Field'){
-
-            if($input.parent().find(".ck-sticky-panel")){
-
-                $input.parent().find(".ck-sticky-panel").css('padding-right', '125px');
-            }
-        }
-    });
 
     $('body').on('click', '.buddy-menu a', function (clickEvent) {
         clickEvent.stopPropagation();
@@ -143,4 +120,41 @@ $(document).ready(function () {
             setInputSelection(fieldType, textField, working, query);
         });
     }
+
+    $('body').on('click', '.cb-btn-generate-entries', function() {
+        if($(this).find('.cb-text').hasClass('disabled')) {
+            return;
+        }
+
+        let id = $(this).attr('data-id');
+        let type = $(this).attr('data-type');
+        let handle = $(this).attr('data-handle');
+        let name = $(this).attr('data-name');
+        console.log('clicked id',id,type,handle,name);
+
+        let $text = $(this).find('.cb-text');
+        $text.text(working).attr('disabled', true).addClass('disabled');
+
+        $.ajax({
+            type: "POST",
+            url: "{{ actionUrl('convergine-contentbuddy/prompt-processor/generate') }}",
+            data: {
+                "id": id,
+                "type": type,
+                "handle": handle,
+                "name": name,
+                [Craft.csrfTokenName]: Craft.csrfTokenValue
+            },
+            success: function (data) {
+                console.log(data);
+                if(data.res) {
+                    $text.text('Generate').attr('disabled', false).removeClass('disabled');
+                    window.location.reload();
+                }
+            },
+            dataType: "json"
+        }).fail(function (data) {
+            console.log(data);
+        });
+    });
 });

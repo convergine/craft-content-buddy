@@ -1,0 +1,22 @@
+setTimeout(function() {
+    document.querySelectorAll('.buddy-button').forEach(button => {
+        let field = button.closest('.field');
+        if(field) {
+            let input = field.querySelector('.input input, .input textarea');
+            if (field.getAttribute('data-type') !== 'craft\\redactor\\Field' && field.getAttribute('data-type') !== 'craft\\ckeditor\\Field') {
+                let charsLeft = field.querySelector('.chars-left');
+                if (charsLeft) {
+                    input.style.paddingRight = '158px';
+                    charsLeft.style.paddingRight = '128px';
+                } else {
+                    input.style.paddingRight = '125px';
+                }
+            } else if (field.getAttribute('data-type') === 'craft\\ckeditor\\Field') {
+                let stickyPanel = field.querySelector('.ck-sticky-panel');
+                if (stickyPanel) {
+                    stickyPanel.style.paddingRight = '125px';
+                }
+            }
+        }
+    });
+}, 100);

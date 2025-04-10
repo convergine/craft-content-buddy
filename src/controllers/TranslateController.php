@@ -223,13 +223,11 @@ class TranslateController extends \craft\web\Controller {
 	public function actionProcessEntry() {
 		$request = \Craft::$app->getRequest();
 
-		$section = $request->getParam('section');
 		$translate_to = $request->getParam('translate_to');
-		$enabledFields = $request->getParam('enabledFields');
-		$instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code. only return the translation');
-		$override = $request->getParam('override');
+		$instructions = $request->getParam('instructions','');
 		$siteId = $request->getParam('siteId');
-		$id =  $request->getParam('elementId');
+        $id =  $request->getParam('elementId');
+        $draftId =  $request->getParam('draftId');
         $translateSlugs = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
 
 		$entry = Craft::$app->entries->getEntryById($id);
@@ -247,6 +245,10 @@ class TranslateController extends \craft\web\Controller {
 		}
 
 		$entry = Craft::$app->entries->getEntryById($id,$siteId);
+
+        if(!empty($draftId)) {
+            Craft::$app->runAction('elements/apply-draft', $request->getBodyParams());
+        }
 
 		$sectionId = $entry->getSection()->id;
 		$sectionType = $entry->getSection()->type;
@@ -318,9 +320,10 @@ class TranslateController extends \craft\web\Controller {
         $request = \Craft::$app->getRequest();
 
         $translate_to = $request->getParam('translate_to');
-        $instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code. only return the translation');
+        $instructions = $request->getParam('instructions','');
         $siteId = $request->getParam('siteId');
         $id =  $request->getParam('elementId');
+        $draftId =  $request->getParam('draftId');
         $translateSlugs = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
 
         $translate_to_list = [];
@@ -336,6 +339,10 @@ class TranslateController extends \craft\web\Controller {
         }
 
         $category = Craft::$app->categories->getCategoryById($id,$siteId);
+
+        if(!empty($draftId)) {
+            Craft::$app->runAction('elements/apply-draft', $request->getBodyParams());
+        }
 
         $sectionId = 0;
         $sectionType = 0;
@@ -405,9 +412,10 @@ class TranslateController extends \craft\web\Controller {
         $request = \Craft::$app->getRequest();
 
         $translate_to = $request->getParam('translate_to');
-        $instructions = $request->getParam('instructions','do not translate HTML code, link URLs or filenames that can break the functionality of the link or HTML code. only return the translation');
+        $instructions = $request->getParam('instructions','');
         $siteId = $request->getParam('siteId');
         $id =  $request->getParam('elementId');
+        $draftId =  $request->getParam('draftId');
         $translateSlugs = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
 
         $translate_to_list = [];
@@ -423,6 +431,10 @@ class TranslateController extends \craft\web\Controller {
         }
 
         $asset = Craft::$app->assets->getAssetById($id,$siteId);
+
+        if(!empty($draftId)) {
+            Craft::$app->runAction('elements/apply-draft', $request->getBodyParams());
+        }
 
         $sectionId = 0;
         $sectionType = 0;

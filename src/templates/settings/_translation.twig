@@ -32,6 +32,7 @@
                 instructions: 'modelDescription'|t('convergine-contentbuddy'),
                 options: [
                     { optgroup: "GPT Models" },
+                    { value: "gpt-4.5-preview", label: "gpt-4.5-preview" },
                     { value: "gpt-4o", label: "gpt-4o" },
                     { value: "gpt-4o-mini", label: "gpt-4o-mini" },
                     { value: "gpt-4-turbo", label: "gpt-4-turbo" },
@@ -60,6 +61,11 @@
                 value: settings.xAiModel,
                 instructions: 'xAiModelDescription'|t('convergine-contentbuddy'),
                 options: {
+                    "grok-3": "grok-3",
+                    "grok-3-fast": "grok-3-fast",
+                    "grok-2-vision": "grok-2-vision",
+                    "grok-2": "grok-2",
+                    "grok-vision-beta": "grok-vision-beta",
                     "grok-beta": "grok-beta",
                 }
             }) }}

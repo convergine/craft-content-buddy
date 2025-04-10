@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.5 - 2025-04-10
+### Added
+- Added GPT-4.5 Preview to the available models for OpenAI.
+- Added Grok 3 & 2 to the available models for x.AI.
+- Allow generating entries related to the current entry's fields. [Issue #25](https://github.com/convergine/craft-content-buddy/issues/25)
+
+### Changed
+- Show a link to the translated pages in the translation overview.
+
+### Fixed
+- Buddy button not rendering on dynamically added CKEditor fields. [Issue #36](https://github.com/convergine/craft-content-buddy/issues/36)
+- Issue with migrations not being applied after updates. [Issue #38](https://github.com/convergine/craft-content-buddy/issues/38)
+- Save drafts before translating, and create matrix fields when translating entries that don't exist yet. [Issue #39](https://github.com/convergine/craft-content-buddy/issues/39)
+- Issue with large content translations cut in half when using gpt-3.5-turbo and gpt-4-turbo models.
+- Make sure MatrixBlock translations are only processed in Craft CMS 4.x.
+- Issue with translations removing some HTML tags.
+
 ## 1.2.4 - 2025-03-19
 ### Changed
 - Allow selecting different API versions for DeepL.

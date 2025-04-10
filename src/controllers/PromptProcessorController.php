@@ -14,19 +14,31 @@
 namespace convergine\contentbuddy\controllers;
 
 use convergine\contentbuddy\BuddyPlugin;
-use Craft;
+use craft\web\Controller;
 
-class PromptProcessorController extends \craft\web\Controller{
+class PromptProcessorController extends Controller {
 
-	public function actionProcess(){
-		$this->requirePostRequest();
-		$data = $this->request->post();
+    public function actionProcess() {
+        $this->requirePostRequest();
+        $data = $this->request->post();
 
-		try{
-			$result = BuddyPlugin::getInstance()->promptProcessor->process($data);
-			return $this->asJson(['res'=>true, 'result'=>$result]);
-		}catch (\Throwable $e){
-			return $this->asJson(['res'=>false, 'msg'=>$e->getMessage()]);
-		}
-	}
+        try{
+            $result = BuddyPlugin::getInstance()->promptProcessor->process($data);
+            return $this->asJson(['res'=>true, 'result'=>$result]);
+        }catch (\Throwable $e){
+            return $this->asJson(['res'=>false, 'msg'=>$e->getMessage()]);
+        }
+    }
+
+    public function actionGenerate() {
+        $this->requirePostRequest();
+        $data = $this->request->post();
+
+        try{
+            $result = BuddyPlugin::getInstance()->promptProcessor->generate($data);
+            return $this->asJson(['res'=>true, 'result'=>$result]);
+        }catch (\Throwable $e){
+            return $this->asJson(['res'=>false, 'msg'=>$e->getMessage()]);
+        }
+    }
 }

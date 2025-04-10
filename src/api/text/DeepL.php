@@ -10,7 +10,7 @@ use Throwable;
 use yii\helpers\StringHelper;
 
 class DeepL extends TextApi {
-	public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $lang=''): string {
+    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = ''): string {
 		try {
 			$translateData = $this->_getTranslatedData($prompt,$lang);
 			$client = new Client();
