@@ -944,15 +944,20 @@ class Translate extends Component {
 
 
 				if ( in_array( $fieldType, $this->_plugin->base->getSupportedFieldTypes() ) ) {
-                    if($fieldType == 'craft\ckeditor\Field') {
-                        $product_value = $product->getFieldValue( $fieldHandle )->getRawContent();
-                    } else {
-                        $product_value = $product->getFieldValue( $fieldHandle );
-                    }
+                    if($product->getFieldValue( $fieldHandle) != null) {
+						if($fieldType == 'craft\ckeditor\Field') {
+							$product_value = $product->getFieldValue( $fieldHandle )->getRawContent();
+						} else {
+							$product_value = $product->getFieldValue( $fieldHandle );
+						}
+					} else {
+						$fieldsSkipped ++;
+						continue;
+					}
 
 					$fieldsProcessed ++;
 					// heck field not empty
-					if ( strlen( (string) $product_value ) == 0 ) {
+					if ( strlen( (string) $product_value ) == 0 && $product_value != null) {
 						$fieldsSkipped ++;
 						continue;
 					}
