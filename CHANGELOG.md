@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.6 - 2025-05-28
+### Added
+- Added support for translating [SEO](https://plugins.craftcms.com/seo) metadata, including title, description, and keywords.
+
+### Changed
+- Allow selecting how many related entries to generate. [Issue #41](https://github.com/convergine/craft-content-buddy/issues/41)
+- Moved settings storage to it's own database table to allow management of settings even when admin changes are disabled.
+- Split content into chunks when translating large entries to avoid issues with large content translations being cut in half.
+
+### Fixed
+- Generated related entries now include slugs. [Issue #41](https://github.com/convergine/craft-content-buddy/issues/41)
+- Fixed an issue with buddy button functionality when having multiple slide-out panels on the same page.
+
 ## 1.2.5 - 2025-04-10
 ### Added
 - Added GPT-4.5 Preview to the available models for OpenAI.

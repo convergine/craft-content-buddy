@@ -121,40 +121,81 @@ $(document).ready(function () {
         });
     }
 
+    let hud = null;
+
     $('body').on('click', '.cb-btn-generate-entries', function() {
         if($(this).find('.cb-text').hasClass('disabled')) {
             return;
         }
 
-        let id = $(this).attr('data-id');
-        let type = $(this).attr('data-type');
-        let handle = $(this).attr('data-handle');
-        let name = $(this).attr('data-name');
-        console.log('clicked id',id,type,handle,name);
+        let $btn = $(this);
 
-        let $text = $(this).find('.cb-text');
-        $text.text(working).attr('disabled', true).addClass('disabled');
+        let id = $btn.attr('data-id');
+        let type = $btn.attr('data-type');
+        let handle = $btn.attr('data-handle');
+        let name = $btn.attr('data-name');
 
-        $.ajax({
-            type: "POST",
-            url: "{{ actionUrl('convergine-contentbuddy/prompt-processor/generate') }}",
-            data: {
-                "id": id,
-                "type": type,
-                "handle": handle,
-                "name": name,
-                [Craft.csrfTokenName]: Craft.csrfTokenValue
-            },
-            success: function (data) {
+        if(hud) {
+            hud.destroy();
+            hud = null;
+            return;
+        }
+
+        const hudContent = document.createElement('div');
+        hudContent.innerHTML = `
+          <form id="hudAmountForm">
+            <label for="hudAmountInput">Amount of entries:</label>
+            <input type="number" id="hudAmountInput" name="number" class="text fullwidth mt-s" value="1" />
+            <div class="buttons right mt-m">
+              <button type="submit" class="btn submit">Generate</button>
+            </div>
+          </form>
+        `;
+        hudContent.style.maxWidth = '200px';
+
+        hud = new Garnish.HUD($btn[0], hudContent, {
+            onHide: () => (hud = null)
+        });
+
+        let form = hudContent.querySelector('#hudAmountForm');
+        let input = form.querySelector('#hudAmountInput');
+        input.focus();
+        input.type = 'text';
+        input.setSelectionRange(input.value.length, input.value.length);
+        input.type = 'number';
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            let $text = $btn.find('.cb-text');
+            $text.text(working).attr('disabled', true).addClass('disabled');
+
+            let amount = input.value;
+
+            $.ajax({
+                type: "POST",
+                url: "{{ actionUrl('convergine-contentbuddy/prompt-processor/generate') }}",
+                data: {
+                    "id": id,
+                    "type": type,
+                    "handle": handle,
+                    "name": name,
+                    "amount": amount,
+                    [Craft.csrfTokenName]: Craft.csrfTokenValue
+                },
+                success: function (data) {
+                    console.log(data);
+                    if(data.res) {
+                        $text.text('Generate').attr('disabled', false).removeClass('disabled');
+                        window.location.reload();
+                    }
+                },
+                dataType: "json"
+            }).fail(function (data) {
                 console.log(data);
-                if(data.res) {
-                    $text.text('Generate').attr('disabled', false).removeClass('disabled');
-                    window.location.reload();
-                }
-            },
-            dataType: "json"
-        }).fail(function (data) {
-            console.log(data);
+            });
+
+            hud.hide();
         });
     });
 });

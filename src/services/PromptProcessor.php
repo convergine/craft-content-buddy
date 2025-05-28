@@ -79,6 +79,7 @@ class PromptProcessor {
         $type = $data['type'] ?? '';
         $handle = $data['handle'] ?? '';
         $name = $data['name'] ?? '';
+        $amount = $data['amount'] ?? 1;
 
         if(!$id || !$type || !$handle) {
             throw new Exception(Craft::t('convergine-contentbuddy', "Missing required params"));
@@ -94,6 +95,11 @@ class PromptProcessor {
             throw new Exception(Craft::t('convergine-contentbuddy', "Record not found"));
         }
 
-        return BuddyPlugin::getInstance()->generateEntry->generate($element, $handle, $name);
+        $results = [];
+        for($i = 0; $i < $amount; $i++) {
+            $results[] = BuddyPlugin::getInstance()->generateEntry->generate($element, $handle, $name);
+        }
+
+        return $results;
     }
 }

@@ -22,6 +22,7 @@ use craft\errors\InvalidFieldException;
 use craft\models\FieldLayout;
 use craft\models\Site;
 use craft\queue\Queue;
+use ether\seo\models\data\SeoData;
 use yii\db\BatchQueryResult;
 
 class Translate extends Component {
@@ -728,40 +729,48 @@ class Translate extends Component {
                     }
 
 					$fieldsProcessed ++;
-					// heck field not empty
-					if ( strlen( (string) $entry_value ) == 0 ) {
-						$fieldsSkipped ++;
-						continue;
-					}
 
-					//check if field is already translated and selected NOT OVERRIDE
-					if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
-						$fieldsSkipped ++;
-						continue;
-					}
-
-					try {
-                        $prompt = $this->getPrompt($translate_to_site, $entry_value);
-                        $translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
-
-                        Craft::info( $prompt, 'content-buddy' );
-                        Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
-                        Craft::info( $translated_text, 'content-buddy' );
-                        $translated_text = trim( $translated_text, '```html' );
-                        $translated_text = rtrim( $translated_text, '```' );
-
-                        if($fieldType == 'craft\ckeditor\Field') {
-                            $translated_text = $this->translateEntriesInCKEditorField($translated_text,$translate_to_site,$instructions);
-                            Craft::info('New CKEditor translated text: '.$translated_text, 'content-buddy');
+                    if($fieldType !== 'ether\seo\fields\SeoField') {
+                        // check field not empty
+                        if ( strlen( (string) $entry_value ) == 0) {
+                            $fieldsSkipped ++;
+                            continue;
                         }
 
-						$_entry->setFieldValue( $fieldHandle, $translated_text );
+                        //check if field is already translated and selected NOT OVERRIDE
+                        if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
+                            $fieldsSkipped ++;
+                            continue;
+                        }
+                    }
 
+					try {
+                        if($fieldType == 'ether\seo\fields\SeoField' && $entry_value instanceof SeoData) {
+                            $site = Craft::$app->sites->getSiteById($translate_to);
+                            $translatedValue = $this->translateSeoData($entry_value, $site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else {
+                            $prompt = $this->getPrompt($translate_to_site, $entry_value);
+                            $translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
+
+                            Craft::info( $prompt, 'content-buddy' );
+                            Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
+                            Craft::info( $translated_text, 'content-buddy' );
+                            $translated_text = trim( $translated_text, '```html' );
+                            $translated_text = rtrim( $translated_text, '```' );
+
+                            if($fieldType == 'craft\ckeditor\Field') {
+                                $translated_text = $this->translateEntriesInCKEditorField($translated_text,$translate_to_site,$instructions);
+                                Craft::info('New CKEditor translated text: '.$translated_text, 'content-buddy');
+                            }
+
+                            $_entry->setFieldValue( $fieldHandle, $translated_text );
+                        }
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
 						$fieldsError ++;
 						$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field );
-                        Craft::error('Failed to translate field "'.$fieldHandle.'": '. $e->getMessage(), 'content-buddy' );
+                        Craft::error('Failed to translate field "'.$fieldHandle.'": '. $e->getMessage()."\n".$e->getTraceAsString(), 'content-buddy' );
 					}
 
 					// process Craft4 Matrix field
@@ -918,7 +927,14 @@ class Translate extends Component {
 				// dig deeper in Matrix fields
 				$translatedValue = $this->translateMatrixField( $lang,$entry_from, $field, $translate_to,  $translateId, $override, $instructions );
 
-			}
+			} elseif(get_class($field) == 'ether\seo\fields\SeoField') {
+                $seo = $field->serializeValue($entry_from->getFieldValue($field->handle), $entry_from);
+                //$seo = $entry_from->getFieldValue($field->handle);
+                if($seo instanceof SeoData) {
+                    $site = Craft::$app->sites->getSiteById($translate_to);
+                    $translatedValue = $this->translateSeoData($seo, $site, $instructions);
+                }
+            }
 			if ($translatedValue) {
 				$target[$field->handle] = $translatedValue;
 			} else {
@@ -990,7 +1006,7 @@ class Translate extends Component {
 
 				try {
                     $prompt = $this->getPrompt($translate_to_site, $entry->title);
-					$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions);
+					$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang);
 
 					$_entry->title = $translated_text;
 
@@ -1021,7 +1037,7 @@ class Translate extends Component {
 
 						try {
                             $prompt = $this->getPrompt($translate_to_site, $entry->getFieldValue($fieldHandle));
-							$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions);
+							$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
 
 							$_entry->setFieldValue( $fieldHandle, $translated_text );
 							$fieldsTranslated ++;
@@ -1056,7 +1072,7 @@ class Translate extends Component {
 								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->getFieldValue( $handle );
 
                                 $prompt = $this->getPrompt($translate_to_site, $originalFieldValue);
-								$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions);
+								$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 
@@ -1098,7 +1114,7 @@ class Translate extends Component {
 								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->$handle;
 
                                 $prompt = $this->getPrompt($translate_to_site, $originalFieldValue);
-								$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions);
+								$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
 
 								$matrixBlockTarget[ $k ]->$handle = $translated_text;
 
@@ -1121,7 +1137,7 @@ class Translate extends Component {
 								// heck field not empty
 
                                 $prompt = $this->getPrompt($translate_to_site, $originalFieldValue);
-								$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions);
+								$translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 
@@ -1171,9 +1187,9 @@ class Translate extends Component {
         }
 
         if($_entry) {
-            $prompt = "Translate this URL slug to $lang, following URL slug";
+            $prompt = "Translate this URL slug to $lang. Only return the URL slug for the following text: $entry->slug";
             try {
-                $translated_text = BuddyPlugin::getInstance()->request->send($prompt . ": {$entry->slug}", 30000, 0.7, true, $instructions, $lang);
+                $translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
 
                 $_entry->slug = $translated_text;
 
@@ -1269,8 +1285,9 @@ class Translate extends Component {
         $lang = $site->language;
 
         $request = $this->getPrompt($site, $text);
+        $input = $request['prompt'] ?? $text;
 
-        Craft::info("translateText() - input: ".$request, 'content-buddy');
+        Craft::info("translateText() - input: ".$input, 'content-buddy');
         $translated_text = BuddyPlugin::getInstance()->request->send($request, 30000, 0.7, true, $instructions, $lang);
         Craft::info("translateText() - output: ".$translated_text, 'content-buddy');
 
@@ -1281,6 +1298,37 @@ class Translate extends Component {
         $translated_text = trim( $translated_text, '```html' );
         $translated_text = rtrim( $translated_text, '```' );
         return $translated_text;
+    }
+
+    private function translateSeoData(SeoData $input, Site $site, $instructions = '') : SeoData {
+        $seo = clone $input;
+
+        Craft::info("Translating SEO data: ".json_encode($input), 'content-buddy');
+
+        foreach($input->titleRaw as $key => $title) {
+            Craft::info("Translating SEO text: ".gettype($title)." ".json_encode($title), 'content-buddy');
+            $seo->titleRaw[$key] = $this->translateText($title, 'craft\fields\PlainText', $site, $instructions);
+        }
+
+        Craft::info("Translating SEO text: ".gettype($input->descriptionRaw)." ".json_encode($input->descriptionRaw), 'content-buddy');
+        $seo->descriptionRaw = $this->translateText($input->descriptionRaw, 'craft\fields\PlainText', $site, $instructions);
+
+        foreach($input->keywords as $key => $keyword) {
+            Craft::info("Translating SEO text: ".gettype($keyword['keyword'])." ".json_encode($keyword['keyword']), 'content-buddy');
+            $seo->keywords[$key]['keyword'] = $this->translateText($keyword['keyword'], 'craft\fields\PlainText', $site, $instructions);
+        }
+
+        Craft::info("Translating SEO social: ".gettype($input->social)." ".json_encode($input->social), 'content-buddy');
+        foreach($input->social as $key => $social) {
+            Craft::info("Translating SEO text: ".gettype($social->title)." ".json_encode($social->title), 'content-buddy');
+            $seo->social[$key]->title = $this->translateText($social->title, 'craft\fields\PlainText', $site, $instructions);
+            Craft::info("Translating SEO text: ".gettype($social->description)." ".json_encode($social->description), 'content-buddy');
+            $seo->social[$key]->description = $this->translateText($social->description, 'craft\fields\PlainText', $site, $instructions);
+        }
+
+        Craft::info("Translated SEO data: ".json_encode($seo), 'content-buddy');
+
+        return $seo;
     }
 
 	protected function _getClass( $object ): string {
@@ -1510,11 +1558,11 @@ class Translate extends Component {
 		return get_class( $field ) === 'craft\fields\Matrix';
 	}
 
-    private function getPrompt(?Site $site, $text) : string|bool {
+    private function getPrompt(?Site $site, $text) : array|bool {
         if(!$site) {
             return false;
         }
-        $language = $site->language;
+        $language = Craft::$app->getI18n()->getLocaleById($site->language)->getDisplayName() . ' (' . $site->language . ')';
         $prompt = "Translate to $language. ";
 
         $tags = $this->getHtmlTags($text);
@@ -1522,8 +1570,13 @@ class Translate extends Component {
             $prompt .= "Preserve all existing HTML tags, including <" . implode(">, <", $tags) . ">. Do not add or remove any HTML tags. Preserve link URLs and filenames to not break the functionality of the link or HTML code. ";
         }
 
-        $prompt .= "The following text: \n\n$text";
-        return $prompt;
+        if(str_contains($text,'%20')) {
+            $prompt .= "Do NOT translate or alter any URLs in the text. Example: 'https://www.example.com/files/This%20Sentence%20Should%20Not%20Be%20Translated.png' should remain exactly as it appears in the input. ";
+        }
+
+        $prompt .= "Return the full translation for the following text: \n\n";
+
+        return [$prompt, $text];
     }
 
     private function getHtmlTags($text) : array {

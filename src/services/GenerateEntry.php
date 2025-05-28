@@ -7,6 +7,7 @@ use Craft;
 use craft\base\Component;
 use craft\base\Element;
 use craft\elements\Entry;
+use craft\helpers\ElementHelper;
 use craft\models\EntryType;
 use craft\models\Section;
 use Exception;
@@ -21,7 +22,10 @@ class GenerateEntry extends Component {
             $nestedElementsTitles[] = $nestedElement->title;
         }
 
-        $titlePrompt = 'Give me a new title for a "'.$entriesName.'" entry, ';
+        $section = $this->getSection($entriesHandle);
+        $entryType = $this->getEntryType($section);
+
+        $titlePrompt = 'Give me a new title for a "'.$entriesName.'" "'.$section->name.'" entry, ';
         if(!empty($nestedElementsTitles)) {
             $titlePrompt .= 'not related to any of these existing values ('.implode(', ', $nestedElementsTitles).'), ';
         }
@@ -49,23 +53,28 @@ class GenerateEntry extends Component {
             throw new Exception(Craft::t('convergine-contentbuddy', "All fields are empty"));
         }
 
-        $titleResponse = BuddyPlugin::getInstance()->request->send($titlePrompt, $this->countWords($titlePrompt), 0.7);
-
         $responses = [];
-        $responses[] = $titleResponse;
 
-        $section = $this->getSection($entriesHandle);
-        $entryType = $this->getEntryType($section);
+        $titleResponse = BuddyPlugin::getInstance()->request->send($titlePrompt, $this->countWords($titlePrompt), 0.7, false, "Only return the text, no other information");
+        $titleResponse = $this->trim($titleResponse);
+        $responses[] = $titleResponse;
 
         $newNestedElement = new Entry();
         $newNestedElement->sectionId = $section->id;
         $newNestedElement->typeId = $entryType->id;
+        $newNestedElement->siteId = $mainElement->siteId;
+        $newNestedElement->postDate = $mainElement->postDate;
+        $newNestedElement->expiryDate = $mainElement->expiryDate;
+        $newNestedElement->enabled = $mainElement->enabled;
+        $newNestedElement->authorId = $mainElement->authorId;
         $newNestedElement->title = $titleResponse;
+        $newNestedElement->slug = ElementHelper::generateSlug($titleResponse);
 
         foreach($entryType->getFieldLayout()->getCustomFields() as $field) {
             if(in_array(get_class($field), BuddyPlugin::getInstance()->base->getSupportedFieldTypes())) {
-                $prompt = 'Write me a paragraph or more for the "'.$field->name.'" field based on this title: "'.$titleResponse.'"';
-                $response = BuddyPlugin::getInstance()->request->send($prompt, 2000, 0.7);
+                $prompt = 'Write me a paragraph or more for a "'.$section->name.'" "'.$field->name.'" field based on this text: '.$titleResponse;
+                $response = BuddyPlugin::getInstance()->request->send($prompt, 2000, 0.7, false, "Only return the text, no other information");
+                $response = $this->trim($response);
                 $newNestedElement->setFieldValue($field->handle, $response);
                 $responses[] = $response;
             }
@@ -118,5 +127,9 @@ class GenerateEntry extends Component {
 
     private function countWords($str) : int {
         return count(preg_split('~[^\p{L}\p{N}\']+~u', $str));
+    }
+
+    private function trim($response) : string {
+        return preg_replace('/^[\s\n\r\t"\'“”]+|[\s\n\r\t"\'“”]+$/u', '', $response);
     }
 }

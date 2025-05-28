@@ -22,6 +22,7 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\events\TemplateEvent;
 use craft\helpers\StringHelper;
 use craft\helpers\UrlHelper;
+use craft\services\ProjectConfig;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use craft\web\View;
@@ -39,7 +40,7 @@ use yii\base\Event;
 class BuddyPlugin extends Plugin {
 	public static string $plugin;
 	public ?string $name = 'Content Buddy';
-    public string $schemaVersion = '1.2.5';
+    public string $schemaVersion = '1.2.6';
 
     public function init() {
         /* plugin initialization */
@@ -119,14 +120,16 @@ class BuddyPlugin extends Plugin {
                     $type = match(get_class($event->element)) {
                         'craft\elements\Category' => 'category',
                         'craft\elements\Asset' => 'asset',
-                        default => 'entry'
+                        'craft\elements\Entry' => 'entry',
+                        default => ''
                     };
+                    if(!empty($type)) {
+                        $replacement = '</button><button type="button" class="btn add cb-btn-generate-entries icon dashed wrap" aria-label="Generate" data-id="'.$id.'" data-type="'.$type.'" data-handle="'.$event->sender->handle.'" data-name="'.$event->sender->name.'">'.self::getIcon('#3F4D5A').' <span class="cb-text">Generate</span></button>';
 
-                    $replacement = '</button><button type="button" class="btn add cb-btn-generate-entries icon dashed wrap" aria-label="Generate" data-id="'.$id.'" data-type="'.$type.'" data-handle="'.$event->sender->handle.'" data-name="'.$event->sender->name.'">'.self::getIcon('#3F4D5A').' <span class="cb-text">Generate</span></button>';
-
-                    $pos = strrpos($event->html, '</button>');
-                    if($pos !== false) {
-                        $event->html = substr_replace($event->html, $replacement, $pos, strlen('</button>'));
+                        $pos = strrpos($event->html, '</button>');
+                        if($pos !== false) {
+                            $event->html = substr_replace($event->html, $replacement, $pos, strlen('</button>'));
+                        }
                     }
                 }
 
@@ -221,6 +224,10 @@ class BuddyPlugin extends Plugin {
 	protected function createSettingsModel(): SettingsModel {
 		/* plugin settings model */
 		return new SettingsModel();
+	}
+
+	public function setSettings(array $settings):void {
+
 	}
 
 	/**

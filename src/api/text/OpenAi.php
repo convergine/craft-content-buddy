@@ -64,14 +64,25 @@ class OpenAi extends TextApi {
         if($isTranslate) {
             $systemContent = '';
             if(str_contains($prompt, '</craft-entry>')) {
-                $systemContent = 'You are a translator. Do NOT remove, add new, translate, or alter any HTML (this includes <iframe> tags) or custom tags, especially <craft-entry> tags. These tags must remain exactly as they appear in the input. Example: \'<craft-entry data-entry-id="24"></craft-entry>\' should never be modified. Keep the tags in the same order and format as the original text.';
+                $systemContent = 'You are a translator. Do NOT remove, add new, translate, or alter any HTML (this includes <iframe> tags) or custom tags, especially <craft-entry> tags. These tags must remain exactly as they appear in the input. Example: \'<craft-entry data-entry-id="24"></craft-entry>\' should never be modified. URLs should never be modified. Keep the tags in the same order and format as the original text.';
             } else if(preg_match('/<[^>]*>/', $prompt)) {
-                $systemContent = 'You are a translator. Do NOT remove, add new, translate, or alter any HTML (this includes <iframe> tags) or custom tags. Keep the tags in the same order and format as the original text.';
+                $systemContent = 'You are a translator. Do NOT remove, add new, translate, or alter any HTML (this includes <iframe> tags) or custom tags. URLs should never be modified. Keep the tags in the same order and format as the original text.';
             }
             if(!empty($systemContent)) {
                 $messages[] = [
                     'role' => 'system',
                     'content' => $systemContent
+                ];
+            }
+
+            if(str_contains($prompt, '%20')) {
+                $messages[] = [
+                    'role' => 'system',
+                    'content' => 'Do NOT translate or alter any URLs in the text. Example: \'https://www.example.com/files/This%20Sentence%20Should%20Not%20Be%20Translated.png\' should remain exactly as it appears in the input.'
+                ];
+                $messages[] = [
+                    'role' => 'system',
+                    'content' => 'Do NOT translate or alter any text surrounded by URL encoding like "%20". Example: \'This%20Sentence%20Should%20Not%20Be%20Translated\' should remain exactly as it appears in the input.'
                 ];
             }
         }
@@ -99,6 +110,8 @@ class OpenAi extends TextApi {
             $body['max_tokens'] = $maxTokensToGenerate;
             $body['temperature'] = $temperature;
         }
+
+        Craft::info( 'OpenAI request body: ' . json_encode( $body ), 'content-buddy' );
 
         return json_encode($body);
     }
