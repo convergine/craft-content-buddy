@@ -1570,6 +1570,37 @@ class Translate extends Component {
 	}
 
 
+	public function getElementFieldsCount( Element $element, array $fields ) {
+		$fieldsCount = 1;
+		foreach ( $fields as $field ) {
+			$_field = explode( ":", $field );
+			if ( in_array( $_field[0], $this->_plugin->base->getSupportedFieldTypes() ) ) {
+				$fieldsCount ++;
+			} elseif ( $_field[0] == 'craft\fields\Matrix' && class_exists( 'craft\elements\MatrixBlock' ) && version_compare( Craft::$app->getInfo()->version, '5.0', '<' ) ) {
+				$fieldHandle      = $_field[2];
+				$block            = $_field[1];
+				$matrixFieldQuery = $element->getFieldValue( $fieldHandle )->type( $block )->all();
+				$fieldsCount      += count( $matrixFieldQuery );
+			} else {
+				if(isset($_field[2])) {
+					$fieldHandle = $_field[2];
+					$block       = $_field[1];
+					$handle      = $_field[3];
+
+					try {
+						$matrixFieldQuery = $element->getFieldValue( $fieldHandle )->type( $block )->all();
+						$fieldsCount      += count( $matrixFieldQuery );
+					} catch ( InvalidFieldException $e ) {
+						continue;
+					}
+				}
+			}
+		}
+
+		return $fieldsCount;
+	}
+
+
     public function getProductFieldsCount( Product $product, array $fields ) {
 		$fieldsCount = 1;
 		foreach ( $fields as $field ) {
