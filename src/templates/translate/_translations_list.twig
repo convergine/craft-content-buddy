@@ -24,6 +24,7 @@
 
             {% for item in items %}
                 {% set sectionName = '' %}
+
                 {% if isCraft5 %}
                     {% set section = craft.app.entries.getSectionById(item.sectionId) %}
                 {% else %}
@@ -35,12 +36,20 @@
                 {% if section %}
                     {% set sectionName = section.name %}
                 {% else %}
-                    {% set category = craft.categories()
-                        .id(item.idEntry)
-                        .one() %}
-                    {% if category %}
-                        {% set sectionName =  'Category: ' ~ category.group.name %}
-                    {% endif %}
+
+					{% if item.sectionId == '0' %}
+						{% set productType = craft.commerce.productTypes.getProductTypeById(item.sectionType) %}
+						{% if productType %}
+							{% set sectionName = 'Product Type: ' ~ productType.name %}
+						{% endif %}
+					{% else %}
+						{% set category = craft.categories()
+							.id(item.idEntry)
+							.one() %}
+						{% if category %}
+							{% set sectionName =  'Category: ' ~ category.group.name %}
+						{% endif %}
+					{% endif %}
                 {% endif %}
 
                 {% if site %}
