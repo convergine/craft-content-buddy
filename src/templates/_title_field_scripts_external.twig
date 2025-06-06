@@ -75,7 +75,7 @@
 
         let buttonsId = 'buddy-button-title-'+Date.now();
         contentBuddyAppendPromptsExternal(buttonsId)
-        $('[id$="'+buttonsId+'"]').appendTo('.slideout-container:not(.hidden) [id$="-title-field"] div.input')
+        $('[id$="'+buttonsId+'"]').appendTo('.slideout-container:not(.hidden):last [id$="-title-field"] div.input')
         $('.slideout-container:not(.hidden) [id$="-title"]').css('padding-right', '66px');
 
     }
@@ -144,7 +144,7 @@
 
         let buttonsId = 'buddy-button-title-tr-'+Date.now();
         contentBuddyAppendLangsExternal(buttonsId)
-        $('[id$="'+buttonsId+'"]').appendTo('.slideout-container:not(.hidden) [id$="-title-field"] div.input')
+        $('[id$="'+buttonsId+'"]').appendTo('.slideout-container:not(.hidden):last [id$="-title-field"] div.input')
         $('[id$="-title"]').css('padding-right', '126px');
 
         }

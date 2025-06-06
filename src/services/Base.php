@@ -63,7 +63,8 @@ class Base {
 			'craft\fields\PlainText',
 			'craft\redactor\Field',
 			'craft\ckeditor\Field',
-			'abmat\tinymce\Field'
+			'abmat\tinymce\Field',
+            'ether\seo\fields\SeoField',
 		];
 	}
 

@@ -84,4 +84,16 @@ class SettingsController extends \craft\web\Controller {
             'isCraft5'     => version_compare(Craft::$app->getInfo()->version, '5.0', '>=')
         ] );
     }
+
+	public function actionSaveSettings() : ?Response {
+		$post     = $this->request->post();
+		$settings = BuddyPlugin::getInstance()->getSettings();
+		$success = $settings->saveSettings( $post['settings'] );
+		return $success ?
+			$this->asSuccess(Craft::t('app', 'Plugin settings saved.')) :
+			$this->asFailure(
+				Craft::t('app', 'Couldn’t save plugin settings.')/*,
+				routeParams: ['plugin' => $plugin]*/
+			);
+	}
 }

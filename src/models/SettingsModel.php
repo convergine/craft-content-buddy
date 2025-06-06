@@ -1,9 +1,11 @@
 <?php
 namespace convergine\contentbuddy\models;
 
+use convergine\contentbuddy\records\SettingsRecord;
 use Craft;
 use craft\base\Model;
 use craft\helpers\App;
+use craft\services\ProjectConfig;
 
 class SettingsModel extends Model
 {
@@ -148,6 +150,11 @@ class SettingsModel extends Model
     public int $maxAttempts = 5;
     public int $ttr = 300;
 
+	 public function init():void {
+		 parent::init();
+		 $this->_getSettingsFromDb();
+	 }
+
     /**
      * @return string
      */
@@ -286,4 +293,43 @@ class SettingsModel extends Model
 			'lt' => Craft::t('convergine-contentbuddy','Lithuanian') . ' (Lietuvių)'
 		];
 	}
+
+	public function saveSettings(array $settings):bool {
+		foreach ($settings as $name=>$value){
+			$record = SettingsRecord::find()->where(['name'=>$name])->one();
+			if(!$record){
+				$record = new SettingsRecord();
+			}
+			if(!$this->hasProperty($name)){
+				continue;
+			}
+			if(isset($value[ProjectConfig::ASSOC_KEY])){
+				$_value = [];
+				foreach ($value[ProjectConfig::ASSOC_KEY] as $item){
+					$_value[$item[0]] = $item[1];
+				}
+				$value = $_value;
+			}
+			if(!is_string($value) && !is_numeric($value)){
+				$value = json_encode($value);
+			}
+			$record->name = $name;
+			$record->value = $value;
+			$record->save();
+		}
+		return true;
+	}
+
+	private function _getSettingsFromDb():void {
+		$settings = [];
+		foreach (SettingsRecord::find()->all() as $row){
+			$value = $row->value;
+			if(null !== $encodedValue = json_decode($row->value,true)){
+				$value = $encodedValue;
+			}
+			$settings[$row->name] = $value;
+		}
+		$this->setAttributes($settings,false);
+	}
+
 }

@@ -9,8 +9,7 @@
 
 {% block content %}
     {{ craft.contentbuddy.checkLicense()|raw }}
-    <input type="hidden" name="action" value="plugins/save-plugin-settings">
-    <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
+    <input type="hidden" name="action" value="convergine-contentbuddy/settings/save-settings">
     {% namespace 'settings' %}
 
         {{ forms.selectField({

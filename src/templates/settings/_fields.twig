@@ -12,8 +12,7 @@
     <div style="margin-bottom: 48px;">
         <p>{{ 'fieldsDescriptionText'|t('convergine-contentbuddy') }}</p>
     </div>
-    <input type="hidden" name="action" value="plugins/save-plugin-settings">
-    <input type="hidden" name="pluginHandle" value="convergine-contentbuddy">
+    <input type="hidden" name="action" value="convergine-contentbuddy/settings/save-settings">
     {% namespace 'settings' %}
 
         {% set _fields = craft.app.fields.getAllFields %}
