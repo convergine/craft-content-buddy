@@ -42,9 +42,6 @@
 						{% if productType %}
 							{% set sectionName = 'Product Type: ' ~ productType.name %}
 						{% endif %}
-						{% if productType %}
-							{% set sectionName = 'Product Type: ' ~ productType.name %}
-						{% endif %}
 					{% else %}
 						{% set category = craft.categories()
 							.id(item.idEntry)
