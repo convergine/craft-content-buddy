@@ -148,12 +148,6 @@ class TranslateController extends \craft\web\Controller {
                     foreach ( $element as $b ) {
                         $batch[] = $b->id;
                        
-                        // TODO determine which translate method to use based on type of element
-                        // if($sectionId === 'product'){
-                        //     $fields += $this->_plugin->translate->getProductFieldsCount( $b, $_enabledFields );
-                        // } else {
-                        //     $fields += $this->_plugin->translate->getEntryFieldsCount( $b, $_enabledFields );
-                        // }
                         $fields += $this->_plugin->translate->getElementFieldsCount( $b, $_enabledFields );
                     }
 

@@ -316,7 +316,7 @@ class Translate extends Component {
 				foreach ( $entry as $b ) {
 					$batch[] = $b->id;
 
-					$fields += $this->_plugin->translate->getEntryFieldsCount( $b, $_enabledFields );
+					$fields += $this->_plugin->translate->getElementFieldsCount( $b, $_enabledFields );
 
 				}
 
@@ -1539,35 +1539,6 @@ class Translate extends Component {
 		return $record;
 	}
 
-	public function getEntryFieldsCount( Entry $entry, array $fields ) {
-		$fieldsCount = 1;
-		foreach ( $fields as $field ) {
-			$_field = explode( ":", $field );
-			if ( in_array( $_field[0], $this->_plugin->base->getSupportedFieldTypes() ) ) {
-				$fieldsCount ++;
-			} elseif ( $_field[0] == 'craft\fields\Matrix' && class_exists( 'craft\elements\MatrixBlock' ) && version_compare( Craft::$app->getInfo()->version, '5.0', '<' ) ) {
-				$fieldHandle      = $_field[2];
-				$block            = $_field[1];
-				$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block )->all();
-				$fieldsCount      += count( $matrixFieldQuery );
-			} else {
-				if(isset($_field[2])) {
-					$fieldHandle = $_field[2];
-					$block       = $_field[1];
-					$handle      = $_field[3];
-
-					try {
-						$matrixFieldQuery = $entry->getFieldValue( $fieldHandle )->type( $block )->all();
-						$fieldsCount      += count( $matrixFieldQuery );
-					} catch ( InvalidFieldException $e ) {
-						continue;
-					}
-				}
-			}
-		}
-
-		return $fieldsCount;
-	}
 
 
 	public function getElementFieldsCount( Element $element, array $fields ) {
@@ -1600,36 +1571,6 @@ class Translate extends Component {
 		return $fieldsCount;
 	}
 
-
-    public function getProductFieldsCount( Product $product, array $fields ) {
-		$fieldsCount = 1;
-		foreach ( $fields as $field ) {
-			$_field = explode( ":", $field );
-			if ( in_array( $_field[0], $this->_plugin->base->getSupportedFieldTypes() ) ) {
-				$fieldsCount ++;
-			} elseif ( $_field[0] == 'craft\fields\Matrix' && class_exists( 'craft\elements\MatrixBlock' ) ) {
-				$fieldHandle      = $_field[2];
-				$block            = $_field[1];
-				$matrixFieldQuery = $product->getFieldValue( $fieldHandle )->type( $block )->all();
-				$fieldsCount      += count( $matrixFieldQuery );
-			} else {
-				if(isset($_field[2])) {
-					$fieldHandle = $_field[2];
-					$block       = $_field[1];
-					$handle      = $_field[3];
-
-					try {
-						$matrixFieldQuery = $product->getFieldValue( $fieldHandle )->type( $block )->all();
-						$fieldsCount      += count( $matrixFieldQuery );
-					} catch ( InvalidFieldException $e ) {
-						continue;
-					}
-				}
-			}
-		}
-
-		return $fieldsCount;
-	}
 
 	public function getJobsInfo( $translateId ) {
 		$jobsData = $this->_getJobsData( $translateId );
