@@ -64,13 +64,24 @@ class SettingsController extends \craft\web\Controller {
 		] );
 	}
 
-	/**
-	 * @return Response
-	 */
-	public function actionTranslation(): Response {
-		$settings       = BuddyPlugin::getInstance()->getSettings();
-		return $this->renderTemplate( 'convergine-contentbuddy/settings/_translation', [
-			'settings' => $settings
-		] );
-	}
+    /**
+     * @return Response
+     */
+    public function actionTranslation(): Response {
+        $settings       = BuddyPlugin::getInstance()->getSettings();
+        return $this->renderTemplate( 'convergine-contentbuddy/settings/_translation', [
+            'settings' => $settings
+        ] );
+    }
+
+    /**
+     * @return Response
+     */
+    public function actionNewsletter(): Response {
+        $settings = BuddyPlugin::getInstance()->getSettings();
+        return $this->renderTemplate( 'convergine-contentbuddy/settings/_newsletter', [
+            'settings'     => $settings,
+            'isCraft5'     => version_compare(Craft::$app->getInfo()->version, '5.0', '>=')
+        ] );
+    }
 }

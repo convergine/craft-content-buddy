@@ -16,8 +16,9 @@ class m240320_093059_translateEntries extends Migration
      */
     public function safeUp(): bool
     {
-        // Place migration code here...
-			$this->addColumn(TranslateRecord::tableName(),'idEntry',$this->integer()->null());
+        if(!$this->db->columnExists(TranslateRecord::tableName(),'idEntry')) {
+            $this->addColumn(TranslateRecord::tableName(),'idEntry',$this->integer()->null());
+        }
         return true;
     }
 

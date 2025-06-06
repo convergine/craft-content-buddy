@@ -28,7 +28,7 @@ class Request {
 		$this->settings = $settings;
 	}
 
-	public function send( $prompt, $maxTokens, $temperature, $isTranslate = false,$lang='' ) {
+	public function send( $prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang='') {
 		$textAi = $isTranslate ? $this->settings->translationAi:$this->settings->textAi;
 		if ( $textAi == 'deepl' ) {
 			$textApi = new DeepL();
@@ -38,6 +38,6 @@ class Request {
 			$textApi = new OpenAi();
 		}
 
-		return $textApi->sendRequest( $prompt, $maxTokens, $temperature, $isTranslate, $lang );
+		return $textApi->sendRequest( $prompt, $maxTokens, $temperature, $isTranslate, $instructions, $lang );
 	}
 }

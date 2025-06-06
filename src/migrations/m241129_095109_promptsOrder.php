@@ -16,8 +16,9 @@ class m241129_095109_promptsOrder extends Migration
      */
     public function safeUp(): bool
     {
-        // Place migration code here...
-	    $this->addColumn(BuddyPromptRecord::tableName(),'order',$this->integer()->defaultValue(99));
+        if(!$this->db->columnExists(BuddyPromptRecord::tableName(), 'order')) {
+            $this->addColumn(BuddyPromptRecord::tableName(),'order',$this->integer()->defaultValue(99));
+        }
         return true;
     }
 

@@ -14,14 +14,14 @@ abstract class TextApi {
         $this->settings = $settings;
     }
 
-    function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $lang='') {}
+    function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = '') {}
 
     protected function getMaxTokensForModel($model): int {
         return match($model) {
-            "grok-beta" => 130000,
-            "gpt-4o", "gpt-4o-mini", "o1", "o1-mini", "o3-mini" => 15900,
-            "gpt-4" => 7900,
-            "gpt-4-turbo", "gpt-3.5-turbo" => 3900,
+            "grok-beta", "grok-2", "grok-3", "grok-3-fast", "grok-3-mini", "grok-3-mini-fast" => 130000,
+            "gpt-4o", "gpt-4o-mini", "o1", "o1-mini", "o3-mini", "gpt-4.5-preview" => 15900,
+            "gpt-4", "grok-2-vision", "grok-vision-beta" => 7900,
+            "gpt-4-turbo", "gpt-3.5-turbo" => 3800,
             default => 2000
         };
     }
