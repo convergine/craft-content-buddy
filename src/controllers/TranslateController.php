@@ -99,17 +99,8 @@ class TranslateController extends \craft\web\Controller {
                 }
 
                 $translate_to_list = [];
-                // if($translate_to === 'all'){
-                //     $sectionSites = version_compare(Craft::$app->getInfo()->version, '5.0', '>=') ? Craft::$app->entries->getSectionById($sectionId) : Craft::$app->sections->getSectionById($sectionId);
-                //     foreach ( $sectionSites->getSiteSettings() as $site ) {
-                //         if ( $site->siteId != $primarySiteId ) {
-                //             $translate_to_list[] = $site->siteId;
-                //         }
-
-                //     }
-                // }else{
-                    $translate_to_list[] = $translate_to;
-                // }
+               
+                 $translate_to_list[] = $translate_to;
 
                 foreach ( $translate_to_list as $indexLanguage => $translate_to_site_id ) {
 
