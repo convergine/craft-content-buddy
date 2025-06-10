@@ -41,6 +41,15 @@
                     {% if category %}
                         {% set sectionName =  'Category: ' ~ category.group.name %}
                     {% endif %}
+                    {% if craft.app.plugins.isPluginInstalled('commerce') and craft.app.plugins.isPluginEnabled('commerce') and category==null and item.sectionId ==0 %}
+                        {% set productType = craft
+                        .commerce
+                        .productTypes
+                            .getProductTypeById(item.sectionType) %}
+                        {% if productType %}
+                            {% set sectionName =  'Product: ' ~ productType.name %}
+                        {% endif %}
+                    {% endif %}
                 {% endif %}
 
                 {% if site %}

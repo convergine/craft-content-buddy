@@ -205,6 +205,7 @@ class SettingsModel extends Model
 			if ( in_array( ( new \ReflectionClass( $field ) )->getName(), $this->_supportedFieldTypes ) ) {
                 $field_obj = [
                     'id'     => $field->id,
+                    'uid'    => $field->uid,
                     'handle' => $field->handle,
                     'name'   => $field->name,
                     'type'   => $this->_getClass( $field )
@@ -233,6 +234,7 @@ class SettingsModel extends Model
                     if ( in_array( ( new \ReflectionClass( $blockField ) )->getName(), $this->_supportedFieldTypes ) ) {
 						$matrixFields [ $matrixField->handle ]['fields'][] = [
 							'id'     => $blockField->id,
+                            'uid'    => $blockField->uid,
 							'handle' => $blockField->handle,
 							'name'   => $blockField->name,
 							'group'  => $block->name,

@@ -30,7 +30,7 @@ class m250521_122032_new_settings_source extends Migration
 		    ] );
 	    }
 	    $settings = Craft::$app->getProjectConfig()->get(ProjectConfig::PATH_PLUGINS . '.convergine-contentbuddy.settings');
-	    (new SettingsModel())->saveSettings($settings);
+	    (new SettingsModel())->saveSettings($settings ?? array());
         return true;
     }
 

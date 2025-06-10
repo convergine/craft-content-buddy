@@ -40,7 +40,7 @@ class translateSections extends BaseJob
 				$this->translateToSiteId,
 				$this->instructions,
 				$this->override,
-                $this->translateSlugs
+				$this->translateSlugs
 			);
 
 		$this->setProgress($this->_queue, 1);

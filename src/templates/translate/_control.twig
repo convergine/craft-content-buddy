@@ -1,4 +1,5 @@
-<input type="hidden" name="translate_to" id="translate_to"><div>
+<input type="hidden" name="translate_to" id="translate_to">
+<div id="buddy-translate-control">
     <label id="context-label" class="visually-hidden">Translate</label>
     <button type="button" id="entry-translate-btn" class="btn menubtn sitemenubtn" data-icon="world" aria-labelledby="context-label">Translate to</button>
     <div class="menu">
@@ -6,13 +7,13 @@
         <ul class="padded">
             {% for siteId, site in sites %}
             <li>
-                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to \'{{ site }}\'')){$('.action-input').val('{{ action }}');
+                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to \'{{ site }}\'')){$('#content input[name=\'action\']').val('{{ action }}');
                             $('#translate_to').val('{{ siteId }}');$('#main-form').submit()}">{{ site }}</a>
             </li>
             {% endfor %}
             {% if enableBulkTranslation %}
             <li>
-                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to all languages')){$('.action-input').val('{{ action }}');
+                <a href="javascript:;" onclick="if(confirm('Are you sure to translate entry to all languages')){$('#content input[name=\'action\']').val('{{ action }}');
                         $('#translate_to').val('all');$('#main-form').submit()}">{{  'To All Languages'|t('convergine-contentbuddy')}}</a>
             </li>
             {% endif %}
@@ -20,3 +21,11 @@
 
     </div>
 </div>
+{% if is5version == false %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+        $("#buddy-translate-control").appendTo($("#header div:first"))
+    });
+
+</script>
+{% endif %}

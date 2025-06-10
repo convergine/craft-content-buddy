@@ -116,6 +116,14 @@
                 </div>
             {% endif %}
         {% endif %}
+        {% if commerceInstalled %}
+            {{ forms.lightswitchField({
+                label: "Translate Product Variants"|t('convergine-contentbuddy'),
+                name: 'translateVariants',
+                on: false,
+                instructions: 'translateVariantFieldsText'|t('convergine-contentbuddy')
+            }) }}
+        {% endif %}
     {% else %}
         <div>
             <p>{{ 'No fields exist yet.'|t('convergine-contentbuddy') }}</p>

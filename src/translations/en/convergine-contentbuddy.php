@@ -140,6 +140,8 @@
 	'All Sections'=>'All Sections',
 	'Enable bulk translation to all languages at once'=>'Enable bulk translation to all languages at once',
 	'Translate all available sections'=>'Translate all available sections',
+	'Translate Product Variants' =>'',
+	'translateVariantFieldsText'=>'Translate all product variants content, recursively',
 
 
 	/* General error messages*/
@@ -153,4 +155,6 @@
 
 	'licenseNotice'=>'By maintaining a valid license for our plugin on live domains, you\'re directly supporting our team\'s efforts. This not only champions the broader CraftCMS community but also enables us to continually innovate and deliver enhanced features for you.',
 	'entryTranslationStarted'=>'Translations request added to queue.',
+
+    'productTranslationStarted' => 'Product translation request added to queue.',
 ];

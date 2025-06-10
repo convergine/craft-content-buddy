@@ -31,7 +31,11 @@
 
 
                     <tr class="s-{{ log.id }}">
-                        <td class="name-column"><a href="{{ entry.cpEditUrl }}" target="_blank">{{ entry.title }}</a></td>
+                        {% if entry %}
+                            <td class="name-column"><a href="{{ entry.cpEditUrl }}" target="_blank">{{ entry.title }}</a></td>
+                        {% else %}
+                            <td class="name-column">{{ log.entryId }}</td>
+                        {% endif %}
                         <td class="field-column">{{ log.field }}</td>
                         <td class="message-column">{{ log.message|raw }}</td>
 

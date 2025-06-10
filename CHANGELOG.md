@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.7 - 2025-06-10
+### Added
+- Added support for translating [Craft Commerce](https://craftcms.com/commerce) products, including product variant fields. [Issue #40](https://github.com/convergine/craft-content-buddy/issues/40)
+
+### Changed
+- Adjusted enabled fields to store with UID instead of handle, fixing issues with Craft CMS 5.x multi-instance fields. [Issue #43](https://github.com/convergine/craft-content-buddy/issues/43)
+
+### Fixed
+- Include Content Buddy settings table to the install migration script. [Issue #47](https://github.com/convergine/craft-content-buddy/issues/47)
+
 ## 1.2.6 - 2025-05-28
 ### Added
 - Added support for translating [SEO](https://plugins.craftcms.com/seo) metadata, including title, description, and keywords.

@@ -3,6 +3,7 @@
 namespace convergine\contentbuddy\migrations;
 
 use convergine\contentbuddy\records\BuddyPromptRecord;
+use convergine\contentbuddy\records\SettingsRecord;
 use convergine\contentbuddy\records\TranslateLogRecord;
 use convergine\contentbuddy\records\TranslateRecord;
 use craft\db\Migration;
@@ -36,6 +37,18 @@ class Install extends Migration {
 	 * @return void
 	 */
 	protected function _createTables(): void {
+
+		$this->archiveTableIfExists( SettingsRecord::tableName() );
+		if(!$this->db->tableExists(SettingsRecord::tableName())) {
+			$this->createTable( SettingsRecord::tableName(), [
+				'id'       => $this->primaryKey(),
+				'name'    => $this->string(100),
+				'value' => $this->text(),
+				'dateCreated' => $this->dateTime()->notNull(),
+				'dateUpdated' => $this->dateTime()->notNull(),
+				'uid'         => $this->uid(),
+			] );
+		}
 
 		$this->archiveTableIfExists( BuddyPromptRecord::tableName() );
 		$this->createTable( BuddyPromptRecord::tableName(), [

@@ -22,7 +22,6 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\events\TemplateEvent;
 use craft\helpers\StringHelper;
 use craft\helpers\UrlHelper;
-use craft\services\ProjectConfig;
 use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use craft\web\View;
@@ -40,7 +39,7 @@ use yii\base\Event;
 class BuddyPlugin extends Plugin {
 	public static string $plugin;
 	public ?string $name = 'Content Buddy';
-    public string $schemaVersion = '1.2.6';
+    public string $schemaVersion = '1.2.7';
 
     public function init() {
         /* plugin initialization */
@@ -134,8 +133,8 @@ class BuddyPlugin extends Plugin {
                 }
 
 				if (
-					array_key_exists($event->sender->handle, $settings->enabledFields)
-					&& $settings->enabledFields[$event->sender->handle]
+					array_key_exists($event->sender->uid, $settings->enabledFields)
+					&& $settings->enabledFields[$event->sender->uid]
 					&& (($settings->textAi == 'openai' && $settings->apiToken) || ($settings->textAi == 'xai' && $settings->xAiApiKey))
 				){
                     $select = Craft::$app->view->renderTemplate('convergine-contentbuddy/_select.twig', [ 'event' => $event, 'hash' => StringHelper::UUID()] );
@@ -219,6 +218,14 @@ class BuddyPlugin extends Plugin {
 				}
 			}
 		);
+
+		if(version_compare( Craft::$app->getInfo()->version, '5.0', '<' )) {
+			Craft::$app->view->hook( 'cp.commerce.product.edit.content', function ( array &$context ) {
+
+				return $this->translate->getEntryTranslateControl( $context['product'] );
+
+			} );
+		}
 	}
 
 	protected function createSettingsModel(): SettingsModel {
