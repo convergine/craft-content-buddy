@@ -10,11 +10,13 @@ use convergine\contentbuddy\services\PromptProcessor;
 use convergine\contentbuddy\services\Request;
 use convergine\contentbuddy\services\Translate;
 use convergine\contentbuddy\variables\BuddyVariable;
+use craft\events\ModelEvent;
 use Craft;
 use craft\base\Element;
 use craft\base\Field;
 use craft\base\Plugin;
 use craft\controllers\ElementsController;
+use craft\elements\Entry;
 use craft\events\DefineElementEditorHtmlEvent;
 use craft\events\DefineFieldHtmlEvent;
 use craft\events\DefineHtmlEvent;
@@ -39,7 +41,7 @@ use yii\base\Event;
 class BuddyPlugin extends Plugin {
 	public static string $plugin;
 	public ?string $name = 'Content Buddy';
-    public string $schemaVersion = '1.2.7';
+    public string $schemaVersion = '1.2.8';
 
     public function init() {
         /* plugin initialization */
@@ -90,6 +92,8 @@ class BuddyPlugin extends Plugin {
 
 				$event->rules['convergine-contentbuddy/site-translate'] = 'convergine-contentbuddy/translate/index';
 				$event->rules['convergine-contentbuddy/site-translate/log'] = 'convergine-contentbuddy/translate/log';
+
+                $event->rules['convergine-contentbuddy/deepl/glossaries'] = 'convergine-contentbuddy/deep-l/glossaries';
 			}
 		);
 	}
@@ -226,6 +230,34 @@ class BuddyPlugin extends Plugin {
 
 			} );
 		}
+
+		Event::on(
+			Entry::class,
+			Entry::EVENT_DEFINE_SIDEBAR_HTML,
+			static function(DefineHtmlEvent $event) {
+				/** @var craft\models\Site $isDefaultSite */
+				$isDefaultSite = $event->sender->getSite()->primary;
+
+				$html = Craft::$app->view->renderTemplate('convergine-contentbuddy/_sidebars/entry-preview.twig',[
+					'element' => $event->sender,
+					'isDefaultSite' => $isDefaultSite,
+					'excludedSites' => BuddyPlugin::getInstance()->translate->getExcludedEntries($event->sender->id)
+				]);
+
+				$event->html .= $html;
+			}
+		);
+
+		Event::on(
+			Entry::class,
+			Entry::EVENT_AFTER_PROPAGATE,
+			function (ModelEvent $event) {
+					if($event->sender->id) {
+						$this->translate->saveExcludeBulkSites( $event->sender );
+					}
+			}
+		);
+
 	}
 
 	protected function createSettingsModel(): SettingsModel {

@@ -97,6 +97,26 @@
                 instructions: 'API Key for the DeepL API'|t('convergine-contentbuddy'),
                 suggestEnvVars: true,
             }) }}
+
+            {% set glossaryOptions = {
+                '': 'None'
+            } %}
+
+            {% if settings.deepLGlossaryId is not empty %}
+                {% set glossaryOptions = glossaryOptions|merge({
+                    (settings.deepLGlossaryId): settings.deepLGlossaryId
+                }) %}
+            {% endif %}
+
+            <div id="deepLGlossaryField" style="display: none;">
+                {{ forms.selectField({
+                    label: 'DeepL Glossary'|t('convergine-contentbuddy'),
+                    name: 'deepLGlossaryId',
+                    value: settings.deepLGlossaryId,
+                    instructions: 'deepLGlossaryIdDescription'|t('convergine-contentbuddy'),
+                    options: glossaryOptions
+                }) }}
+            </div>
         </div>
 
         {{ forms.lightswitchField({

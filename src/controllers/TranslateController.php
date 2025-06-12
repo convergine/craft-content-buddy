@@ -6,6 +6,7 @@ use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\models\SettingsModel;
 use convergine\contentbuddy\queue\translateEntries;
 use convergine\contentbuddy\queue\translateSections;
+use convergine\contentbuddy\records\ExcludeFromBulk;
 use convergine\contentbuddy\records\TranslateLogRecord;
 use convergine\contentbuddy\records\TranslateRecord;
 use convergine\contentbuddy\services\Translate;
@@ -143,7 +144,12 @@ class TranslateController extends \craft\web\Controller {
 					$entries = Entry::find()
 					                ->sectionId( $sectionId )
 					                ->typeId( $sectionType )
-					                ->siteId( $primarySiteId );
+					                ->siteId( $primarySiteId )
+					                ->leftJoin(
+							ExcludeFromBulk::tableName().' bulk',
+							'[[elements.id]] = [[bulk.elementId]] AND [[bulk.siteId]]='.$translate_to_site_id
+						)
+					                ->where(['bulk.elementId' => null]);
 				}
 
 				$entries = $this->_plugin->translate->setBatchLimit( $entries );
@@ -291,6 +297,11 @@ class TranslateController extends \craft\web\Controller {
 		}
 		foreach ( $translate_to_list as $index => $translate_to_siteId ) {
 
+			//check if entry exits in exclude list
+			if($translate_to === 'all' &&
+			   in_array($translate_to_siteId,$this->_plugin->translate->getExcludedEntries($id))){
+				continue;
+			}
 
 			$translateRecord                   = new TranslateRecord();
 			$translateRecord->siteId           = $translate_to_siteId;

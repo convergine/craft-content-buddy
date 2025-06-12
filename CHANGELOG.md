@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.8 - 2025-06-12
+### Added
+- Support for DeepL glossaries.
+- Option to exclude entries from bulk translations.
+
 ## 1.2.7 - 2025-06-10
 ### Added
 - Added support for translating [Craft Commerce](https://craftcms.com/commerce) products, including product variant fields. [Issue #40](https://github.com/convergine/craft-content-buddy/issues/40)

@@ -5,6 +5,7 @@ namespace convergine\contentbuddy\services;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\models\SettingsModel;
 use convergine\contentbuddy\queue\translateEntries;
+use convergine\contentbuddy\records\ExcludeFromBulk;
 use convergine\contentbuddy\records\TranslateLogRecord;
 use convergine\contentbuddy\records\TranslateRecord;
 use Craft;
@@ -278,13 +279,18 @@ class Translate extends Component {
 
 		$translate_to_list = [];
 		if ( $translate_to === 'all' ) {
-			$sectionSites = version_compare( Craft::$app->getInfo()->version, '5.0', '>=' ) ? Craft::$app->entries->getSectionById( $sectionId ) : Craft::$app->sections->getSectionById( $sectionId );
-			foreach ( $sectionSites->getSiteSettings() as $site ) {
-				if ( $site->siteId != $primarySiteId ) {
-					$translate_to_list[] = $site->siteId;
-				}
+			if($sectionId == 'product'){
+				//TODO add support for products
+			}else{
+				$sectionSites = version_compare( Craft::$app->getInfo()->version, '5.0', '>=' ) ? Craft::$app->entries->getSectionById( $sectionId ) : Craft::$app->sections->getSectionById( $sectionId );
+				foreach ( $sectionSites->getSiteSettings() as $site ) {
+					if ( $site->siteId != $primarySiteId ) {
+						$translate_to_list[] = $site->siteId;
+					}
 
+				}
 			}
+
 		} else {
 			$translate_to_list[] = $translate_to;
 		}
@@ -306,10 +312,22 @@ class Translate extends Component {
 			$translateRecord->override         = $override ? 1 : 0;
 			$translateRecord->jobIds           = '';
 			$translateRecord->save();
-			$entries = Entry::find()
-			                ->sectionId( $sectionId )
-			                ->typeId( $sectionType )
-			                ->siteId( $primarySiteId );
+			if($sectionId == 'product'){
+				$entries = Product::find()
+				                  ->typeId( $sectionType )
+				                  ->siteId( $primarySiteId );
+			}else {
+				$entries = Entry::find()
+				                ->sectionId( $sectionId )
+				                ->typeId( $sectionType )
+				                ->siteId( $primarySiteId )
+					//check if entry exits in exclude list
+					             ->leftJoin(
+						ExcludeFromBulk::tableName() . ' bulk',
+						'[[elements.id]] = [[bulk.elementId]] AND [[bulk.siteId]]=' . $translate_to_site_id
+					)
+				                ->where( [ 'bulk.elementId' => null ] );
+			}
 			$entries = $this->_plugin->translate->setBatchLimit( $entries );
 			$items   = $fields = 0;
 			$jobIds  = [];
@@ -361,6 +379,9 @@ class Translate extends Component {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 		$lang              = $translate_to_site->language;
 
+		$translate_from_site = Craft::$app->sites->getSiteById( $entry->siteId );
+		$source_lang         = $translate_from_site->language;
+
 		$translateRecord = TranslateRecord::findOne( $translateId );
 		$override        = $translateRecord->override;
 		$hasError        = false;
@@ -375,7 +396,7 @@ class Translate extends Component {
 		if ( $_entry ) {
 			try {
 				$prompt          = $this->getPrompt( $translate_to_site, $entry->title );
-				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 				$_entry->title = $translated_text;
 
@@ -419,7 +440,7 @@ class Translate extends Component {
 
 					try {
 						$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
-						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
@@ -428,7 +449,7 @@ class Translate extends Component {
 						$translated_text = rtrim( $translated_text, '```' );
 
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $instructions );
+							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
 							Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
 						}
 
@@ -474,7 +495,7 @@ class Translate extends Component {
 								}
 
 								$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 								Craft::info( 'Saving entry (' . $matrixBlockTarget[ $k ]->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
@@ -530,6 +551,9 @@ class Translate extends Component {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 		$lang              = $translate_to_site->language;
 
+		$translate_from_site = Craft::$app->sites->getSiteById( $entry->siteId );
+		$source_lang         = $translate_from_site->language;
+
 		$translateRecord = TranslateRecord::findOne( $translateId );
 		$override        = $translateRecord->override;
 		$hasError        = false;
@@ -544,7 +568,7 @@ class Translate extends Component {
 		if ( $_entry ) {
 			try {
 				$prompt          = $this->getPrompt( $translate_to_site, $entry->title );
-				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 				$_entry->title = $translated_text;
 
@@ -560,7 +584,7 @@ class Translate extends Component {
 			if ( ! empty( $entry->alt ) ) {
 				try {
 					$prompt          = $this->getPrompt( $translate_to_site, $entry->alt );
-					$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+					$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 					$_entry->alt     = $translated_text;
 				} catch ( \Throwable $e ) {
 					$this->_addLog( $translateId, $entry->id, $e->getMessage(), 'alt' );
@@ -599,7 +623,7 @@ class Translate extends Component {
 
 					try {
 						$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
-						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
@@ -608,7 +632,7 @@ class Translate extends Component {
 						$translated_text = rtrim( $translated_text, '```' );
 
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $instructions );
+							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
 							Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
 						}
 
@@ -654,7 +678,7 @@ class Translate extends Component {
 								}
 
 								$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 								Craft::info( 'Saving entry (' . $matrixBlockTarget[ $k ]->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
@@ -705,6 +729,9 @@ class Translate extends Component {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 		$lang              = $translate_to_site->language;
 
+		$translate_from_site = Craft::$app->sites->getSiteById( $entry->siteId );
+		$source_lang         = $translate_from_site->language;
+
 		$translateRecord = TranslateRecord::findOne( $translateId );
 		$override        = $translateRecord->override;
 		$hasError        = false;
@@ -724,7 +751,7 @@ class Translate extends Component {
 		if ( $_entry ) {
 			try {
 				$prompt          = $this->getPrompt( $translate_to_site, $entry->title );
-				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 				$_entry->title = $translated_text;
 
@@ -768,7 +795,7 @@ class Translate extends Component {
 
 					try {
 						$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
-						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
@@ -777,7 +804,7 @@ class Translate extends Component {
 						$translated_text = rtrim( $translated_text, '```' );
 
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $instructions );
+							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
 							Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
 						}
 
@@ -823,7 +850,7 @@ class Translate extends Component {
 								}
 
 								$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 								Craft::info( 'Saving entry (' . $matrixBlockTarget[ $k ]->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
@@ -852,8 +879,8 @@ class Translate extends Component {
 					$_entry->setFieldValues($fieldValues);*/
 
 					foreach ( $entry->getVariants() as $variant ) {
-						$variantFields = $this->getTranslatedFields( $variant );
-                        $variantEnabledFields = array();
+						$variantFields        = $this->getTranslatedFields( $variant );
+						$variantEnabledFields = array();
 						foreach ( $variantFields['regular'] as $f ) {
 							$variantEnabledFields[] = "{$f['_type']}:{$f['handle']}";
 						}
@@ -907,6 +934,9 @@ class Translate extends Component {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 		$lang              = $translate_to_site->language;
 
+		$translate_from_site = Craft::$app->sites->getSiteById( $entry->siteId );
+		$source_lang         = $translate_from_site->language;
+
 		$translateRecord = TranslateRecord::findOne( $translateId );
 		$override        = $translateRecord->override;
 		$hasError        = false;
@@ -921,7 +951,7 @@ class Translate extends Component {
 		if ( $_entry ) {
 			try {
 				$prompt          = $this->getPrompt( $translate_to_site, $entry->title );
-				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 				$_entry->title = $translated_text;
 
@@ -952,47 +982,48 @@ class Translate extends Component {
 
 					$fieldsProcessed ++;
 
-                    if($fieldType !== 'ether\seo\fields\SeoField') {
-                        // check field not empty
-                        if ( strlen( (string) $entry_value ) == 0) {
-                            $fieldsSkipped ++;
-                            continue;
-                        }
+					if ( $fieldType !== 'ether\seo\fields\SeoField' ) {
+						// check field not empty
+						if ( strlen( (string) $entry_value ) == 0 ) {
+							$fieldsSkipped ++;
+							continue;
+						}
 
-                        //check if field is already translated and selected NOT OVERRIDE
-                        if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
-                            $fieldsSkipped ++;
-                            continue;
-                        }
-                    }
+						//check if field is already translated and selected NOT OVERRIDE
+						if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
+							$fieldsSkipped ++;
+							continue;
+						}
+					}
 
 					try {
-                        if($fieldType == 'ether\seo\fields\SeoField' && $entry_value instanceof SeoData) {
-                            $site = Craft::$app->sites->getSiteById($translate_to);
-                            $translatedValue = $this->translateSeoData($entry_value, $site, $instructions);
-                            $_entry->setFieldValue($fieldHandle, $translatedValue);
-                        } else {
-                            $prompt = $this->getPrompt($translate_to_site, $entry_value);
-                            $translated_text = BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, $instructions, $lang);
+						if ( $fieldType == 'ether\seo\fields\SeoField' && $entry_value instanceof SeoData ) {
+							$site            = Craft::$app->sites->getSiteById( $translate_to );
+							$source_site     = Craft::$app->sites->getSiteById( $entry->siteId );
+							$translatedValue = $this->translateSeoData( $entry_value, $site, $source_site, $instructions );
+							$_entry->setFieldValue( $fieldHandle, $translatedValue );
+						} else {
+							$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
+							$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
-                            Craft::info( $prompt, 'content-buddy' );
-                            Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
-                            Craft::info( $translated_text, 'content-buddy' );
-                            $translated_text = trim( $translated_text, '```html' );
-                            $translated_text = rtrim( $translated_text, '```' );
+							Craft::info( $prompt, 'content-buddy' );
+							Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
+							Craft::info( $translated_text, 'content-buddy' );
+							$translated_text = trim( $translated_text, '```html' );
+							$translated_text = rtrim( $translated_text, '```' );
 
-                            if($fieldType == 'craft\ckeditor\Field') {
-                                $translated_text = $this->translateEntriesInCKEditorField($translated_text,$translate_to_site,$instructions);
-                                Craft::info('New CKEditor translated text: '.$translated_text, 'content-buddy');
-                            }
+							if ( $fieldType == 'craft\ckeditor\Field' ) {
+								$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
+								Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
+							}
 
-                            $_entry->setFieldValue( $fieldHandle, $translated_text );
-                        }
+							$_entry->setFieldValue( $fieldHandle, $translated_text );
+						}
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
 						$fieldsError ++;
 						$this->_addLog( $translateId, $entry->id, $e->getMessage(), $field );
-                        Craft::error('Failed to translate field "'.$fieldHandle.'": '. $e->getMessage()."\n".$e->getTraceAsString(), 'content-buddy' );
+						Craft::error( 'Failed to translate field "' . $fieldHandle . '": ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'content-buddy' );
 					}
 
 					// process Craft4 Matrix field
@@ -1028,7 +1059,7 @@ class Translate extends Component {
 								}
 
 								$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 								Craft::info( 'Saving entry (' . $matrixBlockTarget[ $k ]->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
@@ -1095,12 +1126,15 @@ class Translate extends Component {
 	public function processMatrixFields( string $lang, Element $entry_from, int $translate_to, int $translateId, $override, $instructions = '', $or_entry = true ): array {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 
+		$translate_from_site = Craft::$app->sites->getSiteById( $entry_from->siteId );
+		$source_lang         = $translate_from_site->language;
+
 		$target      = [];
 		$targetEntry = Entry::find()->id( $entry_from->id )->siteId( $translate_to )->one();
 		if ( ! $or_entry && ! empty( $entry_from->title ) && $entry_from->getIsTitleTranslatable() ) {
 			try {
 				$prompt          = $this->getPrompt( $translate_to_site, $entry_from->title );
-				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 				$target['title'] = $translated_text;
 			} catch ( \Throwable $e ) {
 				$this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), 'title', 0 );
@@ -1125,7 +1159,7 @@ class Translate extends Component {
 				if ( $originalFieldValue ) {
 					try {
 						$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-						$translatedValue = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+						$translatedValue = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $field->handle . ' (' . $fieldType . ')', 'content-buddy' );
@@ -1134,7 +1168,7 @@ class Translate extends Component {
 						$translatedValue = rtrim( $translatedValue, '```' );
 
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translatedValue = $this->translateEntriesInCKEditorField( $translatedValue, $translate_to_site, $instructions );
+							$translatedValue = $this->translateEntriesInCKEditorField( $translatedValue, $translate_to_site, $translate_from_site, $instructions );
 							Craft::info( 'New CKEditor translated text: ' . $translatedValue, 'content-buddy' );
 						} else {
 							Craft::info( 'Not a CKEditor field, skipping', 'content-buddy' );
@@ -1149,16 +1183,17 @@ class Translate extends Component {
 				// dig deeper in Matrix fields
 				$translatedValue = $this->translateMatrixField( $lang, $entry_from, $field, $translate_to, $translateId, $override, $instructions );
 
-			} elseif(get_class($field) == 'ether\seo\fields\SeoField') {
-                $seo = $field->serializeValue($entry_from->getFieldValue($field->handle), $entry_from);
-                //$seo = $entry_from->getFieldValue($field->handle);
-                if($seo instanceof SeoData) {
-                    $site = Craft::$app->sites->getSiteById($translate_to);
-                    $translatedValue = $this->translateSeoData($seo, $site, $instructions);
-                }
-            }
-			if ($translatedValue) {
-				$target[$field->handle] = $translatedValue;
+			} elseif ( get_class( $field ) == 'ether\seo\fields\SeoField' ) {
+				$seo = $field->serializeValue( $entry_from->getFieldValue( $field->handle ), $entry_from );
+				//$seo = $entry_from->getFieldValue($field->handle);
+				if ( $seo instanceof SeoData ) {
+					$site            = Craft::$app->sites->getSiteById( $translate_to );
+					$source_site     = Craft::$app->sites->getSiteById( $entry_from->siteId );
+					$translatedValue = $this->translateSeoData( $seo, $site, $source_site, $instructions );
+				}
+			}
+			if ( $translatedValue ) {
+				$target[ $field->handle ] = $translatedValue;
 			} else {
 				if ( ! $or_entry && $targetEntry ) {
 					$target[ $field->handle ] = $field->serializeValue( $targetEntry->getFieldValue( $field->handle ), $targetEntry );
@@ -1209,6 +1244,9 @@ class Translate extends Component {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 		$lang              = $translate_to_site->language;
 
+		$translate_from_site = Craft::$app->sites->getSiteById( $entry->siteId );
+		$source_lang         = $translate_from_site->language;
+
 		$translateRecord = TranslateRecord::findOne( $translateId );
 
 		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->one();
@@ -1228,7 +1266,7 @@ class Translate extends Component {
 
 				try {
 					$prompt          = $this->getPrompt( $translate_to_site, $entry->title );
-					$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+					$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 					$_entry->title = $translated_text;
 
@@ -1259,7 +1297,7 @@ class Translate extends Component {
 
 						try {
 							$prompt          = $this->getPrompt( $translate_to_site, $entry->getFieldValue( $fieldHandle ) );
-							$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+							$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 							$_entry->setFieldValue( $fieldHandle, $translated_text );
 							$fieldsTranslated ++;
@@ -1294,7 +1332,7 @@ class Translate extends Component {
 								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->getFieldValue( $handle );
 
 								$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 
@@ -1336,7 +1374,7 @@ class Translate extends Component {
 								$targetFieldValue   = (string) $matrixBlockTarget[ $k ]->$handle;
 
 								$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 								$matrixBlockTarget[ $k ]->$handle = $translated_text;
 
@@ -1359,7 +1397,7 @@ class Translate extends Component {
 								// heck field not empty
 
 								$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+								$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 								$matrixBlockTarget[ $k ]->setFieldValue( $handle, $translated_text );
 
@@ -1398,7 +1436,11 @@ class Translate extends Component {
 	public function translateSlug( Entry $entry, int $translate_to, string $instructions = '' ): bool {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 		$lang              = $translate_to_site->language;
-		$hasError          = false;
+
+		$translate_from_site = Craft::$app->sites->getSiteById( $entry->siteId );
+		$source_lang         = $translate_from_site->language;
+
+		$hasError = false;
 
 		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->one();
 		if ( ! $_entry ) {
@@ -1411,7 +1453,7 @@ class Translate extends Component {
 		if ( $_entry ) {
 			$prompt = "Translate this URL slug to $lang. Only return the URL slug for the following text: $entry->slug";
 			try {
-				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang );
+				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
 				$_entry->slug = $translated_text;
 
@@ -1431,10 +1473,11 @@ class Translate extends Component {
 	/**
 	 * @param $text string initially translated text
 	 * @param $site Site site to translate to
+	 * @param $source_site Site source site to translate from
 	 *
 	 * @return string full translated text including craft-entries
 	 */
-	private function translateEntriesInCKEditorField( string $text, Site $site, $instructions = '' ): string {
+	private function translateEntriesInCKEditorField( string $text, Site $site, Site $source_site, $instructions = '' ): string {
 		preg_match_all( '/<craft-entry[^>]*data-entry-id=["\'](\d+)["\'][^>]*>.*?<\/craft-entry>/', $text, $matches );
 		$entryIds = $matches[1];
 
@@ -1450,7 +1493,7 @@ class Translate extends Component {
 					Craft::info( "Found nested Entry: " . $entry->title, 'content-buddy' );
 
 					$newEntry            = new Entry();
-					$newEntry->title     = $this->translateText( $entry->title, '', $site, $instructions );
+					$newEntry->title     = $this->translateText( $entry->title, '', $site, $source_site, $instructions );
 					$newEntry->slug      = $entry->slug;
 					$newEntry->sectionId = $entry->sectionId;
 					$newEntry->ownerId   = $entry->ownerId;
@@ -1465,7 +1508,7 @@ class Translate extends Component {
 						$field     = Craft::$app->fields->getFieldByHandle( $fieldHandle );
 						$fieldType = $field ? get_class( $field ) : 'Unknown';
 						if ( in_array( $fieldType, $this->_plugin->base->getSupportedFieldTypes() ) ) {
-							$newText = $this->translateText( $value, $fieldType, $site, $instructions );
+							$newText = $this->translateText( $value, $fieldType, $site, $source_site, $instructions );
 							$newEntry->setFieldValue( $fieldHandle, $newText );
 							Craft::info( "Saved field in new nested Entry: " . $fieldHandle . ": $newText", 'content-buddy' );
 						}
@@ -1501,22 +1544,23 @@ class Translate extends Component {
 		return $translatedText;
 	}
 
-	private function translateText( $text, $fieldType, Site $site, $instructions = '' ): string {
+	private function translateText( $text, $fieldType, Site $site, Site $source_site, $instructions = '' ): string {
 		if ( trim( $text ) == '' ) {
 			return '';
 		}
 
-        $lang = $site->language;
+		$lang        = $site->language;
+		$source_lang = $source_site->language;
 
-        $request = $this->getPrompt($site, $text);
-        $input = $request['prompt'] ?? $text;
+		$request = $this->getPrompt( $site, $text );
+		$input   = $request['prompt'] ?? $text;
 
-        Craft::info("translateText() - input: ".$input, 'content-buddy');
-        $translated_text = BuddyPlugin::getInstance()->request->send($request, 30000, 0.7, true, $instructions, $lang);
-        Craft::info("translateText() - output: ".$translated_text, 'content-buddy');
+		Craft::info( "translateText() - input: " . $input, 'content-buddy' );
+		$translated_text = BuddyPlugin::getInstance()->request->send( $request, 30000, 0.7, true, $instructions, $lang, $source_lang );
+		Craft::info( "translateText() - output: " . $translated_text, 'content-buddy' );
 
 		if ( $fieldType == 'craft\ckeditor\Field' ) {
-			$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $site, $instructions );
+			$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $site, $source_site, $instructions );
 		}
 
 		$translated_text = trim( $translated_text, '```html' );
@@ -1525,36 +1569,36 @@ class Translate extends Component {
 		return $translated_text;
 	}
 
-    private function translateSeoData(SeoData $input, Site $site, $instructions = '') : SeoData {
-        $seo = clone $input;
+	private function translateSeoData( SeoData $input, Site $site, Site $source_site, $instructions = '' ): SeoData {
+		$seo = clone $input;
 
-        Craft::info("Translating SEO data: ".json_encode($input), 'content-buddy');
+		Craft::info( "Translating SEO data: " . json_encode( $input ), 'content-buddy' );
 
-        foreach($input->titleRaw as $key => $title) {
-            Craft::info("Translating SEO text: ".gettype($title)." ".json_encode($title), 'content-buddy');
-            $seo->titleRaw[$key] = $this->translateText($title, 'craft\fields\PlainText', $site, $instructions);
-        }
+		foreach ( $input->titleRaw as $key => $title ) {
+			Craft::info( "Translating SEO text: " . gettype( $title ) . " " . json_encode( $title ), 'content-buddy' );
+			$seo->titleRaw[ $key ] = $this->translateText( $title, 'craft\fields\PlainText', $site, $source_site, $instructions );
+		}
 
-        Craft::info("Translating SEO text: ".gettype($input->descriptionRaw)." ".json_encode($input->descriptionRaw), 'content-buddy');
-        $seo->descriptionRaw = $this->translateText($input->descriptionRaw, 'craft\fields\PlainText', $site, $instructions);
+		Craft::info( "Translating SEO text: " . gettype( $input->descriptionRaw ) . " " . json_encode( $input->descriptionRaw ), 'content-buddy' );
+		$seo->descriptionRaw = $this->translateText( $input->descriptionRaw, 'craft\fields\PlainText', $site, $source_site, $instructions );
 
-        foreach($input->keywords as $key => $keyword) {
-            Craft::info("Translating SEO text: ".gettype($keyword['keyword'])." ".json_encode($keyword['keyword']), 'content-buddy');
-            $seo->keywords[$key]['keyword'] = $this->translateText($keyword['keyword'], 'craft\fields\PlainText', $site, $instructions);
-        }
+		foreach ( $input->keywords as $key => $keyword ) {
+			Craft::info( "Translating SEO text: " . gettype( $keyword['keyword'] ) . " " . json_encode( $keyword['keyword'] ), 'content-buddy' );
+			$seo->keywords[ $key ]['keyword'] = $this->translateText( $keyword['keyword'], 'craft\fields\PlainText', $site, $source_site, $instructions );
+		}
 
-        Craft::info("Translating SEO social: ".gettype($input->social)." ".json_encode($input->social), 'content-buddy');
-        foreach($input->social as $key => $social) {
-            Craft::info("Translating SEO text: ".gettype($social->title)." ".json_encode($social->title), 'content-buddy');
-            $seo->social[$key]->title = $this->translateText($social->title, 'craft\fields\PlainText', $site, $instructions);
-            Craft::info("Translating SEO text: ".gettype($social->description)." ".json_encode($social->description), 'content-buddy');
-            $seo->social[$key]->description = $this->translateText($social->description, 'craft\fields\PlainText', $site, $instructions);
-        }
+		Craft::info( "Translating SEO social: " . gettype( $input->social ) . " " . json_encode( $input->social ), 'content-buddy' );
+		foreach ( $input->social as $key => $social ) {
+			Craft::info( "Translating SEO text: " . gettype( $social->title ) . " " . json_encode( $social->title ), 'content-buddy' );
+			$seo->social[ $key ]->title = $this->translateText( $social->title, 'craft\fields\PlainText', $site, $source_site, $instructions );
+			Craft::info( "Translating SEO text: " . gettype( $social->description ) . " " . json_encode( $social->description ), 'content-buddy' );
+			$seo->social[ $key ]->description = $this->translateText( $social->description, 'craft\fields\PlainText', $site, $source_site, $instructions );
+		}
 
-        Craft::info("Translated SEO data: ".json_encode($seo), 'content-buddy');
+		Craft::info( "Translated SEO data: " . json_encode( $seo ), 'content-buddy' );
 
-        return $seo;
-    }
+		return $seo;
+	}
 
 	protected function _getClass( $object ): string {
 		return str_replace( [
@@ -1858,5 +1902,50 @@ class Translate extends Component {
 		}
 
 		return $installed;
+	}
+
+	public function saveExcludeBulkSites( $element ): void {
+		$params = Craft::$app->request->post();
+		if(isset($params['elementId']) && $params['elementId'] == $element->id) {
+			Craft::info( 'saveExcludeBulkSites', 'content-buddy' );
+			Craft::info( $params, 'content-buddy' );
+			if ( isset( $params['buddyExcludeType'] ) && $params['buddyExcludeType'] == 'primary' ) {
+				Craft::info( 'Process all', 'content-buddy' );
+				Craft::$app->getDb()
+				           ->createCommand()
+				           ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => $element->id ] )
+				           ->execute();
+				$sites = $params['buddyExcludeSites'] ?? [];
+				foreach ( $sites as $siteId => $flag ) {
+					if ( $flag == 1 ) {
+						$record            = new ExcludeFromBulk();
+						$record->elementId = $element->id;
+						$record->siteId    = $siteId;
+						$record->save();
+					}
+
+				}
+			} elseif ( isset( $params['buddyExcludeType'] ) && $params['buddyExcludeType'] == 'single' ) {
+				Craft::info( 'Process single', 'content-buddy' );
+				Craft::$app->getDb()
+				           ->createCommand()
+				           ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => $element->id,'siteId'=>$element->siteId ] )
+				           ->execute();
+				if(isset($params['buddyExcludeSite']) && $params['buddyExcludeSite'] == 1){
+					$record            = new ExcludeFromBulk();
+					$record->elementId = $element->id;
+					$record->siteId    = $element->siteId;
+					$record->save();
+				}
+			}
+		}
+	}
+
+	public function getExcludedEntries($elementId):array {
+		$items = [];
+		foreach (ExcludeFromBulk::find()->where(['elementId'=>$elementId])->all() as $row){
+			$items[]=$row->siteId;
+		}
+		return $items;
 	}
 }

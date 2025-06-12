@@ -3,10 +3,12 @@
 namespace convergine\contentbuddy\migrations;
 
 use convergine\contentbuddy\records\BuddyPromptRecord;
+use convergine\contentbuddy\records\ExcludeFromBulk;
 use convergine\contentbuddy\records\SettingsRecord;
 use convergine\contentbuddy\records\TranslateLogRecord;
 use convergine\contentbuddy\records\TranslateRecord;
 use craft\db\Migration;
+use craft\db\Table as CraftTable;
 use craft\enums\LicenseKeyStatus;
 use GuzzleHttp\Client;
 
@@ -48,6 +50,21 @@ class Install extends Migration {
 				'dateUpdated' => $this->dateTime()->notNull(),
 				'uid'         => $this->uid(),
 			] );
+		}
+
+		$this->archiveTableIfExists( ExcludeFromBulk::tableName() );
+		if(!$this->db->tableExists(ExcludeFromBulk::tableName())) {
+			$this->createTable( ExcludeFromBulk::tableName(), [
+				'elementId'       => $this->integer(),
+				'siteId'    => $this->integer(),
+				'dateCreated' => $this->dateTime()->notNull(),
+				'dateUpdated' => $this->dateTime()->notNull(),
+				'uid'         => $this->uid(),
+			] );
+			$this->createIndex(null, ExcludeFromBulk::tableName(), 'elementId', false);
+			$this->createIndex(null, ExcludeFromBulk::tableName(), 'siteId', false);
+			$this->addForeignKey(null, ExcludeFromBulk::tableName(), ['elementId'], CraftTable::ELEMENTS, ['id'], 'SET NULL');
+			$this->addForeignKey(null, ExcludeFromBulk::tableName(), ['siteId'], CraftTable::SITES, ['id'], 'SET NULL');
 		}
 
 		$this->archiveTableIfExists( BuddyPromptRecord::tableName() );

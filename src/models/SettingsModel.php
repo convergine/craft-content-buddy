@@ -48,6 +48,11 @@ class SettingsModel extends Model
     /**
      * @var string
      */
+    public string $deepLGlossaryId = '';
+
+    /**
+     * @var string
+     */
     public string $xAiModel = 'grok-beta';
 
     /**

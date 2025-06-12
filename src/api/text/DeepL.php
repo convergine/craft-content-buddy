@@ -10,15 +10,23 @@ use Throwable;
 use yii\helpers\StringHelper;
 
 class DeepL extends TextApi {
-    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = ''): string {
+    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = '', $source_lang = ''): string {
 		try {
 			$translateData = $this->_getTranslatedData($prompt,$lang);
-			$client = new Client();
-			$sendData = [
-				'text'       => [$translateData['text']],
-				"tag_handling"=>"html",
-				"target_lang" => $translateData['lang'],
-			];
+
+            $sendData = [
+                'text'       => [$translateData['text']],
+                "tag_handling"=>"html",
+                "target_lang" => $translateData['lang'],
+            ];
+
+            if(!empty($this->settings->deepLGlossaryId) && $source_lang !== 'skip') {
+                $source_lang = explode("-",$source_lang)[0];
+                $sendData['source_lang'] = $source_lang ?: 'EN';
+                $sendData['glossary_id'] = $this->settings->deepLGlossaryId;
+            }
+
+            $client = new Client();
 
 			Craft::info( "Translate with DeepL" , 'content-buddy' );
 			Craft::info(  StringHelper::truncateWords($prompt,20,'...',true), 'content-buddy' );
@@ -43,6 +51,12 @@ class DeepL extends TextApi {
 				$message = $json['message'];
 				Craft::info( 'DeepL ERROR', 'content-buddy' );
 				Craft::info( $message, 'content-buddy' );
+
+                // if glossary dictionary is not found, we can try again without it
+                if(str_contains($message, 'No dictionary found for language pair')) {
+                    return $this->sendRequest($prompt, $maxTokens, $temperature, $isTranslate, $instructions, $lang, 'skip');
+                }
+
 				throw new Exception( $message );
 			}
 		} catch ( Throwable $e ) {
@@ -78,4 +92,34 @@ class DeepL extends TextApi {
 		$text = $promptParts[1];
 		return compact('lang','text');
 	}
+
+    public function getGlossaries() : array {
+        $client = new Client();
+        $res = $client->request('GET', 'https://api.deepl.com/v3/glossaries', [
+            'headers' => [
+                'Authorization' => 'DeepL-Auth-Key '.$this->settings->getDeepLApiKey(),
+                'Content-Type'  => 'application/json'
+            ],
+            'http_errors'=>false
+        ]);
+        $body = $res->getBody();
+        $json = json_decode($body, true);
+        if ($res->getStatusCode() == 403) {
+            Craft::info('DeepL ERROR', 'content-buddy');
+            throw new Exception('DeepL API key is invalid');
+        } elseif (isset($json['message'])) {
+            $message = $json['message'];
+            Craft::info('DeepL ERROR', 'content-buddy');
+            Craft::info($message, 'content-buddy');
+            throw new Exception($message);
+        }
+        $glossaries = [];
+        foreach ($json['glossaries'] as $glossary) {
+            $glossaries[] = [
+                'id' => $glossary['glossary_id'],
+                'name' => $glossary['name'],
+            ];
+        }
+        return $glossaries;
+    }
 }

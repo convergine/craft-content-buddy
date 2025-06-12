@@ -1,0 +1,48 @@
+{% import '_includes/forms' as forms %}
+
+{% set currentLocale = element.siteId %}
+<hr/>
+<div class="field">
+
+    <div class="heading">
+        <label class="h6">{{ "Content Buddy: Exclude from bulk translations"|t('convergine-contentbuddy') }}</label>
+    </div>
+</div>
+<div class="meta">
+    {% if isDefaultSite %}
+        {{ hiddenInput('buddyExcludeType','primary') }}
+        {% set languages = [currentLocale] %}
+        {% for site in craft.app.sites.getAllSites () %}
+            {% if site.id not in languages %}
+                {% set languages = languages|merge([site.id]) %}
+                <div id="excludeSitesCont{{ site.id }}" class="field" data-attribute="authorIds">
+                    <div class="heading">
+                        <label for="excludeSites_{{ site.id }}">{{ site.name }} ({{ site.language }})</label>
+                    </div>
+                    <div class="input ltr">
+                        {{ forms.lightswitch({
+                            name: 'buddyExcludeSites['~ site.id ~']',
+                            id: 'buddyExcludeSites_' ~ site.id,
+                            on: site.id in excludedSites,
+                        }) }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+    {{ hiddenInput('buddyExcludeType','single') }}
+        <div id="excludeSitesCont" class="field" data-attribute="authorIds">
+            <div class="heading">
+                <label for="excludeSites">Exclude</label>
+            </div>
+            <div class="input ltr">
+                {{ forms.lightswitch({
+                    name: 'buddyExcludeSite',
+                    id: 'buddyExcludeSite',
+                    on: currentLocale in excludedSites,
+                }) }}
+            </div>
+        </div>
+    {% endif %}
+
+</div>

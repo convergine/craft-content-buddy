@@ -51,12 +51,19 @@ class translateSections extends BaseJob
 	{
 		$_section = explode(":",$this->sectionId);
 		if(version_compare(\Craft::$app->getInfo()->version, '5.0', '>=')){
-			$section = \Craft::$app->entries->getSectionById($_section[0])->name;
+			$section = $_section[0];
+			if(is_numeric($_section[0]) && $_section[0]!='product'){
+				$section = \Craft::$app->entries->getSectionById($_section[0])->name;
+			}
+
 			if($_section[1]) {
 				$sectionType = \Craft::$app->entries->getEntryTypeById( $_section[1] )->name;
 			}
 		}else{
-			$section = \Craft::$app->sections->getSectionById($_section[0])->name;
+			$section = $_section[0];
+			if(is_numeric($_section[0]) && $_section[0]!='product') {
+				$section = \Craft::$app->sections->getSectionById( $_section[0] )->name;
+			}
 			if($_section[1]) {
 				$sectionType = \Craft::$app->sections->getEntryTypeById( $_section[1] )->name;
 			}

@@ -14,7 +14,7 @@ abstract class TextApi {
         $this->settings = $settings;
     }
 
-    function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = '') {}
+    function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = '', $source_lang = '') {}
 
     protected function getMaxTokensForModel($model): int {
         return match($model) {

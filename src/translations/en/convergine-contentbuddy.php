@@ -26,6 +26,7 @@
     'maxAttemptsDescription' => 'The maximum number of attempts to try when saving an entry during translation. This is only an issue if another task or user is editing the same entry at the same time.',
     'ttrDescription' => 'The maximum time a translation task should wait around for the job to be handled before assuming it failed.',
     'deepLApiVersionDescription' => 'API version to use. For more information, see https://developers.deepl.com/docs/getting-started/auth#api-versions',
+    'deepLGlossaryIdDescription' => 'Glossary to use for translations. For more information, see https://www.deepl.com/en/features/glossary',
 
 	/* Settings -> Api Page */
 	'API: Access Token'=>'API: Access Token',

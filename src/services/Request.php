@@ -18,7 +18,7 @@ class Request {
 		$this->settings = $settings;
 	}
 
-	public function send( $prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang='') {
+	public function send( $prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang='', $source_lang = '' ) {
 		$textAi = $isTranslate ? $this->settings->translationAi:$this->settings->textAi;
 		if ( $textAi == 'deepl' ) {
 			$textApi = new DeepL();
@@ -35,14 +35,14 @@ class Request {
                 $return = '';
                 foreach($chunks as $i => $chunk) {
                     Craft::info('Chunk '.$i.': '.$chunk, 'content-buddy');
-                    $return .= $textApi->sendRequest($prompt[0].$chunk, $maxTokens, $temperature, $isTranslate, $instructions, $lang);
+                    $return .= $textApi->sendRequest($prompt[0].$chunk, $maxTokens, $temperature, $isTranslate, $instructions, $lang, $source_lang);
                 }
                 return $return;
             } else {
-                return $textApi->sendRequest($prompt[0].$prompt[1], $maxTokens, $temperature, $isTranslate, $instructions, $lang);
+                return $textApi->sendRequest($prompt[0].$prompt[1], $maxTokens, $temperature, $isTranslate, $instructions, $lang, $source_lang);
             }
         } else {
-            return $textApi->sendRequest($prompt, $maxTokens, $temperature, $isTranslate, $instructions, $lang);
+            return $textApi->sendRequest($prompt, $maxTokens, $temperature, $isTranslate, $instructions, $lang, $source_lang);
         }
 	}
 

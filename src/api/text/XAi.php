@@ -9,7 +9,7 @@ use Throwable;
 use yii\helpers\StringHelper;
 
 class XAi extends TextApi {
-    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = ''): string {
+    public function sendRequest($prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang = '', $source_lang = ''): string {
         try {
             $model = $this->settings->xAiModel;
 
