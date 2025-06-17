@@ -41,7 +41,7 @@ use yii\base\Event;
 class BuddyPlugin extends Plugin {
 	public static string $plugin;
 	public ?string $name = 'Content Buddy';
-    public string $schemaVersion = '1.2.8';
+    public string $schemaVersion = '1.2.9';
 
     public function init() {
         /* plugin initialization */

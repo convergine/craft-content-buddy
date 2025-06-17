@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.9 - 2025-06-17
+### Fixed
+- Resolved an issue where the bulk translation exclusions table was not created correctly on systems with `sql_require_primary_key` enabled.
+
 ## 1.2.8 - 2025-06-12
 ### Added
 - Support for DeepL glossaries.

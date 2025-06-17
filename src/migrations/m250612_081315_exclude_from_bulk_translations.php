@@ -21,8 +21,9 @@ class m250612_081315_exclude_from_bulk_translations extends Migration
 	    $this->archiveTableIfExists( ExcludeFromBulk::tableName() );
 	    if(!$this->db->tableExists(ExcludeFromBulk::tableName())) {
 		    $this->createTable( ExcludeFromBulk::tableName(), [
-			    'elementId'       => $this->integer(),
-			    'siteId'    => $this->integer(),
+                'id'          => $this->primaryKey(),
+                'elementId'   => $this->integer(),
+			    'siteId'      => $this->integer(),
 			    'dateCreated' => $this->dateTime()->notNull(),
 			    'dateUpdated' => $this->dateTime()->notNull(),
 			    'uid'         => $this->uid(),
