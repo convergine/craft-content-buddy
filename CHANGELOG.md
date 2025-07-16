@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.10 - 2025-07-16
+### Fixed
+- Resolved an issue affecting the translation of `<img>` tags within CKEditor fields.
+- Fixed translation issues with Gaelic languages when using OpenAI.
+
 ## 1.2.9 - 2025-06-17
 ### Fixed
 - Resolved an issue where the bulk translation exclusions table was not created correctly on systems with `sql_require_primary_key` enabled.

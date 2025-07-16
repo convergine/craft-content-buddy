@@ -46,8 +46,19 @@ class OpenAi extends TextApi {
         }
 
         $choices = $json['choices'];
+        $text = $this->getTextGenerationBasedOnModel( $model, $choices );
 
-        return $this->getTextGenerationBasedOnModel( $model, $choices );
+        //check for repeated phrases
+        if(in_array($lang,['gv','gd','ga'])) {
+            $normalized = preg_replace('/[\p{P}]+/u', '', strtolower($text));
+            $normalized = preg_replace('/\s+/', ' ', $normalized);
+            if(preg_match_all('/(\b(?:\w+\s?){1,6})\s+(\1\s*){2,}/u', $normalized, $matches)) {
+                Craft::info( 'OpenAI response contains repeated phrases: ' . implode(', ', $matches[0]), 'content-buddy');
+                return $this->sendRequest($prompt, $maxTokens, $temperature, $isTranslate, $instructions, $lang);
+            }
+        }
+
+        return $text;
     }
 
     private function buildTextGenerationRequestBody($model, $prompt, $maxTokensToGenerate, $temperature = 0.7, $isTranslate = false, $instructions = '') {

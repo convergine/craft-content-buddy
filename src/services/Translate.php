@@ -421,6 +421,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
+                        $entry_value = $this->fixAssets($entry_value);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -604,6 +605,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
+                        $entry_value = $this->fixAssets($entry_value);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -776,6 +778,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
+                        $entry_value = $this->fixAssets($entry_value);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -976,6 +979,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
+                        $entry_value = $this->fixAssets($entry_value);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -1150,7 +1154,7 @@ class Translate extends Component {
 			if ( in_array( $fieldType, static::$textFields ) && $processField && ! $or_entry ) {
 				if ( $fieldType == 'craft\ckeditor\Field' ) {
 					$fieldValue         = $entry_from->getFieldValue( $field->handle );
-					$originalFieldValue = $field->serializeValue( $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue, $entry_from );
+					$originalFieldValue = $field->serializeValue( $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent()) : $fieldValue, $entry_from );
 				} else {
 					$originalFieldValue = $field->serializeValue( $entry_from->getFieldValue( $field->handle ), $entry_from );
 				}
@@ -1866,6 +1870,16 @@ class Translate extends Component {
 		return array_unique( $matches[1] );
 	}
 
+    private function fixAssets($text): string {
+        return preg_replace_callback(
+            '/\{asset:\d+:url\|\|(.*?)\}/',
+            function($matches) {
+                return $matches[1];
+            },
+            $text
+        );
+    }
+
 	private function saveElement( $element ): bool {
 		/** @var SettingsModel $settings */
 		$settings    = BuddyPlugin::getInstance()->getSettings();
@@ -1905,7 +1919,11 @@ class Translate extends Component {
 	}
 
 	public function saveExcludeBulkSites( $element ): void {
-		$params = Craft::$app->request->post();
+        $request = Craft::$app->getRequest();
+        if(!($request instanceof \craft\web\Request)) {
+            return;
+        }
+        $params = $request->post();
 		if(isset($params['elementId']) && $params['elementId'] == $element->id) {
 			Craft::info( 'saveExcludeBulkSites', 'content-buddy' );
 			Craft::info( $params, 'content-buddy' );

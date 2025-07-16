@@ -52,7 +52,8 @@ class Request {
 
     private function getMinSentencesPerChunk($lang): int {
         return match ($lang) {
-            'gv' => 3,
+            'gv', 'gd', 'ga' => 3,
+            'el' => 20,
             'nl-NL', 'nl', 'sl' => 100,
             default => 40,
         };
