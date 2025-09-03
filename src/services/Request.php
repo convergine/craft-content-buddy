@@ -4,6 +4,7 @@ namespace convergine\contentbuddy\services;
 
 use convergine\contentbuddy\api\text\DeepL;
 use convergine\contentbuddy\api\text\OpenAi;
+use convergine\contentbuddy\api\text\OpenAiAssistant;
 use convergine\contentbuddy\api\text\XAi;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\models\SettingsModel;
@@ -20,12 +21,19 @@ class Request {
 
 	public function send( $prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '', $lang='', $source_lang = '' ) {
 		$textAi = $isTranslate ? $this->settings->translationAi:$this->settings->textAi;
+
 		if ( $textAi == 'deepl' ) {
 			$textApi = new DeepL();
 		}elseif ( $textAi == 'xai' ) {
 			$textApi = new XAi();
+		}elseif ( $textAi == 'openai-assistant' ) {
+			$textApi = new OpenAiAssistant();
 		} else { //default to openai
-			$textApi = new OpenAi();
+			if($this->settings->openAiAssistantId){
+				$textApi = new OpenAiAssistant();
+			}else {
+				$textApi = new OpenAi();
+			}
 		}
 
         if(is_array($prompt)) {

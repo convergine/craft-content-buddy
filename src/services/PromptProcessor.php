@@ -43,7 +43,8 @@ class PromptProcessor {
 
 	private function _processSystemPrompt($prompt,$query,$lang) {
 		if($prompt == '_translate_'){
-			$prompt="Translate to {$lang}: {$query}";
+			$language = Craft::$app->getI18n()->getLocaleById( $lang)->getDisplayName() . ' (' . $lang . ')';
+			$prompt="Translate to {$language}. Return the full translation only, for the following text: {$query}";
 			return [
 				'response'=>BuddyPlugin::getInstance()->request->send($prompt, 30000, 0.7, true, '', $lang),
 				'replaceText'=>1

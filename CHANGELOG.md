@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.11 - 2025-09-03
+### Added
+- Support for OpenAI assistant models in translations.
+
+### Fixed
+- Duplicate words appearing in translations.
+- Disabled entries incorrectly saving as enabled after translation.
+- Broken links when using `@` entry syntax.
+- Cropped text in translations.
+- Special characters breaking translated URLs.
+
 ## 1.2.10 - 2025-07-16
 ### Fixed
 - Resolved an issue affecting the translation of `<img>` tags within CKEditor fields.

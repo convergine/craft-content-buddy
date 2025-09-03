@@ -421,7 +421,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
-                        $entry_value = $this->fixAssets($entry_value);
+                        $entry_value = $this->fixAssets($entry_value,$translate_to_site->id);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -446,8 +446,8 @@ class Translate extends Component {
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
 						Craft::info( $translated_text, 'content-buddy' );
-						$translated_text = trim( $translated_text, '```html' );
-						$translated_text = rtrim( $translated_text, '```' );
+
+						$translated_text = $this->_sanitizeText($translated_text);
 
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
 							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
@@ -605,7 +605,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
-                        $entry_value = $this->fixAssets($entry_value);
+                        $entry_value = $this->fixAssets($entry_value,$translate_to_site->id);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -630,8 +630,8 @@ class Translate extends Component {
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
 						Craft::info( $translated_text, 'content-buddy' );
-						$translated_text = trim( $translated_text, '```html' );
-						$translated_text = rtrim( $translated_text, '```' );
+
+						$translated_text = $this->_sanitizeText($translated_text);
 
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
 							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
@@ -778,7 +778,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
-                        $entry_value = $this->fixAssets($entry_value);
+                        $entry_value = $this->fixAssets($entry_value,$translate_to_site->id);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -803,8 +803,8 @@ class Translate extends Component {
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
 						Craft::info( $translated_text, 'content-buddy' );
-						$translated_text = trim( $translated_text, '```html' );
-						$translated_text = rtrim( $translated_text, '```' );
+
+						$translated_text = $this->_sanitizeText($translated_text);
 
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
 							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
@@ -979,7 +979,7 @@ class Translate extends Component {
 					if ( $fieldType == 'craft\ckeditor\Field' ) {
 						$fieldValue  = $entry->getFieldValue( $fieldHandle );
 						$entry_value = $fieldValue !== null ? $fieldValue->getRawContent() : $fieldValue;
-                        $entry_value = $this->fixAssets($entry_value);
+                        $entry_value = $this->fixAssets($entry_value,$translate_to_site->id);
 					} else {
 						$entry_value = $entry->getFieldValue( $fieldHandle );
 					}
@@ -1013,8 +1013,8 @@ class Translate extends Component {
 							Craft::info( $prompt, 'content-buddy' );
 							Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
 							Craft::info( $translated_text, 'content-buddy' );
-							$translated_text = trim( $translated_text, '```html' );
-							$translated_text = rtrim( $translated_text, '```' );
+
+							$translated_text = $this->_sanitizeText($translated_text);
 
 							if ( $fieldType == 'craft\ckeditor\Field' ) {
 								$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
@@ -1154,7 +1154,8 @@ class Translate extends Component {
 			if ( in_array( $fieldType, static::$textFields ) && $processField && ! $or_entry ) {
 				if ( $fieldType == 'craft\ckeditor\Field' ) {
 					$fieldValue         = $entry_from->getFieldValue( $field->handle );
-					$originalFieldValue = $field->serializeValue( $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent()) : $fieldValue, $entry_from );
+					//$originalFieldValue = $field->serializeValue( $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent(),$translate_to) : $fieldValue, $entry_from );
+					$originalFieldValue = $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent(),$translate_to) : $fieldValue;
 				} else {
 					$originalFieldValue = $field->serializeValue( $entry_from->getFieldValue( $field->handle ), $entry_from );
 				}
@@ -1168,9 +1169,8 @@ class Translate extends Component {
 						Craft::info( $prompt, 'content-buddy' );
 						Craft::info( $field->handle . ' (' . $fieldType . ')', 'content-buddy' );
 						Craft::info( $translatedValue, 'content-buddy' );
-						$translatedValue = trim( $translatedValue, '```html' );
-						$translatedValue = rtrim( $translatedValue, '```' );
 
+						$translatedValue = $this->_sanitizeText($translatedValue);
 						if ( $fieldType == 'craft\ckeditor\Field' ) {
 							$translatedValue = $this->translateEntriesInCKEditorField( $translatedValue, $translate_to_site, $translate_from_site, $instructions );
 							Craft::info( 'New CKEditor translated text: ' . $translatedValue, 'content-buddy' );
@@ -1567,10 +1567,7 @@ class Translate extends Component {
 			$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $site, $source_site, $instructions );
 		}
 
-		$translated_text = trim( $translated_text, '```html' );
-		$translated_text = rtrim( $translated_text, '```' );
-
-		return $translated_text;
+		return $this->_sanitizeText($translated_text);
 	}
 
 	private function translateSeoData( SeoData $input, Site $site, Site $source_site, $instructions = '' ): SeoData {
@@ -1870,14 +1867,28 @@ class Translate extends Component {
 		return array_unique( $matches[1] );
 	}
 
-    private function fixAssets($text): string {
-        return preg_replace_callback(
+    public function fixAssets($text,$targetSiteId): string {
+        $_text =  preg_replace_callback(
             '/\{asset:\d+:url\|\|(.*?)\}/',
             function($matches) {
                 return $matches[1];
             },
             $text
         );
+
+	    $rewritten = preg_replace_callback(
+		    '/\{entry:(\d+)(?:@(\d+))?:([^|}]+)(?:\|\|([^}]*))?\}/',
+		    function ($m) use ($targetSiteId) {
+			    $id   = $m[1];
+			    $prop = $m[3];
+			    $fb   = isset($m[4]) ? $m[4] : '';
+
+			    return "{$fb}#entry:{$id}@{$targetSiteId}:{$prop}";
+		    },
+		    $_text
+	    );
+
+		  return $rewritten;
     }
 
 	private function saveElement( $element ): bool {
@@ -1965,5 +1976,13 @@ class Translate extends Component {
 			$items[]=$row->siteId;
 		}
 		return $items;
+	}
+
+	private function _sanitizeText($text) {
+		return preg_replace(
+			'/^(?:```html\s*)?(.*?)(?:\s*```)?$/s',
+			'$1',
+			$text
+		);
 	}
 }

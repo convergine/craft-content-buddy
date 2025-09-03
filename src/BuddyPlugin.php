@@ -28,6 +28,7 @@ use craft\web\twig\variables\CraftVariable;
 use craft\web\UrlManager;
 use craft\web\View;
 use yii\base\Event;
+use yii\log\FileTarget;
 
 /**
  * @property Prompt $promptService;
@@ -52,6 +53,26 @@ class BuddyPlugin extends Plugin {
 		$this->_setComponents();
 		$this->_setRoutes();
 		$this->_setEvents();
+
+	    $logService = Craft::$app->getLog();
+
+	    // Avoid duplicate registration
+	    foreach ($logService->targets as $target) {
+
+		    if ($target instanceof \yii\log\FileTarget && $target->categories === ['content-buddy']) {
+			    return;
+		    }
+	    }
+
+	    $logService->targets[] = Craft::createObject([
+		    'class' => \yii\log\FileTarget::class,
+		    'logFile' => Craft::getAlias('@storage/logs/content-buddy-'.date("Y-m-d").'.log'),
+		    'categories' => ['content-buddy'],
+		    'logVars' => [],
+		    'maxFileSize' => 2048,         // in KB (2 MB)
+		    'maxLogFiles' => 8,            // keep 5 rotated files
+		    'rotateByCopy' => false,       // optional, set true to copy instead of renaming
+	    ]);
 	}
 
 	protected function _setComponents() {

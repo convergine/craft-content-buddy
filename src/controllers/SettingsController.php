@@ -2,6 +2,7 @@
 
 namespace convergine\contentbuddy\controllers;
 
+use convergine\contentbuddy\api\text\OpenAiAssistant;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\variables\BuddyVariable;
 use yii\web\Response;
@@ -69,8 +70,26 @@ class SettingsController extends \craft\web\Controller {
      */
     public function actionTranslation(): Response {
         $settings       = BuddyPlugin::getInstance()->getSettings();
+		  $assistants = [[
+			  'label'=>'--',
+			  'value'=>''
+		  ]];
+		  if($settings->apiToken){
+			  $_assistants = (new OpenAiAssistant())->getAssistants();
+			  if(isset($_assistants['data'])) {
+				  foreach ( $_assistants['data'] as $as ) {
+					  $name = $as['name']?:$as['id'];
+					  $assistants[] = [
+						  'label' => $name,
+						  'value' => $as['id']
+					  ];
+				  }
+			  }
+
+		  }
         return $this->renderTemplate( 'convergine-contentbuddy/settings/_translation', [
-            'settings' => $settings
+            'settings' => $settings,
+	         'assistants'=>$assistants
         ] );
     }
 

@@ -1,6 +1,7 @@
 <?php
 namespace convergine\contentbuddy\models;
 
+use convergine\contentbuddy\api\text\OpenAiAssistant;
 use convergine\contentbuddy\records\SettingsRecord;
 use Craft;
 use craft\base\Model;
@@ -24,6 +25,12 @@ class SettingsModel extends Model
 	 * @var string
 	 */
 	public string $translationAi = 'openai';
+
+	/**
+	 * @var string
+	 */
+	public string $openAiAssistantId = '';
+	public string $openAiAssistantThreadId = '';
 
     /**
      * @var string
@@ -323,8 +330,29 @@ class SettingsModel extends Model
 			$record->name = $name;
 			$record->value = $value;
 			$record->save();
+
+
 		}
+		$this->_afterSaveSettings($settings);
 		return true;
+	}
+
+	private function _afterSaveSettings($settings) {
+		$this->_getSettingsFromDb();
+		/*if(isset($settings['openAiAssistantId']) && $settings['openAiAssistantId']){
+			if(!empty($this->openAiAssistantThreadId)){
+				$assistantThreadData = explode(':',$this->openAiAssistantThreadId);
+				$openAiAssistantId = $assistantThreadData[0];
+				if($settings['openAiAssistantId'] != $openAiAssistantId){
+					$threadId = (new OpenAiAssistant())->createThread();
+					if($threadId){
+						$openAiAssistantThreadId = "{$settings['openAiAssistantId']}:{$threadId}";
+						$this->saveSettings(['openAiAssistantThreadId'=>$openAiAssistantThreadId]);
+					}
+
+				}
+			}
+		}*/
 	}
 
 	private function _getSettingsFromDb():void {

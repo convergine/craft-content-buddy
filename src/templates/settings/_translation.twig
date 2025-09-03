@@ -44,6 +44,25 @@
                 ]
             }) }}
 
+            {% if settings.apiToken %}
+                {{ forms.selectField({
+                    label: 'OpenAI Assistant'|t('convergine-contentbuddy'),
+                    name: 'openAiAssistantId',
+                    value: settings.openAiAssistantId,
+                    instructions: 'assistantDescription'|t('convergine-contentbuddy'),
+                    options: assistants
+                }) }}
+            {% else %}
+            <div  class="field" >
+                <div class="heading">
+                    <label >{{ 'OpenAI Assistant'|t('convergine-contentbuddy') }}</label>
+                </div>
+                <div class="instructions">
+                    <p>{{ 'Before select Assistant, need save access token.'|t('convergine-contentbuddy') }}</p>
+                </div>
+            </div>
+            {% endif %}
+
             {{ forms.autosuggestField({
                 label: 'API: Access Token'|t('convergine-contentbuddy'),
                 name: 'apiToken',
