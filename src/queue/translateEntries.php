@@ -4,6 +4,7 @@ namespace convergine\contentbuddy\queue;
 
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\services\Translate;
+use Craft;
 use craft\commerce\elements\Product;
 use craft\elements\Asset;
 use craft\elements\Category;
@@ -15,6 +16,11 @@ class translateEntries extends BaseJob {
 	 * @var array Entry ID
 	 */
 	public $entriesIds;
+
+    /**
+     * @var int Source Site ID
+     */
+    public $siteId;
 
 	/**
 	 * @var int Site ID
@@ -62,7 +68,7 @@ class translateEntries extends BaseJob {
 		$this->setProgress( $this->_queue, 0 );
 
 		foreach ( $this->entriesIds as $id ) {
-			$entry    = Entry::findOne( $id );
+			$entry    = Craft::$app->entries->getEntryById( $id, $this->siteId );
 			$category = Category::findOne( $id );
 			$asset    = Asset::findOne( $id );
 			$product    = null;
