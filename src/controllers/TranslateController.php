@@ -325,6 +325,7 @@ class TranslateController extends \craft\web\Controller {
 			$jobId                             = \craft\helpers\Queue::push(
 				new translateEntries( [
 					'entriesIds'        => [ $id ],
+                    'siteId'            => $siteId,
 					'translateToSiteId' => (int) $translate_to_siteId,
 					'enabledFields'     => $enabledFields,
 					'instructions'      => $instructions,
