@@ -431,7 +431,8 @@ class Translate extends Component {
 					$fieldsProcessed ++;
 
                     if (!in_array($fieldType, [
-                        'verbb\hyper\fields\HyperField'
+                        'verbb\hyper\fields\HyperField',
+                        'nystudio107\seomatic\fields\SeoSettings'
                     ])) {
                         // heck field not empty
                         if ( strlen( (string) $entry_value ) == 0 ) {
@@ -449,6 +450,9 @@ class Translate extends Component {
 					try {
                         if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
                             $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else if ($fieldType == 'nystudio107\seomatic\fields\SeoSettings' && $entry_value instanceof MetaBundle) {
+                            $translatedValue = $this->translateSeomatic($entry_value, $translate_to_site, $translate_from_site, $instructions);
                             $_entry->setFieldValue($fieldHandle, $translatedValue);
                         } else {
                             $prompt          = $this->getPrompt( $translate_to_site, $entry_value );
@@ -625,7 +629,8 @@ class Translate extends Component {
 					$fieldsProcessed ++;
 
                     if (!in_array($fieldType, [
-                        'verbb\hyper\fields\HyperField'
+                        'verbb\hyper\fields\HyperField',
+                        'nystudio107\seomatic\fields\SeoSettings'
                     ])) {
                         // heck field not empty
                         if ( strlen( (string) $entry_value ) == 0 ) {
@@ -642,6 +647,9 @@ class Translate extends Component {
 
 					try {
                         if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
+                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
                             $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
                             $_entry->setFieldValue($fieldHandle, $translatedValue);
                         } else {
@@ -808,7 +816,8 @@ class Translate extends Component {
 					$fieldsProcessed ++;
 
                     if (!in_array($fieldType, [
-                        'verbb\hyper\fields\HyperField'
+                        'verbb\hyper\fields\HyperField',
+                        'nystudio107\seomatic\fields\SeoSettings'
                     ])) {
                         // heck field not empty
                         if ( strlen( (string) $entry_value ) == 0 ) {
@@ -825,6 +834,9 @@ class Translate extends Component {
 
 					try {
                         if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
+                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
                             $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
                             $_entry->setFieldValue($fieldHandle, $translatedValue);
                         } else {
