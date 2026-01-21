@@ -745,10 +745,9 @@ class Translate extends Component {
 			$_entry = Variant::find()->id( $entry->id )->siteId( $translate_to )->one();
 		}
 
-		// TODO check if wee need clone product
-		/*if(!$_entry) {
-			$_entry = $this->cloneElement($entry, $translate_to);
-		}*/
+		if (!$_entry) {
+            $_entry = $this->cloneElement($entry, $translate_to);
+        }
 
 		if ( $_entry ) {
 			try {
