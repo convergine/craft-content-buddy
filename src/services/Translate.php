@@ -1195,7 +1195,13 @@ class Translate extends Component {
 					$source_site     = Craft::$app->sites->getSiteById( $entry_from->siteId );
 					$translatedValue = $this->translateSeoData( $seo, $site, $source_site, $instructions );
 				}
-			}
+			} elseif ($fieldType == 'verbb\hyper\fields\HyperField') {
+                $hyperLinks = $field->serializeValue($entry_from->getFieldValue($field->handle), $entry_from);
+                if (!empty($hyperLinks)) {
+                    $translatedValue = $this->translateHyper($hyperLinks, $translate_to_site, $translate_from_site, $instructions);
+                }
+            }
+
 			if ( $translatedValue ) {
 				$target[ $field->handle ] = $translatedValue;
 			} else {
@@ -1600,6 +1606,22 @@ class Translate extends Component {
 
 		return $seo;
 	}
+
+    private function translateHyper(array $hyperLinks, Site $site, Site $sourceSite, $instructions = ''): array
+    {
+        Craft::info( "Translating Hyper links: " . json_encode( $hyperLinks ), 'content-buddy' );
+
+        foreach ($hyperLinks as $key => $hyperLink) {
+            if (!empty($hyperLink['linkText'])) {
+                $hyperLinks[$key]['linkText'] = $this->translateText($hyperLink['linkText'], 'craft\fields\PlainText', $site, $sourceSite, $instructions);
+            }
+            if (!empty($hyperLink['linkTitle'])) {
+                $hyperLinks[$key]['linkTitle'] = $this->translateText($hyperLink['linkTitle'], 'craft\fields\PlainText', $site, $sourceSite, $instructions);
+            }
+        }
+
+        return $hyperLinks;
+    }
 
 	protected function _getClass( $object ): string {
 		return str_replace( [
