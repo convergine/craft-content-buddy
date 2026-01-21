@@ -28,6 +28,8 @@ use craft\models\FieldLayout;
 use craft\models\Site;
 use craft\queue\Queue;
 use ether\seo\models\data\SeoData;
+use nystudio107\seomatic\models\MetaBundle;
+use verbb\hyper\models\LinkCollection;
 use yii\db\BatchQueryResult;
 
 class Translate extends Component {
@@ -427,34 +429,44 @@ class Translate extends Component {
 					}
 
 					$fieldsProcessed ++;
-					// heck field not empty
-					if ( strlen( (string) $entry_value ) == 0 ) {
-						$fieldsSkipped ++;
-						continue;
-					}
 
-					//check if field is already translated and selected NOT OVERRIDE
-					if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
-						$fieldsSkipped ++;
-						continue;
-					}
+                    if (!in_array($fieldType, [
+                        'verbb\hyper\fields\HyperField'
+                    ])) {
+                        // heck field not empty
+                        if ( strlen( (string) $entry_value ) == 0 ) {
+                            $fieldsSkipped ++;
+                            continue;
+                        }
+
+                        //check if field is already translated and selected NOT OVERRIDE
+                        if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
+                            $fieldsSkipped ++;
+                            continue;
+                        }
+                    }
 
 					try {
-						$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
-						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
+                        if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
+                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else {
+                            $prompt          = $this->getPrompt( $translate_to_site, $entry_value );
+                            $translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
-						Craft::info( $prompt, 'content-buddy' );
-						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
-						Craft::info( $translated_text, 'content-buddy' );
+                            Craft::info( $prompt, 'content-buddy' );
+                            Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
+                            Craft::info( $translated_text, 'content-buddy' );
 
-						$translated_text = $this->_sanitizeText($translated_text);
+                            $translated_text = $this->_sanitizeText($translated_text);
 
-						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
-							Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
-						}
+                            if ( $fieldType == 'craft\ckeditor\Field' ) {
+                                $translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
+                                Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
+                            }
 
-						$_entry->setFieldValue( $fieldHandle, $translated_text );
+                            $_entry->setFieldValue( $fieldHandle, $translated_text );
+                        }
 
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
@@ -611,34 +623,44 @@ class Translate extends Component {
 					}
 
 					$fieldsProcessed ++;
-					// heck field not empty
-					if ( strlen( (string) $entry_value ) == 0 ) {
-						$fieldsSkipped ++;
-						continue;
-					}
 
-					//check if field is already translated and selected NOT OVERRIDE
-					if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
-						$fieldsSkipped ++;
-						continue;
-					}
+                    if (!in_array($fieldType, [
+                        'verbb\hyper\fields\HyperField'
+                    ])) {
+                        // heck field not empty
+                        if ( strlen( (string) $entry_value ) == 0 ) {
+                            $fieldsSkipped ++;
+                            continue;
+                        }
+
+                        //check if field is already translated and selected NOT OVERRIDE
+                        if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
+                            $fieldsSkipped ++;
+                            continue;
+                        }
+                    }
 
 					try {
-						$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
-						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
+                        if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
+                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else {
+                            $prompt          = $this->getPrompt( $translate_to_site, $entry_value );
+                            $translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
-						Craft::info( $prompt, 'content-buddy' );
-						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
-						Craft::info( $translated_text, 'content-buddy' );
+                            Craft::info( $prompt, 'content-buddy' );
+                            Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
+                            Craft::info( $translated_text, 'content-buddy' );
 
-						$translated_text = $this->_sanitizeText($translated_text);
+                            $translated_text = $this->_sanitizeText($translated_text);
 
-						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
-							Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
-						}
+                            if ( $fieldType == 'craft\ckeditor\Field' ) {
+                                $translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
+                                Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
+                            }
 
-						$_entry->setFieldValue( $fieldHandle, $translated_text );
+                            $_entry->setFieldValue( $fieldHandle, $translated_text );
+                        }
 
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
@@ -784,34 +806,44 @@ class Translate extends Component {
 					}
 
 					$fieldsProcessed ++;
-					// heck field not empty
-					if ( strlen( (string) $entry_value ) == 0 ) {
-						$fieldsSkipped ++;
-						continue;
-					}
 
-					//check if field is already translated and selected NOT OVERRIDE
-					if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
-						$fieldsSkipped ++;
-						continue;
-					}
+                    if (!in_array($fieldType, [
+                        'verbb\hyper\fields\HyperField'
+                    ])) {
+                        // heck field not empty
+                        if ( strlen( (string) $entry_value ) == 0 ) {
+                            $fieldsSkipped ++;
+                            continue;
+                        }
+
+                        //check if field is already translated and selected NOT OVERRIDE
+                        if ( ! $override && (string) $entry_value != (string) $_entry->getFieldValue( $fieldHandle ) ) {
+                            $fieldsSkipped ++;
+                            continue;
+                        }
+                    }
 
 					try {
-						$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
-						$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
+                        if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
+                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else {
+                            $prompt          = $this->getPrompt( $translate_to_site, $entry_value );
+                            $translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
-						Craft::info( $prompt, 'content-buddy' );
-						Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
-						Craft::info( $translated_text, 'content-buddy' );
+                            Craft::info( $prompt, 'content-buddy' );
+                            Craft::info( $fieldHandle . ' (' . $fieldType . ')', 'content-buddy' );
+                            Craft::info( $translated_text, 'content-buddy' );
 
-						$translated_text = $this->_sanitizeText($translated_text);
+                            $translated_text = $this->_sanitizeText($translated_text);
 
-						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
-							Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
-						}
+                            if ( $fieldType == 'craft\ckeditor\Field' ) {
+                                $translated_text = $this->translateEntriesInCKEditorField( $translated_text, $translate_to_site, $translate_from_site, $instructions );
+                                Craft::info( 'New CKEditor translated text: ' . $translated_text, 'content-buddy' );
+                            }
 
-						$_entry->setFieldValue( $fieldHandle, $translated_text );
+                            $_entry->setFieldValue( $fieldHandle, $translated_text );
+                        }
 
 						$fieldsTranslated ++;
 					} catch ( \Throwable $e ) {
@@ -903,8 +935,6 @@ class Translate extends Component {
 						$this->translateProduct( $variant, $translate_to, $variantEnabledFields, $translateId, $instructions );
 					}
 				}
-
-
 			}
 
 			Craft::info( 'Saving entry (' . $_entry->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
@@ -917,7 +947,6 @@ class Translate extends Component {
 				$translateRecord->save();
 
 				return true;
-
 			}
 		}
 		$translateRecord->save();
@@ -986,7 +1015,11 @@ class Translate extends Component {
 
 					$fieldsProcessed ++;
 
-					if ( $fieldType !== 'ether\seo\fields\SeoField' ) {
+					if (!in_array($fieldType, [
+                        'ether\seo\fields\SeoField',
+                        'verbb\hyper\fields\HyperField',
+                        'nystudio107\seomatic\fields\SeoSettings'
+                    ])) {
 						// check field not empty
 						if ( strlen( (string) $entry_value ) == 0 ) {
 							$fieldsSkipped ++;
@@ -1006,7 +1039,13 @@ class Translate extends Component {
 							$source_site     = Craft::$app->sites->getSiteById( $entry->siteId );
 							$translatedValue = $this->translateSeoData( $entry_value, $site, $source_site, $instructions );
 							$_entry->setFieldValue( $fieldHandle, $translatedValue );
-						} else {
+						} else if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
+                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else if ($fieldType == 'nystudio107\seomatic\fields\SeoSettings' && $entry_value instanceof MetaBundle) {
+                            $translatedValue = $this->translateSeomatic($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                            $_entry->setFieldValue($fieldHandle, $translatedValue);
+                        } else {
 							$prompt          = $this->getPrompt( $translate_to_site, $entry_value );
 							$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
@@ -1150,14 +1189,14 @@ class Translate extends Component {
 			$fieldTranslatable = $field->translationMethod != Field::TRANSLATION_METHOD_NONE;
 			$processField      = boolval( $fieldTranslatable ); // if translatable
 			$fieldType         = get_class( $field );
+            $fieldValue        = $entry_from->getFieldValue( $field->handle );
 
 			if ( in_array( $fieldType, static::$textFields ) && $processField && ! $or_entry ) {
 				if ( $fieldType == 'craft\ckeditor\Field' ) {
-					$fieldValue         = $entry_from->getFieldValue( $field->handle );
 					//$originalFieldValue = $field->serializeValue( $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent(),$translate_to) : $fieldValue, $entry_from );
 					$originalFieldValue = $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent(),$translate_to) : $fieldValue;
 				} else {
-					$originalFieldValue = $field->serializeValue( $entry_from->getFieldValue( $field->handle ), $entry_from );
+					$originalFieldValue = $field->serializeValue($fieldValue, $entry_from );
 				}
 
 				$translatedValue = $originalFieldValue;
@@ -1188,14 +1227,17 @@ class Translate extends Component {
 				$translatedValue = $this->translateMatrixField( $lang, $entry_from, $field, $translate_to, $translateId, $override, $instructions );
 
 			} elseif ( get_class( $field ) == 'ether\seo\fields\SeoField' ) {
-				$seo = $field->serializeValue( $entry_from->getFieldValue( $field->handle ), $entry_from );
+				$seo = $field->serializeValue($fieldValue, $entry_from );
 				//$seo = $entry_from->getFieldValue($field->handle);
 				if ( $seo instanceof SeoData ) {
 					$site            = Craft::$app->sites->getSiteById( $translate_to );
 					$source_site     = Craft::$app->sites->getSiteById( $entry_from->siteId );
 					$translatedValue = $this->translateSeoData( $seo, $site, $source_site, $instructions );
 				}
-			}
+			} elseif ($fieldType == 'verbb\hyper\fields\HyperField' and $fieldValue instanceof LinkCollection) {
+                $translatedValue = $this->translateHyper($fieldValue, $translate_to_site, $translate_from_site, $instructions);
+            }
+
 			if ( $translatedValue ) {
 				$target[ $field->handle ] = $translatedValue;
 			} else {
@@ -1600,6 +1642,45 @@ class Translate extends Component {
 
 		return $seo;
 	}
+
+    private function translateHyper(LinkCollection $hyperLinks, Site $site, Site $sourceSite, $instructions = ''): LinkCollection
+    {
+        Craft::info( "Translating Hyper links: " . json_encode( $hyperLinks ), 'content-buddy' );
+
+        $links = [];
+        foreach ($hyperLinks->getLinks() as $hyperLink) {
+            if (!empty($hyperLink->linkText)) {
+                $hyperLink->linkText = $this->translateText($hyperLink->linkText, 'craft\fields\PlainText', $site, $sourceSite, $instructions);
+            }
+            if (!empty($hyperLink->linkTitle)) {
+                $hyperLink->linkTitle = $this->translateText($hyperLink->linkTitle, 'craft\fields\PlainText', $site, $sourceSite, $instructions);
+            }
+
+            $links[] = $hyperLink;
+        }
+
+        $hyperLinks->setLinks($links);
+        return $hyperLinks;
+    }
+
+    private function translateSeomatic(MetaBundle $bundle, Site $site, Site $sourceSite, $instructions = ''): MetaBundle
+    {
+        foreach ($bundle->metaGlobalVars->overrides as $property => $override) {
+            $sourceProperty = $property . 'Source';
+            if (!$override                                                              // Skip if override is disabled
+                || in_array($property, ['siteNamePosition', 'twitterSiteNamePosition']) // Skip properties that can be custom, but can only be set to predefined values
+                || empty($bundle->metaBundleSettings->$sourceProperty)                  // Skip if source property can't be verified
+                || $bundle->metaBundleSettings->$sourceProperty !== 'fromCustom'        // Only properties that have been set to custom
+                || str_contains($bundle->metaGlobalVars->$property, '{{')               // Skip properties containing twig
+            ) {
+                continue;
+            }
+
+            $bundle->metaGlobalVars->$property = $this->translateText($bundle->metaGlobalVars->$property, 'craft\fields\PlainText', $site, $sourceSite, $instructions);
+        }
+
+        return $bundle;
+    }
 
 	protected function _getClass( $object ): string {
 		return str_replace( [
