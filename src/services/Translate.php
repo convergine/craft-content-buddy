@@ -649,8 +649,8 @@ class Translate extends Component {
                         if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
                             $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
                             $_entry->setFieldValue($fieldHandle, $translatedValue);
-                        } else if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
-                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                        } else if ($fieldType == 'nystudio107\seomatic\fields\SeoSettings' && $entry_value instanceof MetaBundle) {
+                            $translatedValue = $this->translateSeomatic($entry_value, $translate_to_site, $translate_from_site, $instructions);
                             $_entry->setFieldValue($fieldHandle, $translatedValue);
                         } else {
                             $prompt          = $this->getPrompt( $translate_to_site, $entry_value );
@@ -836,8 +836,8 @@ class Translate extends Component {
                         if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
                             $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
                             $_entry->setFieldValue($fieldHandle, $translatedValue);
-                        } else if ($fieldType == 'verbb\hyper\fields\HyperField' && $entry_value instanceof LinkCollection) {
-                            $translatedValue = $this->translateHyper($entry_value, $translate_to_site, $translate_from_site, $instructions);
+                        } else if ($fieldType == 'nystudio107\seomatic\fields\SeoSettings' && $entry_value instanceof MetaBundle) {
+                            $translatedValue = $this->translateSeomatic($entry_value, $translate_to_site, $translate_from_site, $instructions);
                             $_entry->setFieldValue($fieldHandle, $translatedValue);
                         } else {
                             $prompt          = $this->getPrompt( $translate_to_site, $entry_value );
