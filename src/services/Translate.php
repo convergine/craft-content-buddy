@@ -1677,12 +1677,14 @@ class Translate extends Component {
 
     private function translateSeomatic(MetaBundle $bundle, Site $site, Site $sourceSite, $instructions = ''): MetaBundle
     {
-        foreach ($bundle->metaGlobalVars->overrides as $property => $override) {
-            $sourceProperty = $property . 'Source';
-            if (!$override                                                              // Skip if override is disabled
+        foreach (get_object_vars($bundle->metaBundleSettings) as $name => $value) {
+            $property = preg_replace("/Source$/", '', $name, 1);
+
+            if (
+                !str_ends_with($name, 'Source')                                         // Skip unrelated properties
+                || $value !== 'fromCustom'                                              // Only properties that have been set to custom
                 || in_array($property, ['siteNamePosition', 'twitterSiteNamePosition']) // Skip properties that can be custom, but can only be set to predefined values
-                || empty($bundle->metaBundleSettings->$sourceProperty)                  // Skip if source property can't be verified
-                || $bundle->metaBundleSettings->$sourceProperty !== 'fromCustom'        // Only properties that have been set to custom
+                || empty($bundle->metaGlobalVars->$property)                            // Skip empty overrides
                 || str_contains($bundle->metaGlobalVars->$property, '{{')               // Skip properties containing twig
             ) {
                 continue;
