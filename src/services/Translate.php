@@ -1465,8 +1465,12 @@ class Translate extends Component {
 			try {
 				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
-				$_element->slug = $translated_text;
+                if (strlen($translated_text) > 255) {
+                    Craft::error( 'Translated slug for entry (' . $element->id . ') too big: ' . $translated_text, 'content-buddy' );
+                    return false;
+                }
 
+				$_element->slug = $translated_text;
 			} catch ( \Throwable $e ) {
 				$hasError = true;
 			}
