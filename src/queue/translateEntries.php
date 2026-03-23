@@ -123,8 +123,10 @@ class translateEntries extends BaseJob {
 
 		if ( $this->translateSlugs ) {
 			foreach ( $this->entriesIds as $id ) {
-				$entry = Entry::findOne( $id );
-                $product = Translate::isCommerceInstalled() ? Product::findOne( $id ) : null;
+				$entry = Entry::find()->id( $id )->siteId( $this->translateToSiteId )->one();
+                $product = Translate::isCommerceInstalled()
+                    ? Product::find()->id( $id )->siteId( $this->translateToSiteId )->one()
+                    : null;
 
 				if ( $entry || $product ) {
 					BuddyPlugin::getInstance()->translate->translateSlug(
