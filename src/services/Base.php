@@ -65,6 +65,8 @@ class Base {
 			'craft\ckeditor\Field',
 			'abmat\tinymce\Field',
             'ether\seo\fields\SeoField',
+            'verbb\hyper\fields\HyperField',
+            'nystudio107\seomatic\fields\SeoSettings'
 		];
 	}
 
