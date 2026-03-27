@@ -3,6 +3,7 @@
 namespace convergine\contentbuddy\services;
 
 use convergine\contentbuddy\BuddyPlugin;
+use convergine\contentbuddy\events\TranslateFieldEvent;
 use convergine\contentbuddy\models\SettingsModel;
 use convergine\contentbuddy\queue\translateEntries;
 use convergine\contentbuddy\records\ExcludeFromBulk;
@@ -32,7 +33,13 @@ use nystudio107\seomatic\models\MetaBundle;
 use verbb\hyper\models\LinkCollection;
 use yii\db\BatchQueryResult;
 
-class Translate extends Component {
+class Translate extends Component
+{
+    /**
+     * @var string Event emitted before a field is added to the list of fields to translate.
+     */
+    public const EVENT_BEFORE_TRANSLATE_FIELD = 'beforeTranslateField';
+
 	/**
 	 * @var BuddyPlugin|null
 	 */
@@ -87,6 +94,11 @@ class Translate extends Component {
 					if ( get_class( $fieldCont ) === 'craft\fieldlayoutelements\CustomField' ) {
 						$field = $fieldCont->getField();
 
+                        // Check if handler disabled field translation
+                        if (!$this->triggerTranslateFieldEvent($field)) {
+                            continue;
+                        }
+
 						if ( in_array(
 							     get_class( $field ),
 							     $this->_plugin->base->getSupportedFieldTypes()
@@ -113,6 +125,11 @@ class Translate extends Component {
 				foreach ( $tab->getElements() as $fieldCont ) {
 					if ( get_class( $fieldCont ) === 'craft\fieldlayoutelements\CustomField' ) {
 						$field = $fieldCont->getField();
+
+                        // Check if handler disabled field translation
+                        if (!$this->triggerTranslateFieldEvent($field)) {
+                            continue;
+                        }
 
 						if ( in_array(
 							     get_class( $field ),
@@ -1201,55 +1218,53 @@ class Translate extends Component {
 			$fieldTranslatable = $field->translationMethod != Field::TRANSLATION_METHOD_NONE;
 			$processField      = boolval( $fieldTranslatable ); // if translatable
 			$fieldType         = get_class( $field );
-            $fieldValue        = $entry_from->getFieldValue( $field->handle );
+      $fieldValue        = $entry_from->getFieldValue( $field->handle );
 
-			if ( in_array( $fieldType, static::$textFields ) && $processField && ! $or_entry ) {
-				if ( $fieldType == 'craft\ckeditor\Field' ) {
-					//$originalFieldValue = $field->serializeValue( $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent(),$translate_to) : $fieldValue, $entry_from );
-					$originalFieldValue = $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent(),$translate_to) : $fieldValue;
-				} else {
-					$originalFieldValue = $field->serializeValue($fieldValue, $entry_from );
-				}
+          // Check if handler disabled field translation
+          if ($this->triggerTranslateFieldEvent($field)) {
+              if ( in_array( $fieldType, static::$textFields ) && $processField && ! $or_entry ) {
+                  if ( $fieldType == 'craft\ckeditor\Field' ) {
+                      $originalFieldValue = $fieldValue !== null ? $this->fixAssets($fieldValue->getRawContent(),$translate_to) : $fieldValue;
+                  } else {
+                      $originalFieldValue = $field->serializeValue($fieldValue, $entry_from);
+                  }
 
-				$translatedValue = $originalFieldValue;
-				if ( $originalFieldValue ) {
-					try {
-						$prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
-						$translatedValue = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
+                  $translatedValue = $originalFieldValue;
+                  if ( $originalFieldValue ) {
+                      try {
+                          $prompt          = $this->getPrompt( $translate_to_site, $originalFieldValue );
+                          $translatedValue = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
-						Craft::info( $prompt, 'content-buddy' );
-						Craft::info( $field->handle . ' (' . $fieldType . ')', 'content-buddy' );
-						Craft::info( $translatedValue, 'content-buddy' );
+                          Craft::info( $prompt, 'content-buddy' );
+                          Craft::info( $field->handle . ' (' . $fieldType . ')', 'content-buddy' );
+                          Craft::info( $translatedValue, 'content-buddy' );
 
-						$translatedValue = $this->_sanitizeText($translatedValue);
-						if ( $fieldType == 'craft\ckeditor\Field' ) {
-							$translatedValue = $this->translateEntriesInCKEditorField( $translatedValue, $translate_to_site, $translate_from_site, $instructions );
-							Craft::info( 'New CKEditor translated text: ' . $translatedValue, 'content-buddy' );
-						} else {
-							Craft::info( 'Not a CKEditor field, skipping', 'content-buddy' );
-						}
+                          $translatedValue = $this->_sanitizeText($translatedValue);
+                          if ( $fieldType == 'craft\ckeditor\Field' ) {
+                              $translatedValue = $this->translateEntriesInCKEditorField( $translatedValue, $translate_to_site, $translate_from_site, $instructions );
+                              Craft::info( 'New CKEditor translated text: ' . $translatedValue, 'content-buddy' );
+                          } else {
+                              Craft::info( 'Not a CKEditor field, skipping', 'content-buddy' );
+                          }
 
-					} catch ( \Throwable $e ) {
-						//$fieldsError ++;
-						$this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), $field, 0 );
-					}
-				}
-			} elseif ( in_array( get_class( $field ), static::$matrixFields ) ) {
-				// dig deeper in Matrix fields
-				$translatedValue = $this->translateMatrixField( $lang, $entry_from, $field, $translate_to, $translateId, $override, $instructions );
+                      } catch ( \Throwable $e ) {
+                          $this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), $field, 0 );
+                      }
+                  }
+              } elseif ( in_array( get_class( $field ), static::$matrixFields ) ) {
+                  $translatedValue = $this->translateMatrixField( $lang, $entry_from, $field, $translate_to, $translateId, $override, $instructions );
 
-			} elseif ( get_class( $field ) == 'ether\seo\fields\SeoField' ) {
-				$seo = $field->serializeValue($fieldValue, $entry_from );
-				//$seo = $entry_from->getFieldValue($field->handle);
-				if ( $seo instanceof SeoData ) {
-					$site            = Craft::$app->sites->getSiteById( $translate_to );
-					$source_site     = Craft::$app->sites->getSiteById( $entry_from->siteId );
-					$translatedValue = $this->translateSeoData( $seo, $site, $source_site, $instructions );
-				}
-			} elseif ($fieldType == 'verbb\hyper\fields\HyperField' and $fieldValue instanceof LinkCollection) {
-                $translatedValue = $this->translateHyper($fieldValue, $translate_to_site, $translate_from_site, $instructions);
-            }
-
+              } elseif ( get_class( $field ) == 'ether\seo\fields\SeoField' ) {
+                  $seo = $field->serializeValue($fieldValue, $entry_from);
+                  if ( $seo instanceof SeoData ) {
+                      $site            = Craft::$app->sites->getSiteById( $translate_to );
+                      $source_site     = Craft::$app->sites->getSiteById( $entry_from->siteId );
+                      $translatedValue = $this->translateSeoData( $seo, $site, $source_site, $instructions );
+                  }
+              } elseif ($fieldType == 'verbb\hyper\fields\HyperField' && $fieldValue instanceof LinkCollection) {
+                  $translatedValue = $this->translateHyper($fieldValue, $translate_to_site, $translate_from_site, $instructions);
+              }
+          }
 			if ( $translatedValue ) {
 				$target[ $field->handle ] = $translatedValue;
 			} else {
@@ -2080,4 +2095,15 @@ class Translate extends Component {
 			$text
 		);
 	}
+
+    private function triggerTranslateFieldEvent(FieldInterface $field): bool
+    {
+        $translateFieldEvent = new TranslateFieldEvent([
+            'field' => $field,
+        ]);
+
+        $this->trigger(self::EVENT_BEFORE_TRANSLATE_FIELD, $translateFieldEvent);
+
+        return $translateFieldEvent->isValid;
+    }
 }
