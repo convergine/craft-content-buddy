@@ -1506,36 +1506,46 @@ class Translate extends Component
 		return false;
 	}
 
-	public function translateSlug( Entry $entry, int $translate_to, string $instructions = '' ): bool {
+	public function translateSlug(Element $element, int $translate_to, string $instructions = '' ): bool {
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 		$lang              = $translate_to_site->language;
 
-		$translate_from_site = Craft::$app->sites->getSiteById( $entry->siteId );
+		$translate_from_site = Craft::$app->sites->getSiteById( $element->siteId );
 		$source_lang         = $translate_from_site->language;
 
 		$hasError = false;
 
-		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->one();
-		if ( ! $_entry ) {
-			$entry->siteId = $translate_to;
-			Craft::info( 'Saving entry (' . $entry->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
-			$this->saveElement( $entry );
-			$_entry = $entry;
+		$_element = null;
+        if ($element instanceof Entry) {
+            $_element = Entry::find()->id( $element->id )->siteId( $translate_to )->one();
+        } else if ($element instanceof Product) {
+            $_element = Product::find()->id( $element->id )->siteId( $translate_to )->one();
+        }
+
+		if ( ! $_element ) {
+			$element->siteId = $translate_to;
+			Craft::info( 'Saving entry (' . $element->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
+			$this->saveElement( $element );
+			$_element = $element;
 		}
 
-		if ( $_entry ) {
-			$prompt = "Translate this URL slug to $lang. Only return the URL slug for the following text: $entry->slug";
+		if ( $_element ) {
+			$prompt = "Translate this URL slug to $lang. Only return the URL slug for the following text: $element->slug";
 			try {
 				$translated_text = BuddyPlugin::getInstance()->request->send( $prompt, 30000, 0.7, true, $instructions, $lang, $source_lang );
 
-				$_entry->slug = $translated_text;
+                if (strlen($translated_text) > 255) {
+                    Craft::error( 'Translated slug for entry (' . $element->id . ') too big: ' . $translated_text, 'content-buddy' );
+                    return false;
+                }
 
+				$_element->slug = $translated_text;
 			} catch ( \Throwable $e ) {
 				$hasError = true;
 			}
 
-			Craft::info( 'Saving entry (' . $_entry->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
-			if ( $this->saveElement( $_entry ) ) {
+			Craft::info( 'Saving entry (' . $_element->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
+			if ( $this->saveElement( $_element ) ) {
 				return true;
 			}
 		}
