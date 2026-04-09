@@ -407,7 +407,7 @@ class Translate extends Component
 
 		$fieldsProcessed = $fieldsSkipped = $fieldsError = $fieldsTranslated = 0;
 
-		$_entry = Category::find()->id( $entry->id )->siteId( $translate_to )->one();
+		$_entry = Category::find()->id( $entry->id )->siteId( $translate_to )->status(null)->one();
 		if ( ! $_entry ) {
 			$_entry = $this->cloneElement( $entry, $translate_to );
 		}
@@ -594,7 +594,7 @@ class Translate extends Component
 
 		$fieldsProcessed = $fieldsSkipped = $fieldsError = $fieldsTranslated = 0;
 
-		$_entry = Asset::find()->id( $entry->id )->siteId( $translate_to )->one();
+		$_entry = Asset::find()->id( $entry->id )->siteId( $translate_to )->status(null)->one();
 		if ( ! $_entry ) {
 			$_entry = $this->cloneElement( $entry, $translate_to );
 		}
@@ -787,9 +787,9 @@ class Translate extends Component
 
 		$fieldsProcessed = $fieldsSkipped = $fieldsError = $fieldsTranslated = 0;
 
-		$_entry = Product::find()->id( $entry->id )->siteId( $translate_to )->one();
+		$_entry = Product::find()->id( $entry->id )->siteId( $translate_to )->status(null)->one();
 		if ( ! $_entry ) {
-			$_entry = Variant::find()->id( $entry->id )->siteId( $translate_to )->one();
+			$_entry = Variant::find()->id( $entry->id )->siteId( $translate_to )->status(null)->one();
 		}
 
 		// TODO check if wee need clone product
@@ -1004,7 +1004,7 @@ class Translate extends Component
 
 		$fieldsProcessed = $fieldsSkipped = $fieldsError = $fieldsTranslated = 0;
 
-		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->one();
+		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->status(null)->one();
 		if ( ! $_entry ) {
 			$_entry = $this->cloneElement( $entry, $translate_to );
 		}
@@ -1202,7 +1202,7 @@ class Translate extends Component
 		$source_lang         = $translate_from_site->language;
 
 		$target      = [];
-		$targetEntry = Entry::find()->id( $entry_from->id )->siteId( $translate_to )->one();
+		$targetEntry = Entry::find()->id( $entry_from->id )->siteId( $translate_to )->status(null)->one();
 		if ( ! $or_entry && ! empty( $entry_from->title ) && $entry_from->getIsTitleTranslatable() ) {
 			try {
 				$prompt          = $this->getPrompt( $translate_to_site, $entry_from->title );
@@ -1322,7 +1322,7 @@ class Translate extends Component
 
 		$translateRecord = TranslateRecord::findOne( $translateId );
 
-		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->one();
+		$_entry = Entry::find()->id( $entry->id )->siteId( $translate_to )->status(null)->one();
 
 
 		$fieldsError      = $translateRecord->fieldsError;
@@ -1515,19 +1515,18 @@ class Translate extends Component
 
 		$hasError = false;
 
-		$_element = null;
-        if ($element instanceof Entry) {
-            $_element = Entry::find()->id( $element->id )->siteId( $translate_to )->one();
-        } else if ($element instanceof Product) {
-            $_element = Product::find()->id( $element->id )->siteId( $translate_to )->one();
-        }
-
-		if ( ! $_element ) {
-			$element->siteId = $translate_to;
-			Craft::info( 'Saving entry (' . $element->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
-			$this->saveElement( $element );
-			$_element = $element;
-		}
+    $_element = null;
+    if ($element instanceof Entry) {
+        $_element = Entry::find()->id( $element->id )->siteId( $translate_to )->status(null)->one();
+    } else if($element instanceof Product) {
+        $_element = Product::find()->id( $element->id )->siteId( $translate_to )->status(null)->one();
+    }
+    if(!$_element) {
+        $element->siteId = $translate_to;
+        Craft::info( 'Saving entry (' . $element->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
+        $this->saveElement( $element );
+        $_element = $element;
+    }
 
 		if ( $_element ) {
 			$prompt = "Translate this URL slug to $lang. Only return the URL slug for the following text: $element->slug";
