@@ -68,14 +68,12 @@ class translateEntries extends BaseJob {
 		$this->setProgress( $this->_queue, 0 );
 
 		foreach ( $this->entriesIds as $id ) {
-			$entry    = Craft::$app->entries->getEntryById( $id, $this->siteId );
-			$category = Category::findOne( $id );
-			$asset    = Asset::findOne( $id );
-			$product    = null;
-			if(Translate::isCommerceInstalled()){
-				$product    = Product::findOne( $id );
-			}
-
+            $entry    = Craft::$app->entries->getEntryById( $id, $this->siteId );
+            $category = Category::find()->id( $id )->siteId( $this->siteId )->one();
+            $asset    = Asset::find()->id( $id )->siteId( $this->siteId )->one();
+            $product  = Translate::isCommerceInstalled()
+                ? Product::find()->id( $id )->siteId( $this->siteId )->one()
+                : null;
 
 			if ( $entry ) {
 				BuddyPlugin::getInstance()->translate->translateEntry(

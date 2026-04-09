@@ -172,7 +172,8 @@ class TranslateController extends \craft\web\Controller {
 							'translateToSiteId' => $translate_to_site_id,
 							'enabledFields'     => $_enabledFields,
 							'instructions'      => $instructions,
-							'translationId'     => $translateRecord->id
+							'translationId'     => $translateRecord->id,
+                            'siteId'            => $primarySiteId,
 						] ), 10 + $indexLanguage, $this->_getDelay( $indexLanguage, $index ), $this->_getTTR()
 					);
 					if ( $jobId ) {
@@ -423,7 +424,8 @@ class TranslateController extends \craft\web\Controller {
 					'instructions'      => $instructions,
 					'translationId'     => $translateRecord->id,
 					'translateSlugs'    => $translateSlugs,
-					'type'              => 'category'
+					'type'              => 'category',
+                    'siteId'            => $siteId,
 				] ), 10 + $index, $this->_getDelay( $index ), $this->_getTTR()
 			);
 			$translateRecord->entriesSubmitted = 1;
@@ -519,7 +521,8 @@ class TranslateController extends \craft\web\Controller {
 					'instructions'      => $instructions,
 					'translationId'     => $translateRecord->id,
 					'translateSlugs'    => $translateSlugs,
-					'type'              => 'asset'
+					'type'              => 'asset',
+                    'siteId'            => $siteId,
 				] ), 10 + $index, $this->_getDelay( $index ), $this->_getTTR()
 			);
 			$translateRecord->entriesSubmitted = 1;
@@ -630,7 +633,8 @@ class TranslateController extends \craft\web\Controller {
 					'instructions'      => $instructions,
 					'translationId'     => $translateRecord->id,
 					'translateSlugs'    => $translateSlugs,
-					'type'              => 'product'
+					'type'              => 'product',
+                    'siteId'            => $siteId,
 				] ), 10 + $index, $this->_getDelay( $index ), $this->_getTTR()
 			);
 			$translateRecord->entriesSubmitted = 1;
