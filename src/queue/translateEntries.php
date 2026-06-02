@@ -121,9 +121,9 @@ class translateEntries extends BaseJob {
 
 		if ( $this->translateSlugs ) {
 			foreach ( $this->entriesIds as $id ) {
-				$entry = Entry::find()->id( $id )->siteId( $this->translateToSiteId )->one();
+				$entry = Entry::find()->id( $id )->siteId( $this->translateToSiteId )->status(null)->one();
                 $product = Translate::isCommerceInstalled()
-                    ? Product::find()->id( $id )->siteId( $this->translateToSiteId )->one()
+                    ? Product::find()->id( $id )->siteId( $this->translateToSiteId )->status(null)->one()
                     : null;
 
 				if ( $entry || $product ) {
