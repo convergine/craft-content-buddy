@@ -17,7 +17,9 @@
             value: settings.textAi,
             options: {
                 "openai": "OpenAI",
-                "xai": "xAI"
+                "xai": "xAI",
+                "anthropic": "Anthropic",
+                "openrouter": "OpenRouter"
             },
             toggle: true
         }) }}
@@ -30,11 +32,25 @@
                 instructions: 'modelDescription'|t('convergine-contentbuddy'),
                 options: [
                     { optgroup: "GPT Models" },
+
+
+
+                    { value: "gpt-5.1", label: "gpt-5.1" },
+                    { value: "gpt-5.1-mini", label: "gpt-5.1-mini" },
+                    { value: "gpt-5-nano", label: "gpt-5-nano" },
+                    { value: "gpt-5.1-codex", label: "gpt-5.1-codex" },
+                    { value: "gpt-5.1-codex-mini", label: "gpt-5.1-codex-mini" },
+
+                    { value: "gpt-4.1", label: "gpt-4.1" },
+                    { value: "gpt-4.1-mini", label: "gpt-4.1-mini" },
+                    { value: "gpt-4.1-nano", label: "gpt-4.1-nano" },
+
                     { value: "gpt-4.5-preview", label: "gpt-4.5-preview" },
                     { value: "gpt-4o", label: "gpt-4o" },
                     { value: "gpt-4o-mini", label: "gpt-4o-mini" },
-                    { value: "gpt-4-turbo", label: "gpt-4-turbo" },
                     { value: "gpt-4", label: "gpt-4" },
+                    { value: "gpt-4-turbo", label: "gpt-4-turbo" },
+
                     { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
 
                     { optgroup: "Reasoning Models" },
@@ -59,12 +75,22 @@
                 value: settings.xAiModel,
                 instructions: 'xAiModelDescription'|t('convergine-contentbuddy'),
                 options: {
-                    "grok-3": "grok-3",
-                    "grok-3-fast": "grok-3-fast",
-                    "grok-2-vision": "grok-2-vision",
-                    "grok-2": "grok-2",
-                    "grok-vision-beta": "grok-vision-beta",
-                    "grok-beta": "grok-beta",
+                    "grok-4.3": "grok-4.3",
+                    "grok-4.5": "grok-4.5",
+                    "grok-4.20-0309-reasoning": "grok-4.20-0309-reasoning",
+                }
+            }) }}
+
+            {{ forms.selectField({
+                label: 'xAI Reasoning Effort'|t('convergine-contentbuddy'),
+                name: 'xAiReasoningEffort',
+                value: settings.xAiReasoningEffort,
+                instructions: 'xAiReasoningEffortDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "none": "none",
+                    "low": "low",
+                    "medium": "medium",
+                    "high": "high",
                 }
             }) }}
 
@@ -73,6 +99,49 @@
                 name: 'xAiApiKey',
                 value: settings.xAiApiKey,
                 instructions: 'API Key for the xAI API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+        </div>
+        <div id="anthropic" class="{% if settings.textAi != 'anthropic' %}hidden{% endif %}">
+            {{ forms.selectField({
+                label: 'Anthropic Preferred Model'|t('convergine-contentbuddy'),
+                name: 'anthropicModel',
+                value: settings.anthropicModel,
+                instructions: 'anthropicModelDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "claude-sonnet-4-5-20250929": "Claude Sonnet 4.5",
+                    "claude-haiku-4-5-20251001": "Claude Haiku 4.5",
+                    "claude-opus-4-5-20251101": "Claude Opus 4.5"
+                }
+            }) }}
+
+            {{ forms.autosuggestField({
+                label: 'Anthropic API Key'|t('convergine-contentbuddy'),
+                name: 'anthropicApiKey',
+                value: settings.anthropicApiKey,
+                instructions: 'API Key for the Anthropic API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+        </div>
+
+        <div id="openrouter" class="{% if settings.textAi != 'openrouter' %}hidden{% endif %}">
+            {% if settings.openrouterApiKey !='' %}
+                {{ forms.selectField({
+                    label: 'OpenRouter Preferred Model'|t('convergine-contentbuddy'),
+                    name: 'openrouterModel',
+                    value: settings.openrouterModel,
+                    instructions: 'openRouterModelDescription'|t('convergine-contentbuddy'),
+                    options: openRouteModels
+                }) }}
+            {% else %}
+                <p class="warning">{{ 'openRouterSaveKeyDescription'|t('convergine-contentbuddy') }}</p>
+            {% endif %}
+
+            {{ forms.autosuggestField({
+                label: 'OpenRouter API Key'|t('convergine-contentbuddy'),
+                name: 'openrouterApiKey',
+                value: settings.openrouterApiKey,
+                instructions: 'API Key for the OpenRouter API'|t('convergine-contentbuddy'),
                 suggestEnvVars: true,
             }) }}
         </div>

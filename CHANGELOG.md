@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.0 - 2026-07-10
+### Added
+- Anthropic (Claude) as a text generation and translation provider.
+- OpenRouter as a text generation and image generation provider.
+- Image generation with OpenAI GPT-5.
+- Text generation and translation with OpenAI GPT-5 models.
+- Import and export of plugin settings.
+- Translating with a configured OpenAI Assistant.
+- Support for translating Hyper fields. [PR #52](https://github.com/convergine/craft-content-buddy/pull/52)
+- Support for translating SEOmatic fields. [PR #53](https://github.com/convergine/craft-content-buddy/pull/53)
+- Support for translating Commerce product slugs. [PR #56](https://github.com/convergine/craft-content-buddy/pull/56)
+- Translating links to assets (PDFs or images) during bulk translation.
+- A cancelable `TranslateFieldEvent` for excluding fields from translation from your own module. [PR #55](https://github.com/convergine/craft-content-buddy/pull/55)
+- A reasoning effort setting for Grok 4.3 translations.
+
+### Changed
+- Updated the available OpenAI and Grok models.
+- Grok now defaults to `grok-4.3`. Models that xAI retired on May 15, 2026 have been removed, and any previously selected xAI model is migrated to `grok-4.3`.
+
+### Fixed
+- Translating a field could fail with a fatal "class not found" error.
+- Translation stopped on entries whose field layout referenced a deleted field. [Issue #49](https://github.com/convergine/craft-content-buddy/issues/49)
+- Image generation failed when saving to an external filesystem such as Amazon S3 or DigitalOcean Spaces. [Issue #58](https://github.com/convergine/craft-content-buddy/issues/58)
+- Matrix field content could be lost during a full translation when the target-language entry did not yet exist. [Issue #61](https://github.com/convergine/craft-content-buddy/issues/61)
+- Some fields could not be found for translation. [Issue #62](https://github.com/convergine/craft-content-buddy/issues/62)
+- Disabled target elements were skipped when locating the element to translate. [PR #57](https://github.com/convergine/craft-content-buddy/pull/57)
+- Slugs of disabled elements were not translated. [PR #60](https://github.com/convergine/craft-content-buddy/pull/60)
+- Bulk translation only looked for elements on the primary site. [PR #59](https://github.com/convergine/craft-content-buddy/pull/59)
+- The source site for a translation was not always taken from the current request. [PR #51](https://github.com/convergine/craft-content-buddy/pull/51)
+- Translating with a GPT-5 model did not use the correct OpenAI endpoint, and could bypass a configured OpenAI Assistant.
+- The selected translation model for Anthropic and OpenRouter was ignored, so translations used the content generation model.
+- Translating SEOmatic fields could corrupt the Open Graph site-name position.
+- The translation settings screen could error while loading OpenAI assistants.
+- Translations could include extra commentary before the translated text.
+- Submitting an email address under News & Updates did nothing.
+
 ## 1.2.11 - 2025-09-03
 ### Added
 - Support for OpenAI assistant models in translations.

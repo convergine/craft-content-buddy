@@ -39,7 +39,7 @@
 {% endif %}
 
 
-{% if (settings.textAi == 'openai' and settings.getOpenAiApiKey|length) or (settings.textAi == 'xai' and settings.getXAiApiKey|length) %}
+
 
     {% set prompts = craft.contentbuddy.getPrompts(true) %}
 
@@ -150,4 +150,3 @@
         }
 
     {% endif %}
-{% endif %}

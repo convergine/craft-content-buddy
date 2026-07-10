@@ -8,7 +8,7 @@
     <div style="margin-bottom: 48px;">
         <p>{{ 'translateFieldsDescriptionText'|t('convergine-contentbuddy') }}</p>
     </div>
-    {% if fields.regular|length or fields.matrix|length %}
+    {% if fields.regular|length or fields.matrix|length or fields.contentBlock|length %}
         {% if fields.regular|length %}
             <div class="tableview tablepane">
 
@@ -115,6 +115,14 @@
                     </div>
                 </div>
             {% endif %}
+        {% endif %}
+        {% if isCraft5 and fields.contentBlock|length %}
+            {{ forms.lightswitchField({
+                label: "Translate Content Block Fields"|t('convergine-contentbuddy'),
+                name: 'translateContentBlocks',
+                on: false,
+                instructions: 'translateContentBlockFieldsText'|t('convergine-contentbuddy')
+            }) }}
         {% endif %}
         {% if commerceInstalled %}
             {{ forms.lightswitchField({

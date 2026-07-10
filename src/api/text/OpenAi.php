@@ -115,8 +115,11 @@ class OpenAi extends TextApi {
             'messages'    => $messages,
         ];
 
-        if($this->isReasoningModel($model)) {
-            $body['max_completion_tokens'] = $maxTokensToGenerate;
+		  if($this->isGPT5Model($model)){
+			  $body['temperature'] = 1;
+		  }elseif($this->isReasoningModel($model)) {
+
+			  $body['max_completion_tokens'] = $maxTokensToGenerate;
         } else {
             $body['max_tokens'] = $maxTokensToGenerate;
             $body['temperature'] = $temperature;
@@ -134,6 +137,10 @@ class OpenAi extends TextApi {
     private function isReasoningModel($model) : bool {
         return in_array($model, ['o1', 'o1-mini', 'o3-mini']);
     }
+
+	private function isGPT5Model($model) : bool {
+		return str_contains( $model, 'gpt-5' );
+	}
 
     private function getEndpoint($model) : string {
         return 'https://api.openai.com/v1/chat/completions';

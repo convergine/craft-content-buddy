@@ -1,100 +1,108 @@
 <?php
+
 namespace convergine\contentbuddy\controllers;
 
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\services\ContentGenerator;
 use Craft;
+use craft\errors\FieldNotFoundException;
 use craft\web\Controller;
+use yii\base\InvalidConfigException;
 
 class ContentGeneratorController extends Controller {
 
 	public function actionIndex() {
-		$sections = [];
-        $_sections = version_compare(Craft::$app->getInfo()->version, '5.0', '>=') ? Craft::$app->entries->getAllSections() : Craft::$app->sections->getAllSections();
+		$sections  = [];
+		$_sections = version_compare( Craft::$app->getInfo()->version, '5.0', '>=' ) ? Craft::$app->entries->getAllSections() : Craft::$app->sections->getAllSections();
 
-		foreach ($_sections as $section){
-			if($section->type == 'channel'){
+		foreach ( $_sections as $section ) {
+			if ( $section->type == 'channel' ) {
 
-				foreach ($section->getEntryTypes() as $type){
+				foreach ( $section->getEntryTypes() as $type ) {
 					$entry_data = [
-						'entry_name'=>$section->name,
-						'entry_id'=>$section->id,
-						'entry_type_name'=>$type->name,
-						'entry_type_id'=>$type->id,
-						'fields'=>[],
-						'image_fields'=>[],
+						'entry_name'      => $section->name,
+						'entry_id'        => $section->id,
+						'entry_type_name' => $type->name,
+						'entry_type_id'   => $type->id,
+						'fields'          => [],
+						'image_fields'    => [],
 					];
-					$layout = $type->getFieldLayout();
+					$layout     = $type->getFieldLayout();
 
-					foreach($layout->getTabs() as $tab){
-						foreach ($tab->getElements() as $fieldCont){
+					foreach ( $layout->getTabs() as $tab ) {
+						foreach ( $tab->getElements() as $fieldCont ) {
 
-							if(get_class($fieldCont)==='craft\fieldlayoutelements\CustomField'){
-								$field = $fieldCont->getField();
+							if ( get_class( $fieldCont ) === 'craft\fieldlayoutelements\CustomField' ) {
 
-								if(in_array(get_class($field),[
-									'craft\fields\PlainText',
-									'craft\redactor\Field',
-                                    'craft\ckeditor\Field'
-								])){
-									$entry_data['fields'][]=[
-										'name'=>$field->name,
-										'handle'=>$field->handle,
-									];
+								try {
+									$field = $fieldCont->getField();
 
-								}elseif (in_array(get_class($field),[
-									'craft\fields\Assets'
-								])){
-									$entry_data['image_fields'][]=[
-										'name'=>$field->name,
-										'handle'=>$field->handle,
-									];
+
+									if ( in_array( get_class( $field ), [
+										'craft\fields\PlainText',
+										'craft\redactor\Field',
+										'craft\ckeditor\Field'
+									] ) ) {
+										$entry_data['fields'][] = [
+											'name'   => $field->name,
+											'handle' => $field->handle,
+										];
+
+									} elseif ( in_array( get_class( $field ), [
+										'craft\fields\Assets'
+									] ) ) {
+										$entry_data['image_fields'][] = [
+											'name'   => $field->name,
+											'handle' => $field->handle,
+										];
+									}
+								} catch ( FieldNotFoundException|InvalidConfigException $e ) {
+									Craft::$app->session->setError( $e->getMessage() );
 								}
-
 							}
 
 						}
 					}
-					$sections[]=$entry_data;
+					$sections[] = $entry_data;
 				}
 
 			}
 		}
-		$assets_folders=[['value'=>'','label'=>'Please Select']];
-		$_volumes = Craft::$app->getVolumes()->getAllVolumes();
+		$assets_folders = [ [ 'value' => '', 'label' => 'Please Select' ] ];
+		$_volumes       = Craft::$app->getVolumes()->getAllVolumes();
 
-		foreach ($_volumes as $volume){
-			$_assets_folders = Craft::$app->getAssets()->findFolders([
-				'volumeId'=>$volume->id
-			]);
-			foreach ($_assets_folders as $folder){
-				$assets_folders[]=['value'=>$folder->id,'label'=>$folder->name];
+		foreach ( $_volumes as $volume ) {
+			$_assets_folders = Craft::$app->getAssets()->findFolders( [
+				'volumeId' => $volume->id
+			] );
+			foreach ( $_assets_folders as $folder ) {
+				$assets_folders[] = [ 'value' => $folder->id, 'label' => $folder->name ];
 			}
 		}
 		$sites = [];
-		foreach (Craft::$app->sites->getAllSites() as $site){
-			$sites[$site->id] = $site->name;
+		foreach ( Craft::$app->sites->getAllSites() as $site ) {
+			$sites[ $site->id ] = $site->name;
 		}
 
-		return $this->renderTemplate('convergine-contentbuddy/content/_index',
+		return $this->renderTemplate( 'convergine-contentbuddy/content/_index',
 			[
-				'sections'=>$sections,
-				'folders'=>$assets_folders,
-				'sites'=>$sites,
-				'settings'=>BuddyPlugin::getInstance()->getSettings(),
-				'min_execution_time_alert'=>ContentGenerator::getTimeLimitAlert()
-			]);
+				'sections'                 => $sections,
+				'folders'                  => $assets_folders,
+				'sites'                    => $sites,
+				'settings'                 => BuddyPlugin::getInstance()->getSettings(),
+				'min_execution_time_alert' => ContentGenerator::getTimeLimitAlert()
+			] );
 	}
 
 	public function actionGenerate() {
 		$this->requirePostRequest();
 		$data = $this->request->post();
 
-		$result = BuddyPlugin::getInstance()->contentGenerator->generateEntry($data);
+		$result = BuddyPlugin::getInstance()->contentGenerator->generateEntry( $data );
 
 		$request = Craft::$app->getRequest();
-		if ($request->getAcceptsJson()) {
-			return $this->asJson($result);
+		if ( $request->getAcceptsJson() ) {
+			return $this->asJson( $result );
 		}
 
 		exit();

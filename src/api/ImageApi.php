@@ -25,13 +25,15 @@ abstract class ImageApi {
         $imagePromptWithOnlyLetters = substr( $imagePromptWithOnlyLetters, 0, 40 );
         $imagePromptWithOnlyLetters = strtolower( $imagePromptWithOnlyLetters );
 
-        $folder      = Craft::$app->getAssets()->getFolderByUid( $folderUID );
-        $folder_path = Craft::getAlias( $folder->getVolume()->getFs()->getSettings()['path'] );
-        if ( ! is_dir( $folder_path ) ) {
-            throw new Exception( 'Upload folder not found' );
-        }
-
-        $tmpFilePath  = $folder_path . '/image' . rand( 9999, 9999999 );
+        $folder = is_numeric($folderUID)?Craft::$app->getAssets()->getFolderById($folderUID):Craft::$app->getAssets()->getFolderByUid( $folderUID );
+	    if(strpos($imageData,'base64')!== false){
+		    $imageData = explode(',',$imageData)[1];
+	    }
+        // Stage the image in the system temp dir rather than inside the volume. Only
+        // craft\fs\Local exposes a 'path' setting; any external filesystem (S3,
+        // DigitalOcean Spaces) has none. Craft uploads Asset::$tempFilePath through
+        // the volume's filesystem, so this works for every filesystem type.
+        $tmpFilePath  = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'image' . rand( 9999, 9999999 );
         $outputStream = fopen( $tmpFilePath, 'wb' );
         fwrite( $outputStream, base64_decode( $imageData ) );
 

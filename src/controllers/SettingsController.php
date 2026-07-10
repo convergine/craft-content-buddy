@@ -3,6 +3,7 @@
 namespace convergine\contentbuddy\controllers;
 
 use convergine\contentbuddy\api\text\OpenAiAssistant;
+use convergine\contentbuddy\api\text\OpenRouter;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\variables\BuddyVariable;
 use yii\web\Response;
@@ -23,8 +24,10 @@ class SettingsController extends \craft\web\Controller {
 	public function actionTextGeneration(): Response {
 		$settings = BuddyPlugin::getInstance()->getSettings();
 
+
 		return $this->renderTemplate( 'convergine-contentbuddy/settings/_api', [
 			'settings' => $settings,
+			'openRouteModels'=>$this->_getOpenRouteModels(false)
 		] );
 	}
 
@@ -61,7 +64,8 @@ class SettingsController extends \craft\web\Controller {
 
 		return $this->renderTemplate( 'convergine-contentbuddy/settings/_image', [
 			'settings' => $settings,
-			'folders'  => $assets_folders
+			'folders'  => $assets_folders,
+			'openRouterModels' => $this->_getOpenRouteModels(true)
 		] );
 	}
 
@@ -74,23 +78,36 @@ class SettingsController extends \craft\web\Controller {
 			  'label'=>'--',
 			  'value'=>''
 		  ]];
-		  if($settings->apiToken){
-			  $_assistants = (new OpenAiAssistant())->getAssistants();
-			  if(isset($_assistants['data'])) {
-				  foreach ( $_assistants['data'] as $as ) {
-					  $name = $as['name']?:$as['id'];
-					  $assistants[] = [
-						  'label' => $name,
-						  'value' => $as['id']
-					  ];
+		  $assistantsSupported = $this->_assistantsSupported($settings->preferredTranslationModel);
+		  if($settings->apiToken && $assistantsSupported){
+			  try {
+				  $_assistants = (new OpenAiAssistant())->getAssistants();
+				  if(isset($_assistants['data'])) {
+					  foreach ( $_assistants['data'] as $as ) {
+						  $name = $as['name']?:$as['id'];
+						  $assistants[] = [
+							  'label' => $name,
+							  'value' => $as['id']
+						  ];
+					  }
 				  }
+			  } catch (\Throwable $e) {
+				  Craft::warning('Failed to load OpenAI assistants: ' . $e->getMessage(), 'content-buddy');
 			  }
-
 		  }
         return $this->renderTemplate( 'convergine-contentbuddy/settings/_translation', [
             'settings' => $settings,
-	         'assistants'=>$assistants
+	         'assistants'=>$assistants,
+	         'assistantsSupported'=>$assistantsSupported,
+            'openRouteModels'=>$this->_getOpenRouteModels(false)
         ] );
+    }
+
+    /**
+     * The Assistants API does not support the GPT-5 family.
+     */
+    private function _assistantsSupported(string $model): bool {
+        return !str_starts_with($model, 'gpt-5');
     }
 
     /**
@@ -114,5 +131,38 @@ class SettingsController extends \craft\web\Controller {
 				Craft::t('app', 'Couldn’t save plugin settings.')/*,
 				routeParams: ['plugin' => $plugin]*/
 			);
+	}
+
+	private function _getOpenRouteModels($withImage = false) {
+		$settings = BuddyPlugin::getInstance()->getSettings();
+		$openRouteModels = [[
+			'label'=>'--',
+			'value'=>''
+		]];
+		if($settings->openrouterApiKey){
+			$models = (new OpenRouter())->getModels();
+
+			if(isset($models)) {
+				foreach ( $models as $as ) {
+					if($withImage &&
+					   (!isset($as['architecture']['output_modalities'])
+					   || !is_array($as['architecture']['output_modalities'])
+						|| !in_array('image',$as['architecture']['output_modalities'])
+					    )
+					){
+						continue;
+					}else{
+						$name = $as['name']?:$as['id'];
+						$openRouteModels[] = [
+							'label' => $name,
+							'value' => $as['id']
+						];
+					}
+
+				}
+			}
+
+		}
+		return $openRouteModels;
 	}
 }

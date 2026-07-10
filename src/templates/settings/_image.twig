@@ -19,7 +19,9 @@
             instructions: 'imageModelDescription'|t('convergine-contentbuddy'),
             options: {
                 "openai": "Open AI - DALL-E",
-                "stability": "Stability AI - Stable Diffusion"
+                "openai5": "Open AI - GPT-5",
+                "stability": "Stability AI - Stable Diffusion",
+                "openrouter": "OpenRouter"
             },
             toggle:true
         }) }}
@@ -51,7 +53,7 @@
                 rows:10,
                 instructions: 'imageGenDescription'|t('convergine-contentbuddy')
             }) }}
-            <div id="dall-e-3" class="{% if settings.dalleModel != 'dall-e-3' %}hidden{% endif %}">
+            <div id="dall-e-3" class="{% if settings.dalleModel != 'dall-e-3'  %}hidden{% endif %}">
                 {{ forms.radioGroupField({
                     label: 'Default Image Size'|t('convergine-contentbuddy'),
                     name: 'imageSizeDalle3',
@@ -72,6 +74,94 @@
                         '256x256': 'Small (256x256)',
                         '512x512': 'Medium (512x512)',
                         '1024x1024': 'Large (1024x1024)',
+                    }
+                }) }}
+            </div>
+
+        </div>
+
+        <div id="openai5" class="{% if settings.imageModel !='openai5'%}hidden{% endif %}">
+            {{ forms.autosuggestField({
+                label: 'API: Access Token'|t('convergine-contentbuddy'),
+                name: 'apiToken',
+                value: settings.apiToken,
+                instructions: 'Access token for the OpenAI API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+
+            {{ forms.selectField({
+                label: 'Chat GPT-5 Model'|t('convergine-contentbuddy'),
+                name: 'imageOpenai5Model',
+                value: settings.imageOpenai5Model,
+                instructions: 'imageOpenai5ModelDescription'|t('convergine-contentbuddy'),
+                options: {
+
+                    "gpt-image-1": "GPT Image 1",
+                    "gpt-image-1-mini": "GPT Image 1 mini"
+                },
+                toggle:true
+            }) }}
+            {{ forms.textareaField({
+                label: 'Image Generation Styles'|t('convergine-contentbuddy'),
+                name: 'imagesStyles',
+                value: settings.imagesStyles,
+                rows:10,
+                instructions: 'imageGenDescription'|t('convergine-contentbuddy')
+            }) }}
+            <div id="openai5ImageSize" >
+                {{ forms.radioGroupField({
+                    label: 'Default Image Size'|t('convergine-contentbuddy'),
+                    name: 'imageSizeOpenai5',
+                    value: settings.imageSizeOpenai5,
+                    options: {
+                        '1024x1024': 'Square (1024x1024)',
+                        '1024x1536': 'Portrait (1024x1536)',
+                        '1536x1024': 'Landscape (1536x1024)',
+                    }
+                }) }}
+            </div>
+        </div>
+
+        <div id="openrouter" class="{% if settings.imageModel !='openrouter'%}hidden{% endif %}">
+            {{ forms.autosuggestField({
+                label: 'API: Access Token'|t('convergine-contentbuddy'),
+                name: 'apiOpenRouteImageApiToken',
+                value: settings.apiOpenRouteImageApiToken,
+                instructions: 'Access token for the OpenRouter API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+            {{ forms.selectField({
+                label: 'Open Router Model'|t('convergine-contentbuddy'),
+                name: 'imageOpenRouterModel',
+                value: settings.imageOpenRouterModel,
+                instructions: 'imageOpenRouterDescription'|t('convergine-contentbuddy'),
+                options: openRouterModels,
+                toggle:true
+            }) }}
+            {{ forms.textareaField({
+                label: 'Image Generation Styles'|t('convergine-contentbuddy'),
+                name: 'imageOpenRouterStyles',
+                value: settings.imageOpenRouterStyles ,
+                rows:10,
+                instructions: 'imageGenDescription'|t('convergine-contentbuddy')
+            }) }}
+
+            <div id="openai5ImageSize" >
+                {{ forms.radioGroupField({
+                    label: 'Default Image Size'|t('convergine-contentbuddy'),
+                    name: 'imageSizeOpenRouter',
+                    value: settings.imageSizeOpenRouter,
+                    options: {
+                        '1:1': '1:1 ( 1024×1024 )',
+                        '2:3': '2:3 ( 832×1248 )',
+                        '3:2': '3:2 ( 1248×832 )',
+                        '3:4': '3:4 ( 864×1184 )',
+                        '4:3': '4:3 ( 1184×864 )',
+                        '4:5': '4:5 ( 896×1152 )',
+                        '5:4': '5:4 ( 1152×896 )',
+                        '9:16' : '9:16 ( 768×1344 )',
+                        '16:9' : '16:9 ( 1344×768 )',
+                        '21:9' : '21:9 ( 1536×672 )',
                     }
                 }) }}
             </div>

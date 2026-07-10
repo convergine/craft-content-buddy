@@ -14,7 +14,9 @@
 namespace convergine\contentbuddy\services;
 
 use convergine\contentbuddy\api\image\OpenAi;
+use convergine\contentbuddy\api\image\OpenAi5;
 use convergine\contentbuddy\api\image\StabilityAi;
+use convergine\contentbuddy\api\image\OpenRouter;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\models\SettingsModel;
 
@@ -24,12 +26,18 @@ class Image {
 		$settings = BuddyPlugin::getInstance()->getSettings();
 
         $engine = $settings->imageModel;
-		if($engine == 'openai') {
+		if($engine == 'openai' ) {
             $openaiApi = new OpenAi();
             return $openaiApi->sendRequest($prompt, $folderUID);
+		} elseif( $engine == 'openai5') {
+			$openaiApi = new OpenAi5();
+			return $openaiApi->sendRequest($prompt, $folderUID);
 		} else if($engine == 'stability') {
             $stabilityApi = new StabilityAi();
             return $stabilityApi->sendRequest($prompt, $folderUID);
+		}else if($engine == 'openrouter') {
+			$openrouterApi = new OpenRouter();
+			return $openrouterApi->sendRequest($prompt, $folderUID);
 		}
 
         return null;

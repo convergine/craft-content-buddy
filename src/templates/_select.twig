@@ -40,7 +40,6 @@
 {% endif %}
 
 
-{% if (settings.textAi == 'openai' and settings.getOpenAiApiKey|length) or (settings.textAi == 'xai' and settings.getXAiApiKey|length) %}
 
     {% set prompts = craft.contentbuddy.getPrompts(true) %}
     <div class="buddy-button">
@@ -130,5 +129,4 @@ margin-right: 5px;" width="18" height="18" viewBox="0 0 18 18" fill="none">
                 </ul>
         </div>
     </div>
-{% endif %}
 {% endif %}

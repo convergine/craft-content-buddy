@@ -7,5 +7,5 @@ use craft\events\CancelableEvent;
 
 class TranslateFieldEvent extends CancelableEvent
 {
-    public FieldInterface $field;
+    public ?FieldInterface $field = null;
 }

@@ -56,6 +56,7 @@ class TranslateController extends \craft\web\Controller {
 		$instructions    = $request->getParam( 'instructions' );
 		$override        = $request->getParam( 'override' );
 		$translateMatrix = $request->getParam( 'translateMatrix' );
+		$translateContentBlocks = $request->getParam( 'translateContentBlocks' );
 		$translateVariants = $request->getParam( 'translateVariants' );
 		$translateSlugs  = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
 
@@ -101,6 +102,9 @@ class TranslateController extends \craft\web\Controller {
 			}
 			if ( $translateMatrix ) {
 				$_enabledFields[] = "craft\\fields\\Matrix:fields";
+			}
+			if ( $translateContentBlocks ) {
+				$_enabledFields[] = "craft\\fields\\ContentBlock:fields";
 			}
 			if ( $translateVariants ) {
 				$_enabledFields[] = "craft\\commerce\\fieldlayoutelements\\VariantsField:fields";
@@ -289,6 +293,9 @@ class TranslateController extends \craft\web\Controller {
 			if ( count( $entryFields['matrix'] ) ) {
 				$enabledFields[] = "craft\\fields\\Matrix:fields";
 			}
+			if ( count( $entryFields['contentBlock'] ) ) {
+				$enabledFields[] = "craft\\fields\\ContentBlock:fields";
+			}
 		} else {
 			foreach ( $entryFields['matrix'] as $f ) {
 				foreach ( $f['fields'] as $mf ) {
@@ -326,7 +333,6 @@ class TranslateController extends \craft\web\Controller {
 			$jobId                             = \craft\helpers\Queue::push(
 				new translateEntries( [
 					'entriesIds'        => [ $id ],
-                    'siteId'            => $siteId,
 					'translateToSiteId' => (int) $translate_to_siteId,
 					'enabledFields'     => $enabledFields,
 					'instructions'      => $instructions,
@@ -390,6 +396,9 @@ class TranslateController extends \craft\web\Controller {
 		if ( version_compare( Craft::$app->getInfo()->version, '5.0', '>=' ) ) {
 			if ( count( $entryFields['matrix'] ) ) {
 				$enabledFields[] = "craft\\fields\\Matrix:fields";
+			}
+			if ( count( $entryFields['contentBlock'] ) ) {
+				$enabledFields[] = "craft\\fields\\ContentBlock:fields";
 			}
 		} else {
 			foreach ( $entryFields['matrix'] as $f ) {
@@ -487,6 +496,9 @@ class TranslateController extends \craft\web\Controller {
 		if ( version_compare( Craft::$app->getInfo()->version, '5.0', '>=' ) ) {
 			if ( count( $entryFields['matrix'] ) ) {
 				$enabledFields[] = "craft\\fields\\Matrix:fields";
+			}
+			if ( count( $entryFields['contentBlock'] ) ) {
+				$enabledFields[] = "craft\\fields\\ContentBlock:fields";
 			}
 		} else {
 			foreach ( $entryFields['matrix'] as $f ) {
@@ -593,6 +605,9 @@ class TranslateController extends \craft\web\Controller {
 		if ( version_compare( Craft::$app->getInfo()->version, '5.0', '>=' ) ) {
 			if ( count( $entryFields['matrix'] ) ) {
 				$enabledFields[] = "craft\\fields\\Matrix:fields";
+			}
+			if ( count( $entryFields['contentBlock'] ) ) {
+				$enabledFields[] = "craft\\fields\\ContentBlock:fields";
 			}
 		} else {
 			foreach ( $entryFields['matrix'] as $f ) {

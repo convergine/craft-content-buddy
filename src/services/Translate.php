@@ -24,7 +24,9 @@ use craft\elements\Asset;
 use craft\elements\Category;
 use craft\elements\db\EntryQuery;
 use craft\elements\Entry;
+use craft\errors\FieldNotFoundException;
 use craft\errors\InvalidFieldException;
+use craft\helpers\ElementHelper;
 use craft\models\FieldLayout;
 use craft\models\Site;
 use craft\queue\Queue;
@@ -39,6 +41,16 @@ class Translate extends Component
      * @var string Event emitted before a field is added to the list of fields to translate.
      */
     public const EVENT_BEFORE_TRANSLATE_FIELD = 'beforeTranslateField';
+
+    /**
+     * SEOmatic MetaGlobalVars properties that accept a custom value but only from a
+     * fixed set ('before', 'after', 'none'). Translating them corrupts the setting.
+     */
+    private const SEOMATIC_PREDEFINED_PROPERTIES = [
+        'siteNamePosition',
+        'ogSiteNamePosition',
+        'twitterSiteNamePosition',
+    ];
 
 	/**
 	 * @var BuddyPlugin|null
@@ -85,14 +97,19 @@ class Translate extends Component
 	}
 
 	private function _getLayoutFields( FieldLayout $layout ) {
-		$matrixFields = $fields = [];
+		$matrixFields = $fields = $contentBlockFields = [];
 		$isCraft5     = version_compare( Craft::$app->getInfo()->version, '5.0', '>=' );
 
 		if ( $isCraft5 ) {
 			foreach ( $layout->getTabs() as $tab ) {
 				foreach ( $tab->getElements() as $fieldCont ) {
 					if ( get_class( $fieldCont ) === 'craft\fieldlayoutelements\CustomField' ) {
-						$field = $fieldCont->getField();
+						try {
+							$field = $fieldCont->getField();
+						} catch ( FieldNotFoundException $e ) {
+							Craft::warning( 'Skipping orphaned field layout element: ' . $e->getMessage(), 'content-buddy' );
+							continue;
+						}
 
                         // Check if handler disabled field translation
                         if (!$this->triggerTranslateFieldEvent($field)) {
@@ -116,6 +133,8 @@ class Translate extends Component
 
 						} else if ( $this->isMatrixField( $field ) ) {
 							$this->prepareMatrixField( $field, $matrixFields );
+						} else if ( $this->isContentBlockField( $field ) ) {
+							$this->prepareContentBlockField( $field, $contentBlockFields );
 						}
 					}
 				}
@@ -124,7 +143,12 @@ class Translate extends Component
 			foreach ( $layout->getTabs() as $tab ) {
 				foreach ( $tab->getElements() as $fieldCont ) {
 					if ( get_class( $fieldCont ) === 'craft\fieldlayoutelements\CustomField' ) {
-						$field = $fieldCont->getField();
+						try {
+							$field = $fieldCont->getField();
+						} catch ( FieldNotFoundException $e ) {
+							Craft::warning( 'Skipping orphaned field layout element: ' . $e->getMessage(), 'content-buddy' );
+							continue;
+						}
 
                         // Check if handler disabled field translation
                         if (!$this->triggerTranslateFieldEvent($field)) {
@@ -179,7 +203,7 @@ class Translate extends Component
 			}
 		}
 
-		return [ 'regular' => $fields, 'matrix' => $matrixFields ];
+		return [ 'regular' => $fields, 'matrix' => $matrixFields, 'contentBlock' => $contentBlockFields ];
 	}
 
 	public function prepareMatrixField( craft\fields\Matrix $field, &$matrixFields = [], $parentHandle = '' ): void {
@@ -193,12 +217,20 @@ class Translate extends Component
 
 			foreach ( $entryType->getFieldLayout()->getTabs() as $typeTab ) {
 				foreach ( $typeTab->getElements() as $matrixLayoutElement ) {
-					if ( get_class( $matrixLayoutElement ) === 'craft\fieldlayoutelements\CustomField' && $this->isMatrixField( $matrixField = $matrixLayoutElement->getField() ) ) {
+					if ( get_class( $matrixLayoutElement ) !== 'craft\fieldlayoutelements\CustomField' ) {
+						continue;
+					}
+					try {
+						$matrixField = $matrixLayoutElement->getField();
+					} catch ( FieldNotFoundException $e ) {
+						Craft::warning( 'Skipping orphaned matrix sub-field: ' . $e->getMessage(), 'content-buddy' );
+						continue;
+					}
+					if ( $this->isMatrixField( $matrixField ) ) {
 						$_parentHandle = ( ! empty( $parentHandle ) ? $parentHandle . ':' : '' ) . $entryType->handle . ':' . $field->handle;
 						$this->prepareMatrixField( $matrixField, $matrixFields, $_parentHandle );
 					} else if ( get_class( $matrixLayoutElement ) !== 'craft\fieldlayoutelements\entries\EntryTitleField' && ! $this->isUIElement( $matrixLayoutElement ) ) {
 						/** @var craft\base\Field $matrixField */
-						$matrixField                                                            = $matrixLayoutElement->getField();
 						$fullHandle                                                             = $entryType->handle . ':' . $field->handle . ":$matrixField->handle";
 						$matrixFields [ $field->handle . "-" . $entryType->handle ]['fields'][] = [
 							'name'        => $matrixField->name,
@@ -222,6 +254,48 @@ class Translate extends Component
 							'_field'      => 'craft\\fields\\Matrix:' . ( ! empty( $parentHandle ) ? $parentHandle . ':' : '' ) . $entryType->handle . ':' . $field->handle . ':title',
 						];
 					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Walks a native Craft "Content Block" field (craft\fields\ContentBlock, added
+	 * in Craft 5.5) and registers its nested translatable fields alongside Matrix
+	 * fields. A Content Block is a container field whose value is a single nested
+	 * element, so — like Matrix — its inner fields are otherwise invisible to the
+	 * translator. See GitHub issue #62.
+	 */
+	public function prepareContentBlockField( FieldInterface $field, &$collected = [] ): void {
+		$key = $field->handle;
+		if ( ! isset( $collected[ $key ]['name'] ) ) {
+			$collected[ $key ]['name']   = $field->name;
+			$collected[ $key ]['handle'] = $field->handle;
+			$collected[ $key ]['type']   = 'craft\fields\ContentBlock';
+			$collected[ $key ]['fields'] = [];
+		}
+
+		foreach ( $field->getFieldLayout()->getTabs() as $tab ) {
+			foreach ( $tab->getElements() as $layoutElement ) {
+				if ( get_class( $layoutElement ) !== 'craft\fieldlayoutelements\CustomField' ) {
+					continue;
+				}
+				$nestedField = $layoutElement->getField();
+				if ( $this->isMatrixField( $nestedField ) ) {
+					$this->prepareMatrixField( $nestedField, $collected, $field->handle );
+				} else if ( $this->isContentBlockField( $nestedField ) ) {
+					$this->prepareContentBlockField( $nestedField, $collected );
+				} else {
+					$collected[ $key ]['fields'][] = [
+						'name'        => $nestedField->name,
+						'handle'      => $nestedField->handle,
+						'id'          => $nestedField->id,
+						'blockName'   => $field->name,
+						'blockHandle' => $field->handle,
+						'type'        => $this->_getClass( $nestedField ),
+						'_type'       => ( new \ReflectionClass( $nestedField ) )->getName(),
+						'_field'      => 'craft\\fields\\ContentBlock:' . $field->handle . ':' . $nestedField->handle,
+					];
 				}
 			}
 		}
@@ -427,6 +501,10 @@ class Translate extends Component
 			}
 			$fieldsProcessed ++;
 
+			// Matrix and Content Block containers are translated together in one
+			// recursive pass, so make sure that pass runs at most once per element.
+			$containersProcessed = false;
+
 			foreach ( $enabledFields as $field ) {
 				if ( ! $field ) {
 					continue;
@@ -544,12 +622,14 @@ class Translate extends Component
 					}
 
 					// process Craft5 Matrix field
-				} elseif ( $fieldType == 'craft\fields\Matrix' ) {
+				} elseif ( $fieldType == 'craft\fields\Matrix' || $fieldType == 'craft\fields\ContentBlock' ) {
 
-					$block = $_field[1];
+					if ( ! $containersProcessed ) {
+						$containersProcessed = true;
 
-					$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions );
-					$_entry->setFieldValues( $fieldValues );
+						$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions, true, $this->_getEnabledContainers( $enabledFields ) );
+						$_entry->setFieldValues( $fieldValues );
+					}
 				}
 
 
@@ -625,6 +705,10 @@ class Translate extends Component
 				}
 			}
 
+			// Matrix and Content Block containers are translated together in one
+			// recursive pass, so make sure that pass runs at most once per element.
+			$containersProcessed = false;
+
 			foreach ( $enabledFields as $field ) {
 				if ( ! $field ) {
 					continue;
@@ -742,10 +826,13 @@ class Translate extends Component
 					}
 
 					// process Craft5 Matrix field
-				} elseif ( $fieldType == 'craft\fields\Matrix' ) {
-					$block       = $_field[1];
-					$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions );
-					$_entry->setFieldValues( $fieldValues );
+				} elseif ( $fieldType == 'craft\fields\Matrix' || $fieldType == 'craft\fields\ContentBlock' ) {
+					if ( ! $containersProcessed ) {
+						$containersProcessed = true;
+
+						$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions, true, $this->_getEnabledContainers( $enabledFields ) );
+						$_entry->setFieldValues( $fieldValues );
+					}
 				}
 			}
 
@@ -812,6 +899,10 @@ class Translate extends Component
 			}
 			$fieldsProcessed ++;
 
+			// Matrix and Content Block containers are translated together in one
+			// recursive pass, so make sure that pass runs at most once per element.
+			$containersProcessed = false;
+
 			foreach ( $enabledFields as $field ) {
 				if ( ! $field ) {
 					continue;
@@ -929,14 +1020,15 @@ class Translate extends Component
 					}
 
 					// process Craft5 Matrix field
-				} elseif ( $fieldType == 'craft\fields\Matrix' ) {
+				} elseif ( $fieldType == 'craft\fields\Matrix' || $fieldType == 'craft\fields\ContentBlock' ) {
 
-					$block = $_field[1];
+					if ( ! $containersProcessed ) {
+						$containersProcessed = true;
 
-					$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions );
-					$_entry->setFieldValues( $fieldValues );
+						$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions, true, $this->_getEnabledContainers( $enabledFields ) );
+						$_entry->setFieldValues( $fieldValues );
+					}
 				} elseif ( $fieldType == 'craft\commerce\fieldlayoutelements\VariantsField' ) {
-					Craft::dump( $_field );
 					$block = $_field[1];
 
 					/*$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions );
@@ -952,6 +1044,9 @@ class Translate extends Component
 							if ( count( $variantFields['matrix'] ) ) {
 								$variantEnabledFields[] = "craft\\fields\\Matrix:fields";
 							}
+							if ( count( $variantFields['contentBlock'] ) ) {
+								$variantEnabledFields[] = "craft\\fields\\ContentBlock:fields";
+							}
 						} else {
 							foreach ( $variantFields['matrix'] as $f ) {
 								foreach ( $f['fields'] as $mf ) {
@@ -959,8 +1054,6 @@ class Translate extends Component
 								}
 							}
 						}
-						Craft::dump( $variantFields );
-						Craft::dump( $variantEnabledFields );
 						$this->translateProduct( $variant, $translate_to, $variantEnabledFields, $translateId, $instructions );
 					}
 				}
@@ -1023,6 +1116,10 @@ class Translate extends Component
 				$this->_addLog( $translateId, $entry->id, $e->getMessage(), 'title' );
 			}
 			$fieldsProcessed ++;
+
+			// Matrix and Content Block containers are translated together in one
+			// recursive pass, so make sure that pass runs at most once per element.
+			$containersProcessed = false;
 
 			foreach ( $enabledFields as $field ) {
 				if ( ! $field ) {
@@ -1146,12 +1243,14 @@ class Translate extends Component
 					}
 
 					// process Craft5 Matrix field
-				} elseif ( $fieldType == 'craft\fields\Matrix' ) {
+				} elseif ( $fieldType == 'craft\fields\Matrix' || $fieldType == 'craft\fields\ContentBlock' ) {
 
-					$block = $_field[1];
+					if ( ! $containersProcessed ) {
+						$containersProcessed = true;
 
-					$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions );
-					$_entry->setFieldValues( $fieldValues );
+						$fieldValues = $this->processMatrixFields( $lang, $entry, $translate_to, $translateId, $override, $instructions, true, $this->_getEnabledContainers( $enabledFields ) );
+						$_entry->setFieldValues( $fieldValues );
+					}
 				}
 
 
@@ -1176,26 +1275,48 @@ class Translate extends Component
 	}
 
 	private function cloneElement( Element $originalEntry, $siteId ): ?Element {
-		$newEntry         = clone $originalEntry;
-		$newEntry->siteId = $siteId;
-		$this->saveElement( $newEntry );
+		// Only propagate to sites the element actually supports, otherwise
+		// Craft::$app->elements->propagateElement() throws an UnsupportedSiteException.
+		$supportedSiteIds = [];
+		foreach ( ElementHelper::supportedSitesForElement( $originalEntry ) as $siteInfo ) {
+			$supportedSiteIds[] = (int) $siteInfo['siteId'];
+		}
+		if ( ! in_array( (int) $siteId, $supportedSiteIds, true ) ) {
+			Craft::warning( 'Cannot translate element ' . $originalEntry->id . ' to site ' . $siteId . ': the site is not supported by the element.', 'content-buddy' );
 
-		foreach ( $originalEntry->getFieldLayout()->getCustomFields() as $field ) {
-			if ( in_array( get_class( $field ), static::$matrixFields ) ) {
-				$query = $originalEntry->getFieldValue( $field->handle );
-				foreach ( $query->all() as $matrixElement ) {
-					$newMatrixElement           = clone $matrixElement;
-					$newMatrixElement->siteId   = $siteId;
-					$newMatrixElement->parentId = $newEntry->id;
-					$this->saveElement( $newMatrixElement );
-				}
-			}
+			return null;
 		}
 
-		return $newEntry;
+		// Let Craft create the target-site version of the element. This correctly
+		// duplicates any nested Matrix/Neo/SuperTable blocks to the new site while
+		// leaving the source element's content untouched.
+		//
+		// The previous approach manually cloned the owner element and each nested
+		// block (re-saving shared canonical block elements with a changed siteId and
+		// a Structure "parentId" that Matrix ownership ignores). That corrupted the
+		// nested-entry ownership records, so Craft's NestedElementManager deleted the
+		// source blocks from the default-language entry. See GitHub issue #61.
+		Craft::$app->elements->propagateElement( $originalEntry, $siteId );
+
+		// Re-fetch a clean, fully-loaded copy for the target site. status(null) is
+		// used so the element is returned even if it defaults to disabled for the site.
+		return $originalEntry::find()
+		                     ->id( $originalEntry->id )
+		                     ->siteId( $siteId )
+		                     ->status( null )
+		                     ->one();
 	}
 
-	public function processMatrixFields( string $lang, Element $entry_from, int $translate_to, int $translateId, $override, $instructions = '', $or_entry = true ): array {
+	/**
+	 * @param array|null $allowedContainers Which container field types the user enabled
+	 *                                      ('matrix' and/or 'contentBlock'). Only enforced
+	 *                                      on the owner element; content nested inside an
+	 *                                      enabled container is always translated. Null = all.
+	 */
+	public function processMatrixFields( string $lang, Element $entry_from, int $translate_to, int $translateId, $override, $instructions = '', $or_entry = true, ?array $allowedContainers = null ): array {
+		$allowMatrix       = ! $or_entry || $allowedContainers === null || in_array( 'matrix', $allowedContainers, true );
+		$allowContentBlock = ! $or_entry || $allowedContainers === null || in_array( 'contentBlock', $allowedContainers, true );
+
 		$translate_to_site = Craft::$app->sites->getSiteById( $translate_to );
 
 		$translate_from_site = Craft::$app->sites->getSiteById( $entry_from->siteId );
@@ -1251,8 +1372,11 @@ class Translate extends Component
                           $this->_addLog( $translateId, $entry_from->id, $e->getMessage() . "\n" . $e->getTraceAsString(), $field, 0 );
                       }
                   }
-              } elseif ( in_array( get_class( $field ), static::$matrixFields ) ) {
+              } elseif ( $allowMatrix && in_array( get_class( $field ), static::$matrixFields ) ) {
                   $translatedValue = $this->translateMatrixField( $lang, $entry_from, $field, $translate_to, $translateId, $override, $instructions );
+
+              } elseif ( $allowContentBlock && $this->isContentBlockField( $field ) ) {
+                  $translatedValue = $this->translateContentBlockField( $lang, $entry_from, $field, $translate_to, $translateId, $override, $instructions );
 
               } elseif ( get_class( $field ) == 'ether\seo\fields\SeoField' ) {
                   $seo = $field->serializeValue($fieldValue, $entry_from);
@@ -1304,6 +1428,42 @@ class Translate extends Component
 		}
 
 		return $serialized;
+	}
+
+	/**
+	 * Translates the nested fields of a native Content Block field. Unlike Matrix,
+	 * a Content Block's value is a single nested element rather than a collection,
+	 * so we translate its inner fields (reusing the recursive Matrix engine) and
+	 * return only the translated handles wrapped as serialized field data.
+	 *
+	 * Craft's ContentBlock::normalizeValue() loads the existing block for the
+	 * target site and overwrites only the handles we return here, so untranslated
+	 * nested content is preserved — no data loss. See GitHub issue #62.
+	 */
+	public function translateContentBlockField( string $lang, Element $element, FieldInterface $field, int $translate_to, int $translateId, $override, $instructions = '' ): ?array {
+		/** @var Element|null $block */
+		$block = $element->getFieldValue( $field->handle );
+		if ( ! $block || ! $block->id ) {
+			return null;
+		}
+
+		$translatedValues = $this->processMatrixFields( $lang, $block, $translate_to, $translateId, $override, $instructions, false );
+
+		$translatedFields = [];
+		foreach ( $translatedValues as $nestedHandle => $value ) {
+			if ( $nestedHandle === 'title' ) {
+				continue;
+			}
+			if ( $value !== null && $value !== '' ) {
+				$translatedFields[ $nestedHandle ] = $value;
+			}
+		}
+
+		if ( ! $translatedFields ) {
+			return null;
+		}
+
+		return [ 'fields' => $translatedFields ];
 	}
 
 	public function reTranslateEntry(
@@ -1705,11 +1865,11 @@ class Translate extends Component
             $property = preg_replace("/Source$/", '', $name, 1);
 
             if (
-                !str_ends_with($name, 'Source')                                         // Skip unrelated properties
-                || $value !== 'fromCustom'                                              // Only properties that have been set to custom
-                || in_array($property, ['siteNamePosition', 'twitterSiteNamePosition']) // Skip properties that can be custom, but can only be set to predefined values
-                || empty($bundle->metaGlobalVars->$property)                            // Skip empty overrides
-                || str_contains($bundle->metaGlobalVars->$property, '{{')               // Skip properties containing twig
+                !str_ends_with($name, 'Source')                              // Skip unrelated properties
+                || $value !== 'fromCustom'                                   // Only properties that have been set to custom
+                || in_array($property, self::SEOMATIC_PREDEFINED_PROPERTIES) // Skip properties that can be custom, but can only be set to predefined values
+                || empty($bundle->metaGlobalVars->$property)                 // Skip empty overrides
+                || str_contains($bundle->metaGlobalVars->$property, '{{')    // Skip properties containing twig
             ) {
                 continue;
             }
@@ -1850,6 +2010,9 @@ class Translate extends Component
 			if ( count( $entryFields['matrix'] ) ) {
 				$enabledFields[] = "craft\\fields\\Matrix:fields";
 			}
+			if ( count( $entryFields['contentBlock'] ) ) {
+				$enabledFields[] = "craft\\fields\\ContentBlock:fields";
+			}
 		} else {
 			$fieldLayout = Craft::$app->sections->getEntryTypeById( $entryTypeId )->getFieldLayout();
 			$entryFields = $this->_getLayoutFields( $fieldLayout );
@@ -1959,6 +2122,34 @@ class Translate extends Component
 		return get_class( $field ) === 'craft\fields\Matrix';
 	}
 
+	private function isContentBlockField( $field ): bool {
+		return get_class( $field ) === 'craft\fields\ContentBlock';
+	}
+
+	/**
+	 * Maps the enabled field list onto the container types the user opted into,
+	 * so the "Translate Matrix Fields" and "Translate Content Block Fields"
+	 * toggles stay independent of each other.
+	 */
+	private function _getEnabledContainers( array $enabledFields ): array {
+		$containers = [];
+		foreach ( $enabledFields as $enabledField ) {
+			if ( ! $enabledField ) {
+				continue;
+			}
+			switch ( explode( ':', $enabledField, 2 )[0] ) {
+				case 'craft\fields\Matrix':
+					$containers['matrix'] = true;
+					break;
+				case 'craft\fields\ContentBlock':
+					$containers['contentBlock'] = true;
+					break;
+			}
+		}
+
+		return array_keys( $containers );
+	}
+
 	private function getPrompt( ?Site $site, $text ): array|bool {
 		if ( ! $site ) {
 			return false;
@@ -1975,7 +2166,7 @@ class Translate extends Component
 			$prompt .= "Do NOT translate or alter any URLs in the text. Example: 'https://www.example.com/files/This%20Sentence%20Should%20Not%20Be%20Translated.png' should remain exactly as it appears in the input. ";
 		}
 
-		$prompt .= "Return the full translation for the following text: \n\n";
+		$prompt .= "Return the full translation only, for the following text: \n\n";
 
 		return [ $prompt, $text ];
 	}
@@ -1995,7 +2186,7 @@ class Translate extends Component
             $text
         );
 
-	    $rewritten = preg_replace_callback(
+	    $_text = preg_replace_callback(
 		    '/\{entry:(\d+)(?:@(\d+))?:([^|}]+)(?:\|\|([^}]*))?\}/',
 		    function ($m) use ($targetSiteId) {
 			    $id   = $m[1];
@@ -2007,7 +2198,19 @@ class Translate extends Component
 		    $_text
 	    );
 
-		  return $rewritten;
+	    $_text = preg_replace_callback(
+		    '/\{asset:(\d+)(?:@(\d+))?:([^|}]+)(?:\|\|([^}]*))?\}/',
+		    function ($m) use ($targetSiteId) {
+			    $id   = $m[1];
+			    $prop = $m[3];
+			    $fb   = isset($m[4]) ? $m[4] : '';
+
+			    return "{$fb}#asset:{$id}@{$targetSiteId}:{$prop}";
+		    },
+		    $_text
+	    );
+
+		  return $_text;
     }
 
 	private function saveElement( $element ): bool {

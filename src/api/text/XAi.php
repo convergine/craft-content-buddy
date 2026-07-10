@@ -13,10 +13,12 @@ class XAi extends TextApi {
         try {
             $model = $this->settings->xAiModel;
 
+	        // xAI publishes no max-output-token figure for the current Grok models, and
+	        // max_tokens is deprecated in favour of max_completion_tokens. Omitting the
+	        // cap lets the model generate up to its context length, which is what a
+	        // translation needs; content generation still honours the caller's budget.
 	        if($isTranslate) {
-		        $maxTokens = max( $maxTokens, $this->getMaxTokensForModel( $model ) );
-	        }else{
-		        $maxTokens = min( $maxTokens, $this->getMaxTokensForModel( $model ) );
+		        $maxTokens = null;
 	        }
 
             $client = new Client();
@@ -87,12 +89,29 @@ class XAi extends TextApi {
             'content' => $prompt,
         ];
 
-        return json_encode( [
+        $body = [
             'model'       => $model,
             'messages'    => $messages,
             "temperature" => $temperature,
-            'max_tokens'  => $maxTokensToGenerate,
-        ] );
+        ];
+
+        if($maxTokensToGenerate !== null) {
+            $body['max_completion_tokens'] = $maxTokensToGenerate;
+        }
+
+        if($this->supportsReasoningEffort($model)) {
+            $body['reasoning_effort'] = $this->settings->xAiReasoningEffort;
+        }
+
+        return json_encode( $body );
+    }
+
+    /**
+     * reasoning_effort is only accepted by grok-4.3.
+     * @see https://docs.x.ai/docs/api-reference
+     */
+    private function supportsReasoningEffort($model): bool {
+        return $model === 'grok-4.3';
     }
 
     private function getTextGenerationBasedOnModel($model, $choices) {

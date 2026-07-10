@@ -207,6 +207,8 @@ class ContentGenerator {
 
 			} catch ( \Throwable $e ) {
 				$message       = $e->getMessage();
+				\Craft::info( 'Content Generation Error: ' . $message, 'content-buddy' );
+				\Craft::info( 'Content Generation Trace ' . $e->getTraceAsString(), 'content-buddy' );
 				$result['res'] = false;
 				$result['msg'] = $message;
 				return $result;

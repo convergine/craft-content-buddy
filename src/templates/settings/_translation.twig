@@ -18,7 +18,9 @@
             options: {
                 "openai": "OpenAI",
                 "xai": "xAI",
-                "deepl": "DeepL"
+                "deepl": "DeepL",
+                "anthropic": "Anthropic",
+                "openrouter": "OpenRouter"
             },
             toggle: true
         }) }}
@@ -31,6 +33,11 @@
                 instructions: 'modelDescription'|t('convergine-contentbuddy'),
                 options: [
                     { optgroup: "GPT Models" },
+
+                    { value: "gpt-5.1", label: "gpt-5.1" },
+                    { value: "gpt-5.1-mini", label: "gpt-5.1-mini" },
+                    { value: "gpt-5-nano", label: "gpt-5-nano" },
+
                     { value: "gpt-4.5-preview", label: "gpt-4.5-preview" },
                     { value: "gpt-4o", label: "gpt-4o" },
                     { value: "gpt-4o-mini", label: "gpt-4o-mini" },
@@ -43,25 +50,26 @@
                     { value: "o3-mini", label: "o3-mini" }
                 ]
             }) }}
-
-            {% if settings.apiToken %}
-                {{ forms.selectField({
-                    label: 'OpenAI Assistant'|t('convergine-contentbuddy'),
-                    name: 'openAiAssistantId',
-                    value: settings.openAiAssistantId,
-                    instructions: 'assistantDescription'|t('convergine-contentbuddy'),
-                    options: assistants
-                }) }}
-            {% else %}
-            <div  class="field" >
-                <div class="heading">
-                    <label >{{ 'OpenAI Assistant'|t('convergine-contentbuddy') }}</label>
+            <div id="assistantsContainer" style="display:{% if 'gpt-4' in settings.preferredTranslationModel %}block{% else %}none{% endif %}">
+                {% if settings.apiToken %}
+                    {{ forms.selectField({
+                        label: 'OpenAI Assistant'|t('convergine-contentbuddy'),
+                        name: 'openAiAssistantId',
+                        value: settings.openAiAssistantId,
+                        instructions: 'assistantDescription'|t('convergine-contentbuddy'),
+                        options: assistants
+                    }) }}
+                {% else %}
+                <div  class="field" >
+                    <div class="heading">
+                        <label >{{ 'OpenAI Assistant'|t('convergine-contentbuddy') }}</label>
+                    </div>
+                    <div class="instructions">
+                        <p>{{ 'Before select Assistant, need save access token.'|t('convergine-contentbuddy') }}</p>
+                    </div>
                 </div>
-                <div class="instructions">
-                    <p>{{ 'Before select Assistant, need save access token.'|t('convergine-contentbuddy') }}</p>
-                </div>
+                {% endif %}
             </div>
-            {% endif %}
 
             {{ forms.autosuggestField({
                 label: 'API: Access Token'|t('convergine-contentbuddy'),
@@ -79,12 +87,22 @@
                 value: settings.xAiModel,
                 instructions: 'xAiModelDescription'|t('convergine-contentbuddy'),
                 options: {
-                    "grok-3": "grok-3",
-                    "grok-3-fast": "grok-3-fast",
-                    "grok-2-vision": "grok-2-vision",
-                    "grok-2": "grok-2",
-                    "grok-vision-beta": "grok-vision-beta",
-                    "grok-beta": "grok-beta",
+                    "grok-4.3": "grok-4.3",
+                    "grok-4.5": "grok-4.5",
+                    "grok-4.20-0309-reasoning": "grok-4.20-0309-reasoning",
+                }
+            }) }}
+
+            {{ forms.selectField({
+                label: 'xAI Reasoning Effort'|t('convergine-contentbuddy'),
+                name: 'xAiReasoningEffort',
+                value: settings.xAiReasoningEffort,
+                instructions: 'xAiReasoningEffortDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "none": "none",
+                    "low": "low",
+                    "medium": "medium",
+                    "high": "high",
                 }
             }) }}
 
@@ -137,7 +155,48 @@
                 }) }}
             </div>
         </div>
+        <div id="anthropic" class="{% if settings.translationAi != 'anthropic' %}hidden{% endif %}">
+            {{ forms.selectField({
+                label: 'Anthropic Preferred Model'|t('convergine-contentbuddy'),
+                name: 'anthropicTranslationModel',
+                value: settings.anthropicTranslationModel,
+                instructions: 'anthropicModelDescription'|t('convergine-contentbuddy'),
+                options: {
+                    "claude-sonnet-4-5-20250929": "Claude Sonnet 4.5",
+                    "claude-haiku-4-5-20251001": "Claude Haiku 4.5",
+                    "claude-opus-4-5-20251101": "Claude Opus 4.5"
+                }
+            }) }}
 
+            {{ forms.autosuggestField({
+                label: 'Anthropic API Key'|t('convergine-contentbuddy'),
+                name: 'anthropicApiKey',
+                value: settings.anthropicApiKey,
+                instructions: 'API Key for the Anthropic API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+        </div>
+        <div id="openrouter" class="{% if settings.textAi != 'openrouter' %}hidden{% endif %}">
+            {% if settings.openrouterApiKey !='' %}
+                {{ forms.selectField({
+                    label: 'OpenRouter Preferred Model'|t('convergine-contentbuddy'),
+                    name: 'openrouterTranslationModel',
+                    value: settings.openrouterTranslationModel,
+                    instructions: 'openRouterModelDescription'|t('convergine-contentbuddy'),
+                    options: openRouteModels
+                }) }}
+            {% else %}
+                <p class="warning">{{ 'openRouterSaveKeyDescription'|t('convergine-contentbuddy') }}</p>
+            {% endif %}
+
+            {{ forms.autosuggestField({
+                label: 'Anthropic API Key'|t('convergine-contentbuddy'),
+                name: 'openrouterApiKey',
+                value: settings.openrouterApiKey,
+                instructions: 'API Key for the OpenRouter API'|t('convergine-contentbuddy'),
+                suggestEnvVars: true,
+            }) }}
+        </div>
         {{ forms.lightswitchField({
             label: 'Translate Slugs'|t('convergine-contentbuddy'),
             name: 'translateSlugs',
@@ -147,3 +206,17 @@
 
     {% endnamespace %}
 {% endblock %}
+{% js %}
+window.onload  = function (){
+    const modelSelectValue = document.querySelector('[name="settings[preferredTranslationModel]"]');
+    const assistantContainer = document.getElementById('settings-assistantsContainer');
+    modelSelectValue.addEventListener('change', e=>{
+        const selValue = e.currentTarget.value;
+        if(selValue.includes('gpt-4')){
+            assistantContainer.style.display = 'block'
+        }else{
+            assistantContainer.style.display = 'none'
+        }
+    })
+}
+{% endjs %}

@@ -1,0 +1,88 @@
+{% extends '_layouts/cp' %}
+{% import '_includes/forms' as forms %}
+{% do view.registerAssetBundle("convergine\\contentbuddy\\assets\\BuddyAssets") %}
+
+{% set plugin = craft.app.getModule('convergine-contentbuddy') %}
+{% set crumbs = [
+    { label: plugin.name, url: url('convergine-contentbuddy') },
+    { label: "Import/Export Settings"|t('convergine-contentbuddy'), url: url('convergine-contentbuddy/import_export') },
+] %}
+
+{% set selectedSubnavItem = 'import-export' %}
+
+{% set fullPageForm = false %}
+{% set title = "Import/Export Settings"|t('convergine-contentbuddy') %}
+{% set errors = craft.app.session.getFlash('errorsList') %}
+
+{% block content %}
+    {% if errors != null %}
+        <div class="buddy-alert error">{{ errors|join('<br>')|raw }}</div>
+    {% endif %}
+
+    <div class="buddy-two-cols">
+
+        <div>
+            <h3>Export Settings</h3>
+            <p>{{ 'Download the current settings and prompts as json file'|t('convergine-contentbuddy') }}</p>
+            <form method="post">
+                {{ csrfInput() }}
+                {{ actionInput('convergine-contentbuddy/import-export/export') }}
+                {% namespace 'export' %}
+                <ul class="buddy-settings-list">
+                    {% for key,data in settings_list %}
+                        <li class="{% if key=='general'%}disabled{% endif %}">
+                            {{ forms.checkboxField({
+                                label: data.label|t('convergine-contentbuddy'),
+                                name: key,
+                                checked:key=='general'
+                            }) }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <button type="submit" class="btn submit">Export Settings</button>
+            </form>
+            {% endnamespace %}
+        </div>
+        <div>
+            <h3>Import Settings</h3>
+            <p>{{ 'Upload a settings json file to import settings and/or prompts'|t('convergine-contentbuddy') }}</p>
+            <p style="font-weight: bold">{{ 'Please backup your database before attempting to import settings.<br>Import operation will overwrite all Content Buddy settings from imported file'|t('convergine-contentbuddy')|raw }}</p>
+            <form method="post" enctype="multipart/form-data">
+                {{ csrfInput() }}
+                {{ actionInput('convergine-contentbuddy/import-export/import') }}
+                <div class="field">
+                    <div class="heading">
+                        <label id="importButton-label" for="importButton">&nbsp;</label>
+                        <input type="file" id="file-upload" class="hidden" name="importFile">
+                    </div>
+                    <button type="button" id="importButton" class="btn ml-2xs" onclick="document.getElementById('file-upload').click()">
+                        {{ 'Select File'|t('app') }}
+                    </button>
+                    <ul id="importButtonInfo" class="elements structure"></ul>
+                </div>
+                <button type="submit" class="btn submit">Import Settings</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% js %}
+document.getElementById('file-upload').addEventListener('change', function (e) {
+if (!e.target.files.length) return;
+
+const file = e.target.files[0];
+const structure = document.querySelector('#importButtonInfo');
+
+
+// Create temporary preview
+structure.innerHTML = `
+<li class="element" data-file-name="${file.name}">
+    <div class="flex flex-nowrap items-center">
+
+        <div class="label flex-grow">
+            <span class="title">${file.name}</span>
+        </div>
+    </div>
+</li>
+`;
+});
+{% endjs %}
