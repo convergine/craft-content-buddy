@@ -15,9 +15,12 @@ class OpenAiResponses extends TextApi {
 
 			$model = $isTranslate ? $this->settings->preferredTranslationModel : $this->settings->preferredModel;
 
+			$body = $this->buildTextGenerationRequestBody( $model, $prompt, $maxTokens, $temperature, $isTranslate, $instructions );
+			Craft::info( 'OpenAI Responses request body: ' . $body, 'content-buddy' );
+
 			$client = new Client();
 			$res    = $client->request( 'POST', $this->getEndpoint( $model ), [
-				'body'        => $this->buildTextGenerationRequestBody( $model, $prompt, $isTranslate, $instructions ),
+				'body'        => $body,
 				'headers'     => [
 					'Authorization' => 'Bearer ' . $this->settings->getOpenAiApiKey(),
 					'Content-Type'  => 'application/json',
@@ -42,7 +45,12 @@ class OpenAiResponses extends TextApi {
 		}
 
 		$output = $json['output'];
-		$text    = $this->getTextGenerationBasedOnModel( $model, $output );
+		$text   = $this->getTextGenerationBasedOnModel( $model, $output );
+
+		// An empty, incomplete response (e.g. max_output_tokens reached) must not be saved as a blank translation.
+		if ( $text === '' && ( $json['status'] ?? '' ) === 'incomplete' ) {
+			throw new Exception( 'OpenAI returned an incomplete response (' . ( $json['incomplete_details']['reason'] ?? 'unknown reason' ) . ').<br><br>Model: ' . $model );
+		}
 
 		//check for repeated phrases
 		if ( in_array( $lang, [ 'gv', 'gd', 'ga' ] ) ) {
@@ -58,7 +66,7 @@ class OpenAiResponses extends TextApi {
 		return $text;
 	}
 
-	private function buildTextGenerationRequestBody( $model, $prompt, $isTranslate = false, $instructions = '' ) {
+	private function buildTextGenerationRequestBody( $model, $prompt, $maxTokens, $temperature, $isTranslate = false, $instructions = '' ): string {
 		$instructionsArr = [];
 		$systemMessage   = $this->settings->systemMessage;
 		if ( ! empty( $systemMessage ) ) {
@@ -90,26 +98,57 @@ class OpenAiResponses extends TextApi {
 
 		$body = [
 			'model'        => $model,
-			'instructions' => join('\n',$instructionsArr),
+			'instructions' => join( "\n", $instructionsArr ),
 			'input'        => $prompt
 		];
+
+		// GPT-5 requests stay as before. Other models get the same limits the Chat Completions client sends.
+		if ( ! $this->isGPT5Model( $model ) ) {
+			$body['max_output_tokens'] = min( (int) $maxTokens, $this->getMaxTokensForModel( $model ) );
+			if ( ! $this->isReasoningModel( $model ) ) {
+				$body['temperature'] = (float) $temperature;
+			}
+		}
+
+		$vectorStoreIds = $this->settings->getOpenAiVectorStoreIds( $isTranslate );
+		if ( $vectorStoreIds ) {
+			$body['tools'] = [
+				[
+					'type'             => 'file_search',
+					'vector_store_ids' => $vectorStoreIds,
+				],
+			];
+		}
 
 		return json_encode( $body );
 	}
 
 	private function getTextGenerationBasedOnModel( $model, $output ): string {
 		$text = '';
-		foreach ($output as $key=>$val){
-			if($val['type'] =='message' && $val['status']=='completed'){
-				foreach ($val['content'] as  $content){
-					if($content['type']=='output_text'){
+		foreach ( $output as $val ) {
+			if ( $val['type'] == 'file_search_call' ) {
+				Craft::info( 'OpenAI file_search call ' . ( $val['status'] ?? '' ) . ', queries: ' . json_encode( $val['queries'] ?? [] ), 'content-buddy' );
+				continue;
+			}
+			if ( $val['type'] == 'message' && $val['status'] == 'completed' ) {
+				foreach ( $val['content'] as $content ) {
+					if ( $content['type'] == 'output_text' ) {
 						$text .= $content['text'];
 					}
 
 				}
 			}
 		}
-		return trim( $text );
+
+		return trim( self::stripCitationMarkers( $text ) );
+	}
+
+	/**
+	 * Removes file_search citation markers such as "【4:0†source】" that models can write
+	 * into the text. Plain 【】 brackets are kept: CJK content uses them as punctuation.
+	 */
+	public static function stripCitationMarkers( string $text ): string {
+		return preg_replace( '/【\d+(?::\d+)?†[^】]*】/u', '', $text );
 	}
 
 	private function getEndpoint( $model ): string {

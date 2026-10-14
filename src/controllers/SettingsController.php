@@ -2,7 +2,6 @@
 
 namespace convergine\contentbuddy\controllers;
 
-use convergine\contentbuddy\api\text\OpenAiAssistant;
 use convergine\contentbuddy\api\text\OpenRouter;
 use convergine\contentbuddy\BuddyPlugin;
 use convergine\contentbuddy\variables\BuddyVariable;
@@ -74,41 +73,13 @@ class SettingsController extends \craft\web\Controller {
      */
     public function actionTranslation(): Response {
         $settings       = BuddyPlugin::getInstance()->getSettings();
-		  $assistants = [[
-			  'label'=>'--',
-			  'value'=>''
-		  ]];
-		  $assistantsSupported = $this->_assistantsSupported($settings->preferredTranslationModel);
-		  if($settings->apiToken && $assistantsSupported){
-			  try {
-				  $_assistants = (new OpenAiAssistant())->getAssistants();
-				  if(isset($_assistants['data'])) {
-					  foreach ( $_assistants['data'] as $as ) {
-						  $name = $as['name']?:$as['id'];
-						  $assistants[] = [
-							  'label' => $name,
-							  'value' => $as['id']
-						  ];
-					  }
-				  }
-			  } catch (\Throwable $e) {
-				  Craft::warning('Failed to load OpenAI assistants: ' . $e->getMessage(), 'content-buddy');
-			  }
-		  }
+
         return $this->renderTemplate( 'convergine-contentbuddy/settings/_translation', [
             'settings' => $settings,
-	         'assistants'=>$assistants,
-	         'assistantsSupported'=>$assistantsSupported,
             'openRouteModels'=>$this->_getOpenRouteModels(false)
         ] );
     }
 
-    /**
-     * The Assistants API does not support the GPT-5 family.
-     */
-    private function _assistantsSupported(string $model): bool {
-        return !str_starts_with($model, 'gpt-5');
-    }
 
     /**
      * @return Response

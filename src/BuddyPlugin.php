@@ -45,7 +45,7 @@ use yii\log\FileTarget;
 class BuddyPlugin extends Plugin {
 	public static string $plugin;
 	public ?string $name = 'Content Buddy';
-	public string $schemaVersion = '1.3.0';
+	public string $schemaVersion = '1.3.1';
 
 	public function init() {
 		/* plugin initialization */

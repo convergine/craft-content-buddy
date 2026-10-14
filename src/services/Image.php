@@ -13,7 +13,6 @@
 
 namespace convergine\contentbuddy\services;
 
-use convergine\contentbuddy\api\image\OpenAi;
 use convergine\contentbuddy\api\image\OpenAi5;
 use convergine\contentbuddy\api\image\StabilityAi;
 use convergine\contentbuddy\api\image\OpenRouter;
@@ -26,10 +25,8 @@ class Image {
 		$settings = BuddyPlugin::getInstance()->getSettings();
 
         $engine = $settings->imageModel;
-		if($engine == 'openai' ) {
-            $openaiApi = new OpenAi();
-            return $openaiApi->sendRequest($prompt, $folderUID);
-		} elseif( $engine == 'openai5') {
+		// 'openai' and 'openai-dall-e-2' were the DALL·E provider, shut down by OpenAI on 2026-05-12.
+		if( in_array( $engine, [ 'openai5', 'openai', 'openai-dall-e-2' ], true ) ) {
 			$openaiApi = new OpenAi5();
 			return $openaiApi->sendRequest($prompt, $folderUID);
 		} else if($engine == 'stability') {

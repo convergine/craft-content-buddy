@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.1 - 2026-10-14
+### Added
+- File search with OpenAI Vector Stores for GPT-5 models. [Issue #63](https://github.com/convergine/craft-content-buddy/issues/63)
+- Text generation and translation with OpenAI GPT-5.6 models.
+- Image generation with OpenAI GPT Image 2.5.
+
+### Changed
+- OpenAI now defaults to `gpt-5.6-terra` for text and `gpt-image-2.5-flare` for images. Models that OpenAI has shut down or shuts down on October 23, 2026, including `gpt-3.5-turbo`, DALL·E and `gpt-image-1`, have been removed, and any previously selected model is migrated to its replacement. [Issue #64](https://github.com/convergine/craft-content-buddy/issues/64)
+- Translating with an OpenAI Assistant has been removed, as OpenAI shut down the Assistants API.
+
+### Fixed
+- Installing the plugin failed on MySQL servers that require primary keys (`sql_require_primary_key`).
+- Responses from `gpt-4.1` and `gpt-4.1-mini` were cut off at 2,000 tokens.
+- Incomplete GPT-5 responses could be saved as blank text.
+- The OpenRouter settings on the Translation screen followed the text generation provider.
+
 ## 1.3.0 - 2026-07-10
 ### Added
 - Anthropic (Claude) as a text generation and translation provider.

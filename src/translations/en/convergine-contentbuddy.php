@@ -12,6 +12,8 @@
     /* Settings -> General Page */
     'OpenAI Preferred Model' => 'OpenAI Preferred model',
     'modelDescription' => 'Some models are more capable than others. For example, the davinci model is more capable than the ada model, which is more capable than the babbage model, and so on. The davinci model is the most capable model, but it is also the most expensive one. The ada model is the least capable model, but it is also the cheapest. For more information, see https://platform.openai.com/docs/models',
+	'OpenAI Vector Store IDs' => 'OpenAI Vector Store IDs',
+	'vectorStoreIdsDescription' => 'Optional. One or more OpenAI Vector Store IDs (vs_...), separated by commas. When set, GPT-5 requests use the file_search tool so the model can use the files in these stores. Each request, and each part of long content, can trigger a separate search, which OpenAI bills per call. You can use an environment variable.',
 	'assistantDescription'=>'Choose the OpenAI Assistant from your account that is specifically configured for translations. This assistant should include clear instructions for handling translation tasks, including any glossaries, preferred terminology, and localization guidelines. For best results, make sure the selected assistant is optimized for your content type and target languages.',
 	'Save your OpenAI access token before selecting an Assistant.'=>'Save your OpenAI access token before selecting an Assistant.',
     'xAiModelDescription' => 'For more information and a list of current models, see https://docs.x.ai/developers/models',
@@ -28,7 +30,7 @@
 	'systemMessageDescription' => 'If anything is added in this textarea - then ALL prompts sent to API will include it at the end of the prompt:',
 	'imageModelDescription' => 'Select the default image generation API.',
     'dalleModelDescription' => 'Select the default model that will be used when generating an image using OpenAI. For more information, see https://platform.openai.com/docs/models/dall-',
-	'imageOpenai5ModelDescription' => 'Select the default model that will be used when generating an image using OpenAI GPT-5 . For more information, see https://platform.openai.com/docs/models',
+	'imageOpenai5ModelDescription' => 'Select the default model that will be used when generating an image using OpenAI. Flare is the fastest; Sunburst is the most capable. For more information, see https://platform.openai.com/docs/models',
 	'imageOpenRouterDescription' => 'Select the default model that will be used when generating an image using OpenRoute. For more information, see https://openrouter.ai/models',
     'delayLanguageDescription' => 'During bulk translations, the plugin will add a delay of this amount of seconds for every extra site/language.',
     'delayEntryDescription' => 'During bulk translations, the plugin will add a delay of this amount of seconds for every extra entry.',

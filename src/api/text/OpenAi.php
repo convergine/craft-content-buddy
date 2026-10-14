@@ -134,14 +134,6 @@ class OpenAi extends TextApi {
         return trim( $choices[0]['message']['content'] );
     }
 
-    private function isReasoningModel($model) : bool {
-        return in_array($model, ['o1', 'o1-mini', 'o3-mini']);
-    }
-
-	private function isGPT5Model($model) : bool {
-		return str_contains( $model, 'gpt-5' );
-	}
-
     private function getEndpoint($model) : string {
         return 'https://api.openai.com/v1/chat/completions';
     }

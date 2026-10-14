@@ -2,7 +2,6 @@
 
 namespace convergine\contentbuddy\models;
 
-use convergine\contentbuddy\api\text\OpenAiAssistant;
 use convergine\contentbuddy\records\SettingsRecord;
 use Craft;
 use craft\base\Model;
@@ -10,6 +9,103 @@ use craft\helpers\App;
 use craft\services\ProjectConfig;
 
 class SettingsModel extends Model {
+
+	/**
+	 * OpenAI models offered for preferredModel and preferredTranslationModel.
+	 * Keep in sync with the dropdowns in settings/_api.twig and settings/_translation.twig.
+	 */
+	public const OPENAI_MODELS = [
+		'gpt-5.6-sol',
+		'gpt-5.6-terra',
+		'gpt-5.6-luna',
+		'gpt-5.1',
+		'gpt-4.1',
+		'gpt-4.1-mini',
+		'gpt-4o',
+		'gpt-4o-mini',
+	];
+
+	/**
+	 * Retired OpenAI models and OpenAI's named replacement for each.
+	 * gpt-4.5-preview (2025-07-14), gpt-5.1-codex and gpt-5.1-codex-mini (2026-07-23) are already shut down;
+	 * gpt-3.5-turbo, gpt-4, gpt-4-turbo, gpt-4.1-nano, o1 and o3-mini shut down on 2026-10-23;
+	 * gpt-5-nano on 2026-12-11.
+	 *
+	 * @see https://developers.openai.com/api/docs/deprecations
+	 */
+	public const RETIRED_OPENAI_MODELS = [
+		'gpt-3.5-turbo'      => 'gpt-5.6-terra',
+		'gpt-4'              => 'gpt-5.6-sol',
+		'gpt-4-turbo'        => 'gpt-5.6-sol',
+		'gpt-4.1-nano'       => 'gpt-5.6-luna',
+		'gpt-4.5-preview'    => 'gpt-5.6-sol',
+		'o1'                 => 'gpt-5.6-sol',
+		'o3-mini'            => 'gpt-5.6-sol',
+		'gpt-5.1-codex'      => 'gpt-5.6-sol',
+		'gpt-5.1-codex-mini' => 'gpt-5.6-terra',
+		'gpt-5-nano'         => 'gpt-5.6-luna',
+	];
+
+	public const DEFAULT_OPENAI_MODEL = 'gpt-5.6-terra';
+
+	/**
+	 * Maps a saved OpenAI model to one the settings still offer: retired models to their
+	 * replacement, anything else unknown (e.g. gpt-5.1-mini, which never existed) to the default.
+	 */
+	public static function normalizeOpenAiModel( string $model ): string {
+		if ( in_array( $model, self::OPENAI_MODELS, true ) ) {
+			return $model;
+		}
+
+		return self::RETIRED_OPENAI_MODELS[ $model ] ?? self::DEFAULT_OPENAI_MODEL;
+	}
+
+	/**
+	 * OpenAI image models offered for imageOpenai5Model. Keep in sync with settings/_image.twig.
+	 */
+	public const OPENAI_IMAGE_MODELS = [ 'gpt-image-2.5-flare', 'gpt-image-2.5-sunburst' ];
+
+	/**
+	 * gpt-image-1 shuts down on 2026-10-23, gpt-image-1-mini on 2026-12-01.
+	 *
+	 * @see https://developers.openai.com/api/docs/deprecations
+	 */
+	public const RETIRED_OPENAI_IMAGE_MODELS = [
+		'gpt-image-1'      => 'gpt-image-2.5-sunburst',
+		'gpt-image-1-mini' => 'gpt-image-2.5-flare',
+	];
+
+	public const DEFAULT_OPENAI_IMAGE_MODEL = 'gpt-image-2.5-flare';
+
+	/**
+	 * Moves saved image settings off retired OpenAI image models.
+	 * DALL·E 2 and 3 were shut down on 2026-05-12, so the DALL·E provider ('openai', or the older
+	 * 'openai-dall-e-2') switches to the GPT Image provider, keeping the orientation of the DALL·E 3 size.
+	 *
+	 * @param array $settings Saved values by setting name; missing names fall back to the defaults.
+	 *
+	 * @return array Only the settings that change.
+	 */
+	public static function retireOpenAiImageSettings( array $settings ): array {
+		$wanted = [];
+
+		if ( in_array( $settings['imageModel'] ?? null, [ 'openai', 'openai-dall-e-2' ], true ) ) {
+			$dalle3Size = ( $settings['dalleModel'] ?? 'dall-e-3' ) === 'dall-e-3' ? ( $settings['imageSizeDalle3'] ?? '' ) : '';
+
+			$wanted['imageModel']       = 'openai5';
+			$wanted['imageSizeOpenai5'] = match ( $dalle3Size ) {
+				'1024x1792' => '1024x1536',
+				'1792x1024' => '1536x1024',
+				default     => '1024x1024',
+			};
+			// A GPT Image model saved next to DALL·E was never chosen, only posted with the form.
+			$wanted['imageOpenai5Model'] = self::DEFAULT_OPENAI_IMAGE_MODEL;
+		} elseif ( isset( $settings['imageOpenai5Model'] ) && ! in_array( $settings['imageOpenai5Model'], self::OPENAI_IMAGE_MODELS, true ) ) {
+			$wanted['imageOpenai5Model'] = self::RETIRED_OPENAI_IMAGE_MODELS[ $settings['imageOpenai5Model'] ] ?? self::DEFAULT_OPENAI_IMAGE_MODEL;
+		}
+
+		return array_filter( $wanted, fn( $value, $name ) => $value !== ( $settings[ $name ] ?? null ), ARRAY_FILTER_USE_BOTH );
+	}
 
 	/**
 	 * @var string
@@ -35,12 +131,26 @@ class SettingsModel extends Model {
 	/**
 	 * @var string
 	 */
-	public string $preferredModel = 'gpt-3.5-turbo';
+	public string $preferredModel = self::DEFAULT_OPENAI_MODEL;
 
 	/**
 	 * @var string
 	 */
-	public string $preferredTranslationModel = 'gpt-3.5-turbo';
+	public string $preferredTranslationModel = self::DEFAULT_OPENAI_MODEL;
+
+	/**
+	 * OpenAI Vector Store IDs for the file_search tool when generating text.
+	 * Comma- or whitespace-separated; may be an environment variable reference.
+	 * @var string
+	 */
+	public string $openAiVectorStoreIds = '';
+
+	/**
+	 * OpenAI Vector Store IDs for the file_search tool when translating.
+	 * Comma- or whitespace-separated; may be an environment variable reference.
+	 * @var string
+	 */
+	public string $openAiTranslationVectorStoreIds = '';
 
 	/**
 	 * @var string
@@ -134,10 +244,10 @@ class SettingsModel extends Model {
 		'abmat\tinymce\Field'
 	];
 
-	public string $imageModel = 'openai';
+	public string $imageModel = 'openai5';
 
 	public string $dalleModel = 'dall-e-3';
-	public string $imageOpenai5Model = 'gpt-image-1';
+	public string $imageOpenai5Model = self::DEFAULT_OPENAI_IMAGE_MODEL;
 
 	// stability ai options
 
@@ -239,6 +349,24 @@ class SettingsModel extends Model {
 	 */
 	public function getOpenRouterApiKey(): string {
 		return App::parseEnv( $this->openrouterApiKey );
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function getOpenAiVectorStoreIds( bool $isTranslate ): array {
+		$raw = $isTranslate ? $this->openAiTranslationVectorStoreIds : $this->openAiVectorStoreIds;
+
+		return self::parseVectorStoreIds( (string) App::parseEnv( $raw ) );
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function parseVectorStoreIds( string $raw ): array {
+		$ids = preg_split( '/[\s,]+/', $raw, - 1, PREG_SPLIT_NO_EMPTY );
+
+		return array_values( array_unique( $ids ) );
 	}
 
 	public function titleFieldEnabled() {

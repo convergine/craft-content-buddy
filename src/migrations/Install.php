@@ -55,6 +55,8 @@ class Install extends Migration {
 		$this->archiveTableIfExists( ExcludeFromBulk::tableName() );
 		if(!$this->db->tableExists(ExcludeFromBulk::tableName())) {
 			$this->createTable( ExcludeFromBulk::tableName(), [
+				// Same shape as m250612/m250617 leave upgraded installs in; MySQL with sql_require_primary_key rejects tables without one.
+				'id'          => $this->primaryKey(),
 				'elementId'       => $this->integer(),
 				'siteId'    => $this->integer(),
 				'dateCreated' => $this->dateTime()->notNull(),

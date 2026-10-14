@@ -14,6 +14,7 @@
 namespace convergine\contentbuddy\services;
 
 use convergine\contentbuddy\BuddyPlugin;
+use convergine\contentbuddy\models\SettingsModel;
 use convergine\contentbuddy\records\BuddyPromptRecord;
 use Craft;
 use yii\base\Exception;
@@ -40,6 +41,7 @@ class ImportExport extends \craft\base\Component {
 				'textAi',
 				'preferredModel',
 				'apiToken',
+				'openAiVectorStoreIds',
 				'xAiModel',
 				'xAiApiKey',
 				'xAiReasoningEffort',
@@ -56,6 +58,7 @@ class ImportExport extends \craft\base\Component {
 			'settings' => [
 				'translationAi',
 				'preferredTranslationModel',
+				'openAiTranslationVectorStoreIds',
 				'openAiAssistantId',
 				'apiToken',
 				'xAiModel',
@@ -171,6 +174,13 @@ class ImportExport extends \craft\base\Component {
 				}
 			}
 		}
+		// Older exports can name OpenAI models that have since been retired.
+		foreach ( [ 'preferredModel', 'preferredTranslationModel' ] as $settingName ) {
+			if ( isset( $settingsToImport[ $settingName ] ) && is_string( $settingsToImport[ $settingName ] ) ) {
+				$settingsToImport[ $settingName ] = SettingsModel::normalizeOpenAiModel( $settingsToImport[ $settingName ] );
+			}
+		}
+		$settingsToImport = array_merge( $settingsToImport, SettingsModel::retireOpenAiImageSettings( $settingsToImport ) );
 		$settingsModel->saveSettings( $settingsToImport );
 		if($prompts){
 			$this->_importPrompts($prompts);

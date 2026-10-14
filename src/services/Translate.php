@@ -2258,10 +2258,9 @@ class Translate extends Component
         }
         $params = $request->post();
 		if(isset($params['elementId']) && $params['elementId'] == $element->id) {
-			Craft::info( 'saveExcludeBulkSites', 'content-buddy' );
-			Craft::info( $params, 'content-buddy' );
+
 			if ( isset( $params['buddyExcludeType'] ) && $params['buddyExcludeType'] == 'primary' ) {
-				Craft::info( 'Process all', 'content-buddy' );
+
 				Craft::$app->getDb()
 				           ->createCommand()
 				           ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => $element->id ] )
@@ -2277,7 +2276,7 @@ class Translate extends Component
 
 				}
 			} elseif ( isset( $params['buddyExcludeType'] ) && $params['buddyExcludeType'] == 'single' ) {
-				Craft::info( 'Process single', 'content-buddy' );
+
 				Craft::$app->getDb()
 				           ->createCommand()
 				           ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => $element->id,'siteId'=>$element->siteId ] )

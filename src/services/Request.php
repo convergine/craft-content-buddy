@@ -5,7 +5,6 @@ namespace convergine\contentbuddy\services;
 use convergine\contentbuddy\api\text\AnthropicAi;
 use convergine\contentbuddy\api\text\DeepL;
 use convergine\contentbuddy\api\text\OpenAi;
-use convergine\contentbuddy\api\text\OpenAiAssistant;
 use convergine\contentbuddy\api\text\OpenAiResponses;
 use convergine\contentbuddy\api\text\OpenRouter;
 use convergine\contentbuddy\api\text\XAi;
@@ -32,18 +31,15 @@ class Request {
 			$textApi = new DeepL();
 		} elseif ( $textAi == 'xai' ) {
 			$textApi = new XAi();
-		} elseif ( $textAi == 'openai-assistant' ) {
-			$textApi = new OpenAiAssistant();
 		} elseif ( $textAi == 'anthropic' ) {
 			$textApi = new AnthropicAi();
 		}elseif ( $textAi == 'openrouter' ) {
 
 			$textApi = new OpenRouter();
 		} else { //default to openai
+			// Vector Stores (file_search) are only used with GPT-5 models, which always go through the Responses API.
 			if ( str_contains( $preferredModel, 'gpt-5' ) ) {
 				$textApi = new OpenAiResponses();
-			} elseif ( $this->settings->openAiAssistantId && $this->settings->translationAi=='openai' && $isTranslate) {
-				$textApi = new OpenAiAssistant();
 			} else {
 				$textApi = new OpenAi();
 			}

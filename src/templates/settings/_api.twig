@@ -25,6 +25,7 @@
         }) }}
 
         <div id="openai" class="{% if settings.textAi != 'openai' %}hidden{% endif %}">
+            {# Keep the options in sync with SettingsModel::OPENAI_MODELS #}
             {{ forms.selectField({
                 label: 'OpenAI Preferred Model'|t('convergine-contentbuddy'),
                 name: 'preferredModel',
@@ -32,32 +33,30 @@
                 instructions: 'modelDescription'|t('convergine-contentbuddy'),
                 options: [
                     { optgroup: "GPT Models" },
-
-
+                    { value: "gpt-5.6-sol", label: "gpt-5.6-sol" },
+                    { value: "gpt-5.6-terra", label: "gpt-5.6-terra" },
+                    { value: "gpt-5.6-luna", label: "gpt-5.6-luna" },
 
                     { value: "gpt-5.1", label: "gpt-5.1" },
-                    { value: "gpt-5.1-mini", label: "gpt-5.1-mini" },
-                    { value: "gpt-5-nano", label: "gpt-5-nano" },
-                    { value: "gpt-5.1-codex", label: "gpt-5.1-codex" },
-                    { value: "gpt-5.1-codex-mini", label: "gpt-5.1-codex-mini" },
 
                     { value: "gpt-4.1", label: "gpt-4.1" },
                     { value: "gpt-4.1-mini", label: "gpt-4.1-mini" },
-                    { value: "gpt-4.1-nano", label: "gpt-4.1-nano" },
 
-                    { value: "gpt-4.5-preview", label: "gpt-4.5-preview" },
                     { value: "gpt-4o", label: "gpt-4o" },
-                    { value: "gpt-4o-mini", label: "gpt-4o-mini" },
-                    { value: "gpt-4", label: "gpt-4" },
-                    { value: "gpt-4-turbo", label: "gpt-4-turbo" },
-
-                    { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
-
-                    { optgroup: "Reasoning Models" },
-                    { value: "o1", label: "o1" },
-                    { value: "o3-mini", label: "o3-mini" }
+                    { value: "gpt-4o-mini", label: "gpt-4o-mini" }
                 ]
             }) }}
+
+            <div id="openAiVectorStoreIdsContainer" class="{% if 'gpt-5' not in settings.preferredModel %}hidden{% endif %}">
+                {{ forms.autosuggestField({
+                    label: 'OpenAI Vector Store IDs'|t('convergine-contentbuddy'),
+                    name: 'openAiVectorStoreIds',
+                    value: settings.openAiVectorStoreIds,
+                    instructions: 'vectorStoreIdsDescription'|t('convergine-contentbuddy'),
+                    placeholder: 'vs_...',
+                    suggestEnvVars: true,
+                }) }}
+            </div>
 
             {{ forms.autosuggestField({
                 label: 'API: Access Token'|t('convergine-contentbuddy'),
@@ -176,3 +175,15 @@
 
     {% endnamespace %}
 {% endblock %}
+{% js %}
+(function () {
+    // Vector Stores are only used with GPT-5 models.
+    const modelSelect = document.querySelector('[name="settings[preferredModel]"]');
+    const container = document.getElementById('settings-openAiVectorStoreIdsContainer');
+    if (modelSelect && container) {
+        modelSelect.addEventListener('change', e => {
+            container.classList.toggle('hidden', !e.currentTarget.value.includes('gpt-5'));
+        });
+    }
+})();
+{% endjs %}

@@ -8,15 +8,19 @@
 
 Content Buddy, an AI-powered CraftCMS plugin, simplifies your content creation tasks. Leveraging OpenAI's ChatGPT, it generates multi-lingual, keyword-focused articles and entries swiftly and efficiently. 
 
-Configurable settings allow you to control the length and style of generated content, while the image inclusion feature, powered by DALL.E, visually enhances your posts. 
+Configurable settings allow you to control the length and style of generated content, while the image inclusion feature, powered by OpenAI GPT Image, Stability AI or OpenRouter, visually enhances your posts. 
 
 Additionally, the plugin offers the convenience of customized prompts, accessible via a dropdown menu in text fields, textareas, and redactor fields, giving your content a unique touch. 
 
 ## Features
 
-- **GPT-4o & GPT-4o mini Support, o1 & o3-mini Support**: Content Buddy works with OpenAI's most advanced text generation models, including the latest GPT-4o & GPT-4o mini, for exceptional human-like text generation.
+- **GPT-5.6, GPT-5.1, GPT-4.1 & GPT-4o Support**: Content Buddy works with OpenAI's most advanced text generation models, including the latest GPT-5.6 Sol, Terra & Luna, for exceptional human-like text generation.
 
-- **DALL.E 3 & 2 Image Generation**: Create perfect matching images for your posts directly from your editor using DALL.E 3 & 2 APIs.
+- **AI Image Generation**: Create perfect matching images for your posts directly from your editor using OpenAI GPT Image 2.5, Stability AI or OpenRouter image models.
+
+- **File Search with OpenAI Vector Stores**: Let GPT-5 models draw on your own documents by connecting one or more OpenAI Vector Stores.
+
+- **Anthropic Claude & OpenRouter Support**: Generate and translate content with Claude, or with any model available on OpenRouter.
 
 - **x.AI Grok Support**: Generate content with the latest x.AI Grok model, designed for generating high-quality, human-like text.
 
@@ -52,7 +56,7 @@ Additionally, the plugin offers the convenience of customized prompts, accessibl
 
 ## Requirements
 
-- OpenAI Account with API key
+- An API key for OpenAI or another supported provider (Anthropic, x.AI, OpenRouter, DeepL, Stability AI)
 - Craft CMS 4.0.0 or later
 - PHP 8.0.2 or later
 
@@ -81,10 +85,9 @@ composer require convergine/craft-content-buddy
 
 ## Roadmap
 - **Scheduled Content Generation**: allow Content Buddy to generate content on a schedule, with various controls, list of different topics etc.
-- **More Image AI Integrations**: integration with other generative AI projects, aside from DALL.E.
 - **RSS Feeds Integration**: allow Content Buddy to generate content from RSS feeds and based on schedule.
 - **Model Fine-Tuning**: allow users to fine-tune models for their specific needs.
-- more settings and controls for plugin, including import/export settings functionality.
+- more settings and controls for plugin.
 
 ## Support
 
