@@ -69,10 +69,10 @@ class translateEntries extends BaseJob {
 
 		foreach ( $this->entriesIds as $id ) {
             $entry    = Craft::$app->entries->getEntryById( $id, $this->siteId );
-            $category = Category::find()->id( $id )->siteId( $this->siteId )->one();
-            $asset    = Asset::find()->id( $id )->siteId( $this->siteId )->one();
+            $category = Category::find()->id( $id )->siteId( $this->siteId )->status(null)->one();
+            $asset    = Asset::find()->id( $id )->siteId( $this->siteId )->status(null)->one();
             $product  = Translate::isCommerceInstalled()
-                ? Product::find()->id( $id )->siteId( $this->siteId )->one()
+                ? Product::find()->id( $id )->siteId( $this->siteId )->status(null)->one()
                 : null;
 
 			if ( $entry ) {

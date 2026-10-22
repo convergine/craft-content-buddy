@@ -442,7 +442,8 @@ class Translate extends Component
 						'enabledFields'     => $_enabledFields,
 						'instructions'      => $instructions,
 						'translationId'     => $translateRecord->id,
-						'translateSlugs'    => $translateSlugs
+						'translateSlugs'    => $translateSlugs,
+						'siteId'            => $primarySiteId,
 					] ), 10 + $index, 0
 				);
 				if ( $jobId ) {
@@ -1682,10 +1683,9 @@ class Translate extends Component
         $_element = Product::find()->id( $element->id )->siteId( $translate_to )->status(null)->one();
     }
     if(!$_element) {
-        $element->siteId = $translate_to;
-        Craft::info( 'Saving entry (' . $element->id . ') with site (' . $translate_to . ') on line (' . __LINE__ . ')', 'content-buddy' );
-        $this->saveElement( $element );
-        $_element = $element;
+        // $element is the source: re-saving it with the target siteId would move it off its own site
+        // when the section doesn't propagate there. cloneElement() returns null for unsupported sites.
+        $_element = $this->cloneElement( $element, $translate_to );
     }
 
 		if ( $_element ) {

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.2 - 2026-10-22
+### Fixed
+- Entries that don't exist on the primary site were not translated. [PR #65](https://github.com/convergine/craft-content-buddy/pull/65)
+- Slugs were translated from the target site's slug instead of the source site's. [PR #66](https://github.com/convergine/craft-content-buddy/pull/66)
+- Translating to all languages failed for entries and products that don't exist on, or are disabled on, the primary site.
+- Disabled products and categories were not translated, and translating a disabled product failed with an error.
+
 ## 1.3.1 - 2026-10-14
 ### Added
 - File search with OpenAI Vector Stores for GPT-5 models. [Issue #63](https://github.com/convergine/craft-content-buddy/issues/63)

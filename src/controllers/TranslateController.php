@@ -261,7 +261,7 @@ class TranslateController extends \craft\web\Controller {
 		$draftId        = $request->getParam( 'draftId' );
 		$translateSlugs = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
 
-		$entry             = Craft::$app->entries->getEntryById( $id );
+		$entry             = Craft::$app->entries->getEntryById( $id, $siteId );
 		$translate_to_list = [];
 		if ( $translate_to === 'all' ) {
 			$sectionSites = $entry->getSection()->getSiteSettings();
@@ -561,7 +561,7 @@ class TranslateController extends \craft\web\Controller {
 		$draftId        = $request->getParam( 'draftId' );
 		$translateSlugs = BuddyPlugin::getInstance()->getSettings()->translateSlugs;
 
-		$entry             = Product::findOne( $id );
+		$entry             = Product::find()->id( $id )->siteId( $siteId )->status( null )->one();
 		$translate_to_list = [];
 		if ( $translate_to === 'all' ) {
 			$sectionSites = $entry->getSupportedSites();
@@ -585,6 +585,7 @@ class TranslateController extends \craft\web\Controller {
 		$entry = Product::find()
 		                ->id( $id )
 		                ->siteId( $siteId )
+		                ->status( null )
 		                ->one();
 
 
