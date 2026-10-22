@@ -337,7 +337,8 @@ class TranslateController extends \craft\web\Controller {
 					'enabledFields'     => $enabledFields,
 					'instructions'      => $instructions,
 					'translationId'     => $translateRecord->id,
-					'translateSlugs'    => $translateSlugs
+					'translateSlugs'    => $translateSlugs,
+				 	'siteId'            => $siteId,
 				] ), 10 + $index, $this->_getDelay( $index ), $this->_getTTR()
 			);
 			$translateRecord->entriesSubmitted = 1;
