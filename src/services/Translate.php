@@ -37,6 +37,9 @@ use yii\db\BatchQueryResult;
 
 class Translate extends Component
 {
+	/** @var array<int, int[]> Exclusion site IDs captured before a draft is applied. */
+	private array $pendingExcludeBulkSites = [];
+
     /**
      * @var string Event emitted before a field is added to the list of fields to translate.
      */
@@ -2314,20 +2317,39 @@ class Translate extends Component
 	}
 
 	/**
-	 * Apply a draft's exclusion settings to its canonical element immediately
-	 * before Craft applies the rest of the draft content.
+	 * Capture a draft's exclusion settings before Craft applies the draft.
+	 * The canonical entry is not changed until after Craft's apply transaction
+	 * has completed successfully.
+	 */
+	public function prepareExcludeBulkSites( $draft ): void {
+		$this->pendingExcludeBulkSites[$draft->id] = [];
+
+		foreach (ExcludeFromBulk::find()->where(['elementId' => $draft->id])->all() as $source) {
+			$this->pendingExcludeBulkSites[$draft->id][] = (int)$source->siteId;
+		}
+	}
+
+	/**
+	 * Apply the captured draft settings to its canonical element after Craft
+	 * has successfully applied the draft.
 	 */
 	public function applyExcludeBulkSites( $draft, $canonical ): void {
-		$db = Craft::$app->getDb();
+		if (!array_key_exists($draft->id, $this->pendingExcludeBulkSites)) {
+			return;
+		}
 
+		$siteIds = $this->pendingExcludeBulkSites[$draft->id];
+		unset($this->pendingExcludeBulkSites[$draft->id]);
+
+		$db = Craft::$app->getDb();
 		$db->createCommand()
 		   ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => $canonical->id ] )
 		   ->execute();
 
-		foreach (ExcludeFromBulk::find()->where(['elementId' => $draft->id])->all() as $source) {
+		foreach ($siteIds as $siteId) {
 			$record = new ExcludeFromBulk();
 			$record->elementId = $canonical->id;
-			$record->siteId = $source->siteId;
+			$record->siteId = $siteId;
 			$record->save(false);
 		}
 	}

@@ -309,14 +309,15 @@ class BuddyPlugin extends Plugin {
 			Drafts::class,
 			Drafts::EVENT_BEFORE_APPLY_DRAFT,
 			function (DraftEvent $event) {
-				$this->translate->applyExcludeBulkSites($event->draft, $event->canonical);
+				$this->translate->prepareExcludeBulkSites($event->draft);
 			}
 		);
 
 		Event::on(
 			Drafts::class,
 			Drafts::EVENT_AFTER_APPLY_DRAFT,
-			function () {
+			function (DraftEvent $event) {
+				$this->translate->applyExcludeBulkSites($event->draft, $event->canonical);
 				$this->translate->removeOrphanedExcludeBulkSites();
 			}
 		);
