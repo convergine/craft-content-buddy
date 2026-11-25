@@ -22,8 +22,10 @@ use craft\elements\Entry;
 use craft\events\DefineElementEditorHtmlEvent;
 use craft\events\DefineFieldHtmlEvent;
 use craft\events\DefineHtmlEvent;
+use craft\events\DraftEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\TemplateEvent;
+use craft\services\Drafts;
 use craft\helpers\StringHelper;
 use craft\helpers\UrlHelper;
 use craft\web\twig\variables\CraftVariable;
@@ -290,6 +292,33 @@ class BuddyPlugin extends Plugin {
 				if ( $event->sender->id ) {
 					$this->translate->saveExcludeBulkSites( $event->sender );
 				}
+			}
+		);
+
+		// Exclusion settings are stored outside Craft's element content, so they
+		// need to follow the draft lifecycle explicitly.
+		Event::on(
+			Drafts::class,
+			Drafts::EVENT_AFTER_CREATE_DRAFT,
+			function (DraftEvent $event) {
+				$this->translate->copyExcludeBulkSites($event->canonical, $event->draft);
+			}
+		);
+
+		Event::on(
+			Drafts::class,
+			Drafts::EVENT_BEFORE_APPLY_DRAFT,
+			function (DraftEvent $event) {
+				$this->translate->prepareExcludeBulkSites($event->draft);
+			}
+		);
+
+		Event::on(
+			Drafts::class,
+			Drafts::EVENT_AFTER_APPLY_DRAFT,
+			function (DraftEvent $event) {
+				$this->translate->applyExcludeBulkSites($event->draft, $event->canonical);
+				$this->translate->removeOrphanedExcludeBulkSites();
 			}
 		);
 
