@@ -2257,7 +2257,8 @@ class Translate extends Component
             return;
         }
         $params = $request->post();
-		if(isset($params['elementId']) && $params['elementId'] == $element->id) {
+		$requestElementId = isset($params['elementId']) ? (int)$params['elementId'] : null;
+		if($requestElementId !== null && in_array($requestElementId, [(int)$element->id, (int)$element->getCanonicalId()], true)) {
 
 			if ( isset( $params['buddyExcludeType'] ) && $params['buddyExcludeType'] == 'primary' ) {
 
@@ -2289,6 +2290,57 @@ class Translate extends Component
 				}
 			}
 		}
+	}
+
+	/**
+	 * Copy the canonical element's exclusion settings to a newly-created draft.
+	 *
+	 * Drafts have their own element IDs. Keeping their settings under that ID
+	 * means saving a draft does not modify the live entry's settings.
+	 */
+	public function copyExcludeBulkSites( $canonical, $draft ): void {
+		$db = Craft::$app->getDb();
+
+		$db->createCommand()
+		   ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => $draft->id ] )
+		   ->execute();
+
+		foreach (ExcludeFromBulk::find()->where(['elementId' => $canonical->id])->all() as $source) {
+			$record = new ExcludeFromBulk();
+			$record->elementId = $draft->id;
+			$record->siteId = $source->siteId;
+			$record->save(false);
+		}
+	}
+
+	/**
+	 * Apply a draft's exclusion settings to its canonical element immediately
+	 * before Craft applies the rest of the draft content.
+	 */
+	public function applyExcludeBulkSites( $draft, $canonical ): void {
+		$db = Craft::$app->getDb();
+
+		$db->createCommand()
+		   ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => $canonical->id ] )
+		   ->execute();
+
+		foreach (ExcludeFromBulk::find()->where(['elementId' => $draft->id])->all() as $source) {
+			$record = new ExcludeFromBulk();
+			$record->elementId = $canonical->id;
+			$record->siteId = $source->siteId;
+			$record->save(false);
+		}
+	}
+
+	/**
+	 * Craft's foreign key intentionally nulls the element ID when a draft is
+	 * deleted. Those rows are no longer useful after the draft has been applied.
+	 */
+	public function removeOrphanedExcludeBulkSites(): void {
+		Craft::$app->getDb()
+		   ->createCommand()
+		   ->delete( ExcludeFromBulk::tableName(), [ 'elementId' => null ] )
+		   ->execute();
 	}
 
 	public function getExcludedEntries($elementId):array {
